@@ -1,1 +1,659 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Azulejo</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,700&family=Nunito+Sans:wght@400;600;800&display=swap');
+
+  :root{
+    --clay: #C4643F;
+    --clay-dark: #A8502F;
+    --stone: #EFE3CC;
+    --stone-line: #D8C6A3;
+    --cream: #F6EEDD;
+    --ink: #3A2A1E;
+    --azul: #2C5F7C;
+    --ocre: #C68A2E;
+    --verde: #4C7A5D;
+    --terracota: #B5533A;
+    --berenjena: #6B4066;
+    --cell: 40px;
+    --gap: 6px;
+  }
+
+  *{ box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+
+  html, body{
+    margin:0; padding:0; height:100%;
+    background: radial-gradient(ellipse at top, #D97A4E 0%, var(--clay) 45%, var(--clay-dark) 100%);
+    font-family: 'Nunito Sans', sans-serif;
+    color: var(--ink);
+    overflow: hidden;
+    touch-action: none;
+    user-select: none;
+    -webkit-user-select: none;
+  }
+
+  .app{
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    justify-content:flex-start;
+    height:100%;
+    padding: 18px 12px 12px;
+    gap: 14px;
+  }
+
+  header{
+    width:100%;
+    max-width: 460px;
+    display:flex;
+    align-items:baseline;
+    justify-content:space-between;
+    padding: 0 6px;
+  }
+
+  h1{
+    font-family: 'Fraunces', serif;
+    font-weight: 700;
+    font-size: 28px;
+    color: var(--cream);
+    margin:0;
+    letter-spacing: 0.5px;
+    text-shadow: 0 2px 0 rgba(0,0,0,0.15);
+  }
+
+  .score-box{
+    text-align:right;
+    color: var(--cream);
+  }
+  .score-label{
+    font-size: 11px;
+    opacity: 0.85;
+    display:block;
+    margin-bottom: -2px;
+  }
+  .score-value{
+    font-family:'Fraunces', serif;
+    font-size: 24px;
+    font-weight:700;
+  }
+
+  .board-frame{
+    background: linear-gradient(160deg, #8a5a3a, #6b4327);
+    padding: 10px;
+    border-radius: 14px;
+    box-shadow: 0 10px 24px rgba(0,0,0,0.35), inset 0 0 0 3px rgba(255,255,255,0.08);
+  }
+
+  #board{
+    position:relative;
+    display:grid;
+    grid-template-columns: repeat(8, var(--cell));
+    grid-template-rows: repeat(8, var(--cell));
+    gap: 3px;
+    background: #5b3d26;
+    padding: 6px;
+    border-radius: 8px;
+  }
+
+  .cell{
+    width: var(--cell);
+    height: var(--cell);
+    border-radius: 5px;
+    background: var(--stone);
+    box-shadow: inset 0 0 0 1px var(--stone-line);
+    transition: background 0.12s, box-shadow 0.12s;
+  }
+
+  .cell.filled{
+    border-radius: 6px;
+  }
+
+  .cell.preview-ok{
+    box-shadow: inset 0 0 0 2px rgba(76,122,93,0.9);
+    background: #DDEBDF;
+  }
+  .cell.preview-bad{
+    box-shadow: inset 0 0 0 2px rgba(181,83,58,0.85);
+  }
+  .cell.preview-clear{
+    box-shadow: inset 0 0 0 2px #F6EEDD;
+    background: #f2e6c9;
+  }
+
+  .cell.pop{
+    animation: pop 0.32s ease;
+  }
+  @keyframes pop{
+    0%{ transform: scale(1); }
+    40%{ transform: scale(1.15); filter: brightness(1.4); }
+    100%{ transform: scale(1); }
+  }
+
+  /* --- solid glossy tile colors --- */
+  .tile-azul{
+    background: linear-gradient(160deg, #4FA8E8, #1E74C2);
+    box-shadow: inset 0 2px 3px rgba(255,255,255,0.5), inset 0 -3px 4px rgba(0,0,0,0.25);
+  }
+  .tile-ocre{
+    background: linear-gradient(160deg, #FFC94A, #F0A020);
+    box-shadow: inset 0 2px 3px rgba(255,255,255,0.5), inset 0 -3px 4px rgba(0,0,0,0.2);
+  }
+  .tile-verde{
+    background: linear-gradient(160deg, #6FCF6F, #2E9E4A);
+    box-shadow: inset 0 2px 3px rgba(255,255,255,0.5), inset 0 -3px 4px rgba(0,0,0,0.22);
+  }
+  .tile-terracota{
+    background: linear-gradient(160deg, #FF7A5C, #E8432A);
+    box-shadow: inset 0 2px 3px rgba(255,255,255,0.5), inset 0 -3px 4px rgba(0,0,0,0.22);
+  }
+  .tile-berenjena{
+    background: linear-gradient(160deg, #B07AE0, #7C3FB8);
+    box-shadow: inset 0 2px 3px rgba(255,255,255,0.5), inset 0 -3px 4px rgba(0,0,0,0.22);
+  }
+
+  .tray-frame{
+    width:100%;
+    max-width: 460px;
+    background: linear-gradient(160deg, #8a5a3a, #6b4327);
+    border-radius: 14px;
+    padding: 14px 8px;
+    box-shadow: 0 10px 24px rgba(0,0,0,0.3), inset 0 0 0 3px rgba(255,255,255,0.08);
+    display:flex;
+    justify-content: space-around;
+    align-items:center;
+    gap: 6px;
+  }
+
+  .tray-slot{
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    min-width: 82px;
+    min-height: 82px;
+  }
+
+  .piece{
+    display:grid;
+    cursor: grab;
+    touch-action: none;
+  }
+  .piece.dragging-source{
+    opacity: 1;
+  }
+
+  .piece-tile{
+    border-radius: 5px;
+  }
+
+  #ghost{
+    position: fixed;
+    top:0; left:0;
+    display:grid;
+    pointer-events:none;
+    z-index: 999;
+    opacity: 0.92;
+    filter: drop-shadow(0 6px 10px rgba(0,0,0,0.35));
+    will-change: transform;
+  }
+  .ghost-tile{
+    border-radius: 6px;
+  }
+  .ghost-tile.invalid{
+    filter: grayscale(0.6) brightness(0.8);
+  }
+
+  .footer-row{
+    width:100%;
+    max-width: 460px;
+    display:flex;
+    justify-content: center;
+  }
+  .restart-btn{
+    background: var(--cream);
+    color: var(--clay-dark);
+    border: none;
+    font-family:'Nunito Sans', sans-serif;
+    font-weight: 800;
+    font-size: 13px;
+    padding: 8px 18px;
+    border-radius: 20px;
+    box-shadow: 0 3px 0 rgba(0,0,0,0.2);
+    cursor:pointer;
+  }
+  .restart-btn:active{ transform: translateY(2px); box-shadow: 0 1px 0 rgba(0,0,0,0.2); }
+
+  .overlay{
+    position: fixed;
+    inset:0;
+    background: rgba(58,42,30,0.78);
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    z-index: 1000;
+  }
+  .overlay.hidden{ display:none; }
+  .overlay-card{
+    background: var(--cream);
+    border-radius: 16px;
+    padding: 28px 32px;
+    text-align:center;
+    max-width: 320px;
+    box-shadow: 0 20px 40px rgba(0,0,0,0.4);
+  }
+  .overlay-card h2{
+    font-family:'Fraunces', serif;
+    margin: 0 0 4px;
+    font-size: 24px;
+    color: var(--clay-dark);
+  }
+  .overlay-card p{
+    margin: 4px 0 18px;
+    font-size: 14px;
+    color: var(--ink);
+    opacity: 0.75;
+  }
+  .overlay-card .final-score{
+    font-family:'Fraunces', serif;
+    font-size: 40px;
+    font-weight:700;
+    color: var(--terracota);
+    margin-bottom: 10px;
+  }
+</style>
+</head>
+<body>
+
+<svg width="0" height="0" style="position:absolute"></svg>
+
+<div class="app">
+  <header>
+    <h1>Azulejo</h1>
+    <div class="score-box">
+      <span class="score-label">Puntuación</span>
+      <span class="score-value" id="score">0</span>
+    </div>
+  </header>
+
+  <div class="board-frame">
+    <div id="board"></div>
+  </div>
+
+  <div class="tray-frame">
+    <div class="tray-slot" id="slot0"></div>
+    <div class="tray-slot" id="slot1"></div>
+    <div class="tray-slot" id="slot2"></div>
+  </div>
+
+  <div class="footer-row">
+    <button class="restart-btn" id="restartBtn">Nueva partida</button>
+  </div>
+</div>
+
+<div id="ghost"></div>
+
+<div class="overlay hidden" id="gameover">
+  <div class="overlay-card">
+    <h2>Se acabó el mosaico</h2>
+    <p>No queda hueco para las piezas restantes.</p>
+    <div class="final-score" id="finalScore">0</div>
+    <button class="restart-btn" id="restartBtn2">Jugar de nuevo</button>
+  </div>
+</div>
+
+<script>
+(function(){
+  const SIZE = 8;
+  const COLORS = ['azul','ocre','verde','terracota','berenjena'];
+
+  const SHAPES = [
+    [[0,0]],
+    [[0,0],[0,1]],
+    [[0,0],[1,0]],
+    [[0,0],[0,1],[0,2]],
+    [[0,0],[1,0],[2,0]],
+    [[0,0],[0,1],[1,0],[1,1]],
+    [[0,0],[0,1],[0,2],[0,3]],
+    [[0,0],[1,0],[2,0],[3,0]],
+    [[0,0],[1,0],[1,1],[1,2]],
+    [[0,2],[1,0],[1,1],[1,2]],
+    [[0,0],[0,1],[0,2],[1,0]],
+    [[0,0],[0,1],[0,2],[1,2]],
+    [[0,0],[0,1],[1,1],[1,2]],
+    [[0,1],[0,2],[1,0],[1,1]],
+    [[0,1],[1,0],[1,1],[1,2]],
+    [[0,0],[1,0],[1,1],[2,1]],
+    [[0,0],[0,1],[0,2],[1,0],[1,1],[1,2]],
+    [[0,0],[1,0],[2,0],[0,1],[1,1],[2,1]],
+    [[0,0],[0,1],[0,2],[1,0],[2,0]],
+    [[0,0],[1,0],[2,0],[2,1],[2,2]],
+    [[0,0],[0,1],[0,2],[1,2],[2,2]],
+    [[2,0],[1,0],[0,0],[0,1],[0,2]].map(p=>p),
+    [[0,0],[0,1],[1,1]]
+  ];
+
+  let board = new Array(SIZE*SIZE).fill(null);
+  let tray = [null, null, null];
+  let score = 0;
+  let cellSize = 40;
+  let dragState = null;
+
+  const boardEl = document.getElementById('board');
+  const scoreEl = document.getElementById('score');
+  const ghostEl = document.getElementById('ghost');
+  const gameoverEl = document.getElementById('gameover');
+  const finalScoreEl = document.getElementById('finalScore');
+  const traySlots = [document.getElementById('slot0'), document.getElementById('slot1'), document.getElementById('slot2')];
+
+  function computeCellSize(){
+    const maxBoard = Math.min(window.innerWidth * 0.9, 420);
+    cellSize = Math.floor((maxBoard - 12 - 7*3) / 8);
+    document.documentElement.style.setProperty('--cell', cellSize + 'px');
+  }
+
+  function normalizeShape(cells){
+    const minR = Math.min(...cells.map(c=>c[0]));
+    const minC = Math.min(...cells.map(c=>c[1]));
+    return cells.map(c=>[c[0]-minR, c[1]-minC]);
+  }
+
+  function randomPiece(){
+    const shape = normalizeShape(SHAPES[Math.floor(Math.random()*SHAPES.length)]);
+    const color = COLORS[Math.floor(Math.random()*COLORS.length)];
+    return { shape, color };
+  }
+
+  function buildBoard(){
+    boardEl.innerHTML = '';
+    for(let i=0;i<SIZE*SIZE;i++){
+      const cell = document.createElement('div');
+      cell.className = 'cell';
+      cell.dataset.index = i;
+      boardEl.appendChild(cell);
+    }
+  }
+
+  function renderBoard(){
+    const cells = boardEl.children;
+    for(let i=0;i<SIZE*SIZE;i++){
+      const val = board[i];
+      const cell = cells[i];
+      cell.className = 'cell' + (val ? ' filled tile-' + val : '');
+    }
+  }
+
+  function renderTray(){
+    traySlots.forEach((slot, i)=>{
+      slot.innerHTML = '';
+      const piece = tray[i];
+      if(!piece) return;
+      const maxR = Math.max(...piece.shape.map(c=>c[0])) + 1;
+      const maxC = Math.max(...piece.shape.map(c=>c[1])) + 1;
+      const trayCell = Math.min(24, Math.floor(80 / Math.max(maxR, maxC)));
+      const el = document.createElement('div');
+      el.className = 'piece';
+      el.style.gridTemplateColumns = `repeat(${maxC}, ${trayCell}px)`;
+      el.style.gridTemplateRows = `repeat(${maxR}, ${trayCell}px)`;
+      el.style.gap = '3px';
+      el.dataset.slot = i;
+      const grid = new Array(maxR*maxC).fill(null);
+      piece.shape.forEach(([r,c])=>{ grid[r*maxC+c] = true; });
+      for(let r=0;r<maxR;r++){
+        for(let c=0;c<maxC;c++){
+          const cellDiv = document.createElement('div');
+          if(grid[r*maxC+c]){
+            cellDiv.className = 'piece-tile tile-' + piece.color;
+          } else {
+            cellDiv.style.background = 'transparent';
+            cellDiv.style.boxShadow = 'none';
+          }
+          cellDiv.style.width = trayCell+'px';
+          cellDiv.style.height = trayCell+'px';
+          el.appendChild(cellDiv);
+        }
+      }
+      slot.appendChild(el);
+      el.addEventListener('pointerdown', (e)=> onPointerDown(e, i));
+    });
+  }
+
+  function fillTrayIfNeeded(){
+    if(tray.every(p=>p===null)){
+      tray = [randomPiece(), randomPiece(), randomPiece()];
+      renderTray();
+      setTimeout(checkGameOver, 50);
+    }
+  }
+
+  function canPlace(shape, originR, originC){
+    for(const [r,c] of shape){
+      const rr = originR+r, cc = originC+c;
+      if(rr<0||rr>=SIZE||cc<0||cc>=SIZE) return false;
+      if(board[rr*SIZE+cc]) return false;
+    }
+    return true;
+  }
+
+  function canPlaceAnywhere(shape){
+    for(let r=0;r<SIZE;r++){
+      for(let c=0;c<SIZE;c++){
+        if(canPlace(shape, r, c)) return true;
+      }
+    }
+    return false;
+  }
+
+  function checkGameOver(){
+    const active = tray.filter(p=>p!==null);
+    const stillPossible = active.some(p => canPlaceAnywhere(p.shape));
+    if(!stillPossible && active.length>0){
+      finalScoreEl.textContent = score;
+      gameoverEl.classList.remove('hidden');
+    }
+  }
+
+  function placePiece(shape, color, originR, originC){
+    shape.forEach(([r,c])=>{
+      board[(originR+r)*SIZE+(originC+c)] = color;
+    });
+    score += shape.length * 2;
+    renderBoard();
+    updateScore();
+    clearLines();
+  }
+
+  function clearLines(){
+    let rowsToClear = [];
+    let colsToClear = [];
+    for(let r=0;r<SIZE;r++){
+      let full = true;
+      for(let c=0;c<SIZE;c++){ if(!board[r*SIZE+c]){ full=false; break; } }
+      if(full) rowsToClear.push(r);
+    }
+    for(let c=0;c<SIZE;c++){
+      let full = true;
+      for(let r=0;r<SIZE;r++){ if(!board[r*SIZE+c]){ full=false; break; } }
+      if(full) colsToClear.push(c);
+    }
+    const totalLines = rowsToClear.length + colsToClear.length;
+    if(totalLines === 0) return;
+
+    const cellsToPop = new Set();
+    rowsToClear.forEach(r=>{ for(let c=0;c<SIZE;c++) cellsToPop.add(r*SIZE+c); });
+    colsToClear.forEach(c=>{ for(let r=0;r<SIZE;r++) cellsToPop.add(r*SIZE+c); });
+
+    const cells = boardEl.children;
+    cellsToPop.forEach(idx=> cells[idx].classList.add('pop'));
+
+    score += totalLines * 80 + (totalLines>1 ? totalLines*40 : 0);
+    updateScore();
+
+    setTimeout(()=>{
+      cellsToPop.forEach(idx=>{ board[idx] = null; });
+      renderBoard();
+    }, 260);
+  }
+
+  function updateScore(){
+    scoreEl.textContent = score;
+  }
+
+  function highlightPreview(shape, originR, originC, valid){
+    const cells = boardEl.children;
+    for(let i=0;i<SIZE*SIZE;i++){
+      cells[i].classList.remove('preview-ok','preview-bad','preview-clear');
+    }
+    if(originR===null) return;
+    shape.forEach(([r,c])=>{
+      const rr = originR+r, cc = originC+c;
+      if(rr>=0 && rr<SIZE && cc>=0 && cc<SIZE){
+        cells[rr*SIZE+cc].classList.add(valid ? 'preview-ok' : 'preview-bad');
+      }
+    });
+  }
+
+  function onPointerDown(e, slotIndex){
+    const piece = tray[slotIndex];
+    if(!piece) return;
+    e.preventDefault();
+    const pieceEl = e.currentTarget;
+    pieceEl.setPointerCapture && pieceEl.setPointerCapture(e.pointerId);
+
+    const rect = pieceEl.getBoundingClientRect();
+    const trayCell = rect.width / (Math.max(...piece.shape.map(c=>c[1]))+1);
+    const localX = e.clientX - rect.left;
+    const localY = e.clientY - rect.top;
+    const grabC = Math.min(Math.floor(localX / trayCell), Math.max(...piece.shape.map(c=>c[1])));
+    const grabR = Math.min(Math.floor(localY / trayCell), Math.max(...piece.shape.map(c=>c[0])));
+
+    pieceEl.classList.add('dragging-source');
+
+    const maxR = Math.max(...piece.shape.map(c=>c[0])) + 1;
+    const maxC = Math.max(...piece.shape.map(c=>c[1])) + 1;
+    ghostEl.innerHTML = '';
+    ghostEl.style.gridTemplateColumns = `repeat(${maxC}, ${cellSize}px)`;
+    ghostEl.style.gridTemplateRows = `repeat(${maxR}, ${cellSize}px)`;
+    ghostEl.style.gap = '3px';
+    const grid = new Array(maxR*maxC).fill(false);
+    piece.shape.forEach(([r,c])=>{ grid[r*maxC+c]=true; });
+    const ghostTiles = [];
+    for(let r=0;r<maxR;r++){
+      for(let c=0;c<maxC;c++){
+        const t = document.createElement('div');
+        if(grid[r*maxC+c]){
+          t.className = 'ghost-tile tile-' + piece.color;
+          t.style.width = cellSize+'px';
+          t.style.height = cellSize+'px';
+        } else {
+          t.style.width = cellSize+'px';
+          t.style.height = cellSize+'px';
+          t.style.background = 'transparent';
+        }
+        ghostEl.appendChild(t);
+        ghostTiles.push(t);
+      }
+    }
+    ghostEl.style.display = 'grid';
+
+    dragState = { slotIndex, piece, grabR, grabC, ghostTiles, maxR, maxC, grid };
+
+    updateGhostPosition(e.clientX, e.clientY);
+
+    window.addEventListener('pointermove', onPointerMove);
+    window.addEventListener('pointerup', onPointerUp);
+  }
+
+  function boardOriginFromGhost(GX, GY){
+    const boardRect = boardEl.getBoundingClientRect();
+    const step = cellSize + 3;
+    const originCol = Math.round((GX - boardRect.left) / step);
+    const originRow = Math.round((GY - boardRect.top) / step);
+    return { originRow, originCol };
+  }
+
+  function updateGhostPosition(clientX, clientY){
+    if(!dragState) return;
+    const LIFT = cellSize * 1.6;
+    const step = cellSize + 3;
+    const desiredX = clientX - cellSize/2;
+    const desiredY = clientY - LIFT - cellSize/2;
+    const GX = desiredX - dragState.grabC * step;
+    const GY = desiredY - dragState.grabR * step;
+    ghostEl.style.transform = `translate3d(${GX}px, ${GY}px, 0)`;
+
+    const { originRow, originCol } = boardOriginFromGhost(GX, GY);
+    const valid = canPlace(dragState.piece.shape, originRow, originCol);
+    dragState.lastOrigin = { originRow, originCol, valid };
+    highlightPreview(dragState.piece.shape, originRow, originCol, valid);
+
+    dragState.ghostTiles.forEach((t, idx)=>{
+      if(!dragState.grid[idx]) return;
+      t.classList.toggle('invalid', !valid);
+    });
+  }
+
+  let pendingMove = null;
+  let rafScheduled = false;
+  function onPointerMove(e){
+    pendingMove = { x: e.clientX, y: e.clientY };
+    if(!rafScheduled){
+      rafScheduled = true;
+      requestAnimationFrame(()=>{
+        rafScheduled = false;
+        if(pendingMove) updateGhostPosition(pendingMove.x, pendingMove.y);
+      });
+    }
+  }
+
+  function onPointerUp(e){
+    window.removeEventListener('pointermove', onPointerMove);
+    window.removeEventListener('pointerup', onPointerUp);
+    if(!dragState) return;
+
+    const { slotIndex, piece, lastOrigin } = dragState;
+    const pieceEls = document.querySelectorAll('.piece.dragging-source');
+    pieceEls.forEach(el=>el.classList.remove('dragging-source'));
+
+    ghostEl.style.display = 'none';
+    ghostEl.innerHTML = '';
+    highlightPreview(null, null, null, false);
+
+    if(lastOrigin && lastOrigin.valid){
+      placePiece(piece.shape, piece.color, lastOrigin.originRow, lastOrigin.originCol);
+      tray[slotIndex] = null;
+      renderTray();
+      dragState = null;
+      fillTrayIfNeeded();
+      setTimeout(checkGameOver, 320);
+    } else {
+      dragState = null;
+    }
+  }
+
+  function newGame(){
+    board = new Array(SIZE*SIZE).fill(null);
+    score = 0;
+    tray = [randomPiece(), randomPiece(), randomPiece()];
+    updateScore();
+    renderBoard();
+    renderTray();
+    gameoverEl.classList.add('hidden');
+  }
+
+  document.getElementById('restartBtn').addEventListener('click', newGame);
+  document.getElementById('restartBtn2').addEventListener('click', newGame);
+
+  window.addEventListener('resize', ()=>{ computeCellSize(); renderBoard(); renderTray(); });
+
+  computeCellSize();
+  buildBoard();
+  newGame();
+})();
+</script>
+
+</body>
+</html>
 
