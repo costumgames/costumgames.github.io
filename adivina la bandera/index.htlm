@@ -1,1 +1,836 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Adivina la bandera</title>
+<style>
+  :root{
+    --tinta: #16241f;
+    --papel: #f3ede0;
+    --papel-alt: #e9e0cc;
+    --linea: #cabf9e;
+    --acento: #2f6f5e;
+    --acento-osc: #1f4d40;
+    --alerta: #a5432f;
+    --dorado: #b7893f;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    background: var(--papel);
+    color: var(--tinta);
+    font-family: "Iowan Old Style","Palatino Linotype",Palatino,Georgia,serif;
+    min-height:100vh;
+    display:flex;
+    justify-content:center;
+    padding: 28px 16px 60px;
+  }
+  .atlas{
+    width:100%;
+    max-width:620px;
+  }
+  header.masthead{
+    border-bottom: 3px double var(--tinta);
+    padding-bottom: 10px;
+    margin-bottom: 22px;
+    display:flex;
+    align-items:baseline;
+    justify-content:space-between;
+    flex-wrap:wrap;
+    gap:8px;
+  }
+  header.masthead h1{
+    font-size: 1.7rem;
+    margin:0;
+    letter-spacing: 0.5px;
+    font-weight: 600;
+  }
+  header.masthead .sub{
+    font-size: 0.82rem;
+    color: #5a5142;
+    font-style: italic;
+  }
+
+  /* pantalla de inicio */
+  .portada{
+    background: var(--papel-alt);
+    border: 1px solid var(--linea);
+    padding: 28px 24px;
+    text-align:center;
+  }
+  .portada .emblema{
+    font-size: 3.4rem;
+    margin-bottom: 6px;
+  }
+  .portada p{
+    line-height:1.55;
+    color:#3a3226;
+    max-width: 460px;
+    margin: 14px auto 22px;
+    font-size: 0.98rem;
+  }
+  .portada .datos{
+    display:flex;
+    justify-content:center;
+    gap: 26px;
+    margin: 18px 0 24px;
+    font-size: 0.85rem;
+    color:#5a5142;
+  }
+  .portada .datos b{
+    display:block;
+    font-size:1.3rem;
+    color: var(--tinta);
+    font-weight:600;
+  }
+
+  button{
+    font-family: inherit;
+    cursor:pointer;
+    border:none;
+  }
+  .btn-principal{
+    background: var(--acento);
+    color: var(--papel);
+    padding: 13px 34px;
+    font-size: 1.02rem;
+    letter-spacing: 0.3px;
+    transition: background 0.15s ease;
+  }
+  .btn-principal:hover{ background: var(--acento-osc); }
+  .btn-principal:active{ transform: translateY(1px); }
+  .btn-secundario{
+    background: transparent;
+    color: var(--acento-osc);
+    border: 1px solid var(--acento) !important;
+    padding: 12px 34px;
+    font-size: 1.02rem;
+    letter-spacing: 0.3px;
+    transition: background 0.15s ease, color 0.15s ease;
+  }
+  .btn-secundario:hover{ background: var(--acento); color: var(--papel); }
+  .botones-modo{
+    display:flex;
+    flex-direction:column;
+    gap: 12px;
+    align-items:center;
+  }
+
+  /* barra de juego */
+  .barra{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    padding: 10px 4px 16px;
+    border-bottom: 1px solid var(--linea);
+    margin-bottom: 22px;
+    font-size: 0.86rem;
+    color:#5a5142;
+  }
+  .barra .crono{
+    font-variant-numeric: tabular-nums;
+    font-size: 1.15rem;
+    color: var(--tinta);
+    font-weight:600;
+  }
+  .barra .marcador span{ color: var(--acento-osc); font-weight:600; }
+  .barra .finalizar{
+    background:transparent;
+    border: 1px solid var(--alerta);
+    color: var(--alerta);
+    padding: 6px 14px;
+    font-size: 0.8rem;
+  }
+  .barra .finalizar:hover{ background: var(--alerta); color: var(--papel); }
+
+  /* panel de respuesta (bandera elegida) */
+  .panel-respuesta{
+    background: var(--papel-alt);
+    border: 1px solid var(--linea);
+    padding: 26px 24px;
+    text-align:center;
+    margin-bottom: 20px;
+    min-height: 108px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+  }
+  .sin-seleccion{
+    color:#8a8066;
+    font-style: italic;
+    font-size: 0.94rem;
+  }
+  .seleccionada{ width:100%; }
+  .bandera-media{
+    font-size: 4.4rem;
+    line-height:1;
+    margin-bottom: 16px;
+    filter: drop-shadow(0 3px 3px rgba(0,0,0,0.12));
+  }
+
+  /* cuadrícula de todas las banderas */
+  .cuadricula-titulo{
+    font-size: 0.78rem;
+    color:#8a8066;
+    text-align:center;
+    margin-bottom: 10px;
+    letter-spacing: 0.4px;
+  }
+  .cuadricula-banderas{
+    display:grid;
+    grid-template-columns: repeat(auto-fill, minmax(52px,1fr));
+    gap: 8px;
+    background: var(--papel-alt);
+    border: 1px solid var(--linea);
+    padding: 16px;
+    max-height: 420px;
+    overflow-y:auto;
+  }
+  .celda-bandera{
+    font-family: inherit;
+    background: var(--papel);
+    border: 1px solid var(--linea);
+    font-size: 1.6rem;
+    line-height:1;
+    padding: 8px 0;
+    text-align:center;
+    position:relative;
+    transition: transform 0.1s ease, border-color 0.15s ease;
+  }
+  .celda-bandera:hover{ border-color: var(--acento); transform: translateY(-1px); }
+  .celda-bandera.seleccionada-celda{
+    border-color: var(--acento);
+    border-width: 2px;
+    background: #fff;
+  }
+  .celda-bandera.acertada{
+    opacity: 0.35;
+    cursor:default;
+  }
+  .celda-bandera.acertada::after{
+    content:"✓";
+    position:absolute;
+    top:1px;
+    right:3px;
+    font-size: 0.62rem;
+    color: var(--acento-osc);
+    font-weight:700;
+  }
+  .celda-bandera.acertada:hover{ transform:none; border-color: var(--linea); }
+
+  /* tarjeta y opciones del modo elección */
+  .tarjeta{
+    background: var(--papel-alt);
+    border: 1px solid var(--linea);
+    padding: 36px 24px 30px;
+    text-align:center;
+  }
+  .bandera-grande{
+    font-size: 6rem;
+    line-height:1;
+    margin-bottom: 18px;
+    filter: drop-shadow(0 3px 3px rgba(0,0,0,0.12));
+  }
+  .contador-progreso{
+    font-size: 0.78rem;
+    color:#8a8066;
+    margin-bottom: 6px;
+    letter-spacing: 0.4px;
+  }
+  .opciones-grid{
+    display:grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+    max-width: 440px;
+    margin: 0 auto;
+  }
+  .opcion-btn{
+    font-family: inherit;
+    background: var(--papel);
+    border: 1px solid var(--linea);
+    color: var(--tinta);
+    padding: 14px 10px;
+    font-size: 0.98rem;
+    transition: background 0.15s ease, border-color 0.15s ease;
+  }
+  .opcion-btn:hover:not(:disabled){ border-color: var(--acento); }
+  .opcion-btn.correcta{
+    background: var(--acento);
+    border-color: var(--acento);
+    color: var(--papel);
+  }
+  .opcion-btn.incorrecta{
+    background: var(--alerta);
+    border-color: var(--alerta);
+    color: var(--papel);
+  }
+  .opcion-btn:disabled{ cursor:default; }
+  @media (max-width:480px){
+    .opciones-grid{ grid-template-columns: 1fr; }
+  }
+
+  form.respuesta{
+    display:flex;
+    gap:10px;
+    max-width: 380px;
+    margin: 0 auto;
+  }
+  form.respuesta input{
+    flex:1;
+    font-family: inherit;
+    font-size: 1.02rem;
+    padding: 11px 14px;
+    border: 1px solid var(--linea);
+    background: var(--papel);
+    color: var(--tinta);
+  }
+  form.respuesta input:focus{
+    outline: none;
+    border-color: var(--acento);
+  }
+  form.respuesta button{
+    background: var(--tinta);
+    color: var(--papel);
+    padding: 0 20px;
+    font-size: 0.95rem;
+  }
+  form.respuesta button:hover{ background: var(--acento-osc); }
+
+  .acciones-secundarias{
+    margin-top: 16px;
+    display:flex;
+    justify-content:center;
+    gap: 18px;
+  }
+  .acciones-secundarias button{
+    background:transparent;
+    color:#7a6f57;
+    font-size: 0.8rem;
+    text-decoration: underline;
+    text-underline-offset: 3px;
+  }
+  .acciones-secundarias button:hover{ color: var(--tinta); }
+
+  .aviso{
+    min-height: 26px;
+    margin-top: 16px;
+    font-size: 0.92rem;
+    font-weight: 600;
+  }
+  .aviso.correcto{ color: var(--acento-osc); }
+  .aviso.incorrecto{ color: var(--alerta); }
+
+  /* pantalla final */
+  .resultado{
+    background: var(--papel-alt);
+    border: 1px solid var(--linea);
+    padding: 26px 24px;
+  }
+  .resultado h2{
+    margin-top:0;
+    font-size: 1.3rem;
+    border-bottom: 1px solid var(--linea);
+    padding-bottom: 12px;
+  }
+  .resumen-final{
+    display:flex;
+    justify-content: space-around;
+    text-align:center;
+    margin: 20px 0 26px;
+  }
+  .resumen-final div b{
+    display:block;
+    font-size: 1.6rem;
+    color: var(--acento-osc);
+  }
+  .resumen-final div span{
+    font-size: 0.78rem;
+    color:#7a6f57;
+  }
+  .lista-titulo{
+    font-size: 0.85rem;
+    color:#5a5142;
+    margin-bottom: 10px;
+    font-style: italic;
+  }
+  .lista-pendientes{
+    display:grid;
+    grid-template-columns: repeat(auto-fill, minmax(150px,1fr));
+    gap: 8px 14px;
+    max-height: 320px;
+    overflow-y:auto;
+    padding-right: 4px;
+  }
+  .lista-pendientes .fila{
+    display:flex;
+    align-items:center;
+    gap: 8px;
+    font-size: 0.88rem;
+    padding: 4px 0;
+    border-bottom: 1px dotted var(--linea);
+  }
+  .lista-pendientes .fila .bandera-mini{ font-size:1.15rem; }
+  .sin-pendientes{
+    text-align:center;
+    color: var(--acento-osc);
+    font-weight:600;
+    padding: 18px 0;
+  }
+  .resultado .btn-principal{ margin-top: 22px; width:100%; }
+
+  footer.pie{
+    text-align:center;
+    margin-top: 20px;
+    font-size: 0.72rem;
+    color:#a39a82;
+  }
+
+  @media (max-width:480px){
+    .bandera-grande{ font-size:5.2rem; }
+    form.respuesta{ flex-direction:column; }
+    .portada .datos{ gap:16px; }
+  }
+</style>
+</head>
+<body>
+<div class="atlas">
+  <header class="masthead">
+    <h1>Adivina la bandera</h1>
+    <span class="sub">todos los países del mundo, un nombre por bandera</span>
+  </header>
+
+  <!-- PORTADA -->
+  <section id="pantalla-inicio" class="portada">
+    <div class="emblema">🌍</div>
+    <p>Verás todas las banderas del mundo a la vez, en una cuadrícula. Elige tú la que quieras responder, escribe el nombre y pulsa Enter. Las que no te sepas, simplemente no las toques. El cronómetro corre desde que empiezas, y puedes finalizar la partida cuando quieras: al terminar verás el nombre de las banderas que dejaste sin acertar.</p>
+    <div class="datos">
+      <div><b id="total-paises">—</b>países en juego</div>
+      <div><b>∞</b>tiempo, a tu ritmo</div>
+    </div>
+    <div class="botones-modo">
+      <button class="btn-principal" id="btn-modo-escritura">Escribir el nombre</button>
+      <button class="btn-secundario" id="btn-modo-eleccion">Elegir entre 4 opciones</button>
+    </div>
+  </section>
+
+  <!-- JUEGO: MODO ESCRITURA (elige tú la bandera) -->
+  <section id="pantalla-juego" style="display:none;">
+    <div class="barra">
+      <div class="crono crono-valor">00:00</div>
+      <div class="marcador">Aciertos: <span class="marcador-aciertos-valor">0</span> / <span class="marcador-total-valor">0</span></div>
+      <button class="finalizar btn-finalizar">Finalizar partida</button>
+    </div>
+
+    <div class="panel-respuesta" id="panel-respuesta">
+      <div class="sin-seleccion" id="sin-seleccion">Elige una bandera de la lista para escribir su nombre</div>
+      <div class="seleccionada" id="bloque-seleccionada" style="display:none;">
+        <div class="bandera-media" id="bandera-actual">🏳️</div>
+        <div class="respuesta">
+          <input type="text" id="input-respuesta" placeholder="Nombre del país..." autocomplete="off">
+          <button type="button" id="btn-comprobar">Comprobar</button>
+        </div>
+        <div class="aviso" id="aviso"></div>
+        <div class="acciones-secundarias">
+          <button type="button" id="btn-pista">Ver pista</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="cuadricula-titulo">Toca una bandera para responder</div>
+    <div class="cuadricula-banderas" id="cuadricula-banderas"></div>
+  </section>
+
+  <!-- JUEGO: MODO ELECCIÓN (4 opciones) -->
+  <section id="pantalla-eleccion" style="display:none;">
+    <div class="barra">
+      <div class="crono crono-valor">00:00</div>
+      <div class="marcador">Aciertos: <span class="marcador-aciertos-valor">0</span> / <span class="marcador-total-valor">0</span></div>
+      <button class="finalizar btn-finalizar">Finalizar partida</button>
+    </div>
+
+    <div class="tarjeta">
+      <div class="contador-progreso" id="progreso-eleccion">Bandera 1</div>
+      <div class="bandera-grande" id="bandera-eleccion">🏳️</div>
+      <div class="opciones-grid" id="opciones-grid"></div>
+      <div class="aviso" id="aviso-eleccion"></div>
+    </div>
+  </section>
+
+  <!-- RESULTADO -->
+  <section id="pantalla-resultado" style="display:none;" class="resultado">
+    <h2>Resultado de la partida</h2>
+    <div class="resumen-final">
+      <div><b id="res-tiempo">00:00</b><span>tiempo</span></div>
+      <div><b id="res-aciertos">0</b><span>aciertos</span></div>
+      <div><b id="res-pendientes">0</b><span>sin acertar</span></div>
+    </div>
+    <div id="bloque-pendientes">
+      <div class="lista-titulo">Banderas que no acertaste:</div>
+      <div class="lista-pendientes" id="lista-pendientes"></div>
+    </div>
+    <button class="btn-principal" id="btn-reiniciar">Volver al menú</button>
+  </section>
+
+  <footer class="pie">195 países soberanos reconocidos por la ONU</footer>
+</div>
+
+<script>
+// ---------- Datos: países (código ISO-2 -> nombre en español) ----------
+const PAISES = {
+  "AF":"Afganistán","AL":"Albania","DZ":"Argelia","AD":"Andorra","AO":"Angola",
+  "AG":"Antigua y Barbuda","AR":"Argentina","AM":"Armenia","AU":"Australia","AT":"Austria",
+  "AZ":"Azerbaiyán","BS":"Bahamas","BH":"Baréin","BD":"Bangladés","BB":"Barbados",
+  "BY":"Bielorrusia","BE":"Bélgica","BZ":"Belice","BJ":"Benín","BT":"Bután",
+  "BO":"Bolivia","BA":"Bosnia y Herzegovina","BW":"Botsuana","BR":"Brasil","BN":"Brunéi",
+  "BG":"Bulgaria","BF":"Burkina Faso","BI":"Burundi","CV":"Cabo Verde","KH":"Camboya",
+  "CM":"Camerún","CA":"Canadá","CF":"República Centroafricana","TD":"Chad","CL":"Chile",
+  "CN":"China","CO":"Colombia","KM":"Comoras","CG":"Congo","CD":"República Democrática del Congo",
+  "CR":"Costa Rica","CI":"Costa de Marfil","HR":"Croacia","CU":"Cuba","CY":"Chipre",
+  "CZ":"República Checa","DK":"Dinamarca","DJ":"Yibuti","DM":"Dominica","DO":"República Dominicana",
+  "EC":"Ecuador","EG":"Egipto","SV":"El Salvador","GQ":"Guinea Ecuatorial","ER":"Eritrea",
+  "EE":"Estonia","SZ":"Esuatini","ET":"Etiopía","FJ":"Fiyi","FI":"Finlandia",
+  "FR":"Francia","GA":"Gabón","GM":"Gambia","GE":"Georgia","DE":"Alemania",
+  "GH":"Ghana","GR":"Grecia","GD":"Granada","GT":"Guatemala","GN":"Guinea",
+  "GW":"Guinea-Bisáu","GY":"Guyana","HT":"Haití","HN":"Honduras","HU":"Hungría",
+  "IS":"Islandia","IN":"India","ID":"Indonesia","IR":"Irán","IQ":"Irak",
+  "IE":"Irlanda","IL":"Israel","IT":"Italia","JM":"Jamaica","JP":"Japón",
+  "JO":"Jordania","KZ":"Kazajistán","KE":"Kenia","KI":"Kiribati","KP":"Corea del Norte",
+  "KR":"Corea del Sur","KW":"Kuwait","KG":"Kirguistán","LA":"Laos","LV":"Letonia",
+  "LB":"Líbano","LS":"Lesoto","LR":"Liberia","LY":"Libia","LI":"Liechtenstein",
+  "LT":"Lituania","LU":"Luxemburgo","MG":"Madagascar","MW":"Malaui","MY":"Malasia",
+  "MV":"Maldivas","ML":"Malí","MT":"Malta","MH":"Islas Marshall","MR":"Mauritania",
+  "MU":"Mauricio","MX":"México","FM":"Micronesia","MD":"Moldavia","MC":"Mónaco",
+  "MN":"Mongolia","ME":"Montenegro","MA":"Marruecos","MZ":"Mozambique","MM":"Birmania",
+  "NA":"Namibia","NR":"Nauru","NP":"Nepal","NL":"Países Bajos","NZ":"Nueva Zelanda",
+  "NI":"Nicaragua","NE":"Níger","NG":"Nigeria","MK":"Macedonia del Norte","NO":"Noruega",
+  "OM":"Omán","PK":"Pakistán","PW":"Palaos","PA":"Panamá","PG":"Papúa Nueva Guinea",
+  "PY":"Paraguay","PE":"Perú","PH":"Filipinas","PL":"Polonia","PT":"Portugal",
+  "QA":"Catar","RO":"Rumanía","RU":"Rusia","RW":"Ruanda","KN":"San Cristóbal y Nieves",
+  "LC":"Santa Lucía","VC":"San Vicente y las Granadinas","WS":"Samoa","SM":"San Marino","ST":"Santo Tomé y Príncipe",
+  "SA":"Arabia Saudita","SN":"Senegal","RS":"Serbia","SC":"Seychelles","SL":"Sierra Leona",
+  "SG":"Singapur","SK":"Eslovaquia","SI":"Eslovenia","SB":"Islas Salomón","SO":"Somalia",
+  "ZA":"Sudáfrica","SS":"Sudán del Sur","ES":"España","LK":"Sri Lanka","SD":"Sudán",
+  "SR":"Surinam","SE":"Suecia","CH":"Suiza","SY":"Siria","TJ":"Tayikistán",
+  "TZ":"Tanzania","TH":"Tailandia","TL":"Timor Oriental","TG":"Togo","TO":"Tonga",
+  "TT":"Trinidad y Tobago","TN":"Túnez","TR":"Turquía","TM":"Turkmenistán","TV":"Tuvalu",
+  "UG":"Uganda","UA":"Ucrania","AE":"Emiratos Árabes Unidos","GB":"Reino Unido","US":"Estados Unidos",
+  "UY":"Uruguay","UZ":"Uzbekistán","VU":"Vanuatu","VA":"Ciudad del Vaticano","VE":"Venezuela",
+  "VN":"Vietnam","YE":"Yemen","ZM":"Zambia","ZW":"Zimbabue"
+};
+
+// respuestas alternativas aceptadas por código
+const ALTERNATIVAS = {
+  "US":["estados unidos","eeuu","ee.uu","usa","estados unidos de america"],
+  "GB":["reino unido","gran bretana","gran bretaña","inglaterra","uk"],
+  "KP":["corea del norte","norcorea"],
+  "KR":["corea del sur","surcorea","corea"],
+  "CZ":["republica checa","chequia"],
+  "CD":["republica democratica del congo","congo rdc","congo kinshasa","zaire"],
+  "CG":["congo","congo brazzaville"],
+  "MM":["birmania","myanmar"],
+  "SZ":["esuatini","suazilandia"],
+  "MK":["macedonia del norte","macedonia"],
+  "VA":["ciudad del vaticano","vaticano"],
+  "TL":["timor oriental","timor leste"],
+  "BA":["bosnia y herzegovina","bosnia"],
+  "AE":["emiratos arabes unidos","emiratos"],
+  "BN":["brunei"],
+  "BH":["bahrein","barein"],
+  "MD":["moldavia","moldova"],
+  "CI":["costa de marfil","cote d'ivoire"],
+  "SA":["arabia saudita","arabia saudi"]
+};
+
+function normaliza(s){
+  return s.toLowerCase()
+    .normalize("NFD").replace(/[\u0300-\u036f]/g,"")
+    .replace(/[^a-z ]/g,"")
+    .trim();
+}
+
+function codigoAEmoji(codigo){
+  const base = 127397;
+  return codigo.toUpperCase().split("").map(c => String.fromCodePoint(base + c.charCodeAt(0))).join("");
+}
+
+// ---------- Estado del juego ----------
+let codigosTotales = Object.keys(PAISES);
+let acertadas = new Set();      // códigos ya acertados (compartido por ambos modos)
+let seleccionActual = null;     // código elegido en modo escritura
+let cronoInterval = null;
+let segundos = 0;
+let jugando = false;
+let pistaMostrada = false;
+let modoActual = null;          // "escritura" | "eleccion"
+
+// estado propio del modo elección
+let mazoEleccion = [];
+let indiceEleccion = 0;
+
+const $ = id => document.getElementById(id);
+
+document.querySelectorAll(".marcador-total-valor").forEach(el => el.textContent = codigosTotales.length);
+if($("total-paises")) $("total-paises").textContent = codigosTotales.length;
+
+function formateaTiempo(s){
+  const m = Math.floor(s/60).toString().padStart(2,"0");
+  const ss = (s%60).toString().padStart(2,"0");
+  return `${m}:${ss}`;
+}
+
+function actualizarCrono(){
+  document.querySelectorAll(".crono-valor").forEach(el => el.textContent = formateaTiempo(segundos));
+}
+
+function actualizarMarcador(){
+  document.querySelectorAll(".marcador-aciertos-valor").forEach(el => el.textContent = acertadas.size);
+}
+
+function baraja(array){
+  const a = array.slice();
+  for(let i = a.length - 1; i > 0; i--){
+    const j = Math.floor(Math.random() * (i+1));
+    [a[i],a[j]] = [a[j],a[i]];
+  }
+  return a;
+}
+
+function iniciarCronometro(){
+  segundos = 0;
+  actualizarCrono();
+  clearInterval(cronoInterval);
+  cronoInterval = setInterval(()=>{
+    segundos++;
+    actualizarCrono();
+  },1000);
+}
+
+function mostrarPantalla(id){
+  ["pantalla-inicio","pantalla-juego","pantalla-eleccion","pantalla-resultado"].forEach(p=>{
+    $(p).style.display = (p === id) ? "block" : "none";
+  });
+}
+
+function irAlMenu(){
+  jugando = false;
+  clearInterval(cronoInterval);
+  mostrarPantalla("pantalla-inicio");
+}
+
+// ===================== MODO ESCRITURA =====================
+function construirCuadricula(){
+  const cont = $("cuadricula-banderas");
+  cont.innerHTML = "";
+  const ordenados = codigosTotales.slice().sort((a,b)=> PAISES[a].localeCompare(PAISES[b],"es"));
+  ordenados.forEach(codigo=>{
+    const celda = document.createElement("button");
+    celda.type = "button";
+    celda.className = "celda-bandera";
+    celda.dataset.codigo = codigo;
+    celda.textContent = codigoAEmoji(codigo);
+    celda.addEventListener("click", ()=> seleccionarBandera(codigo));
+    cont.appendChild(celda);
+  });
+}
+
+function iniciarModoEscritura(){
+  modoActual = "escritura";
+  acertadas = new Set();
+  seleccionActual = null;
+  jugando = true;
+  pistaMostrada = false;
+
+  mostrarPantalla("pantalla-juego");
+  actualizarMarcador();
+  construirCuadricula();
+  mostrarPanelVacio();
+  iniciarCronometro();
+}
+
+function mostrarPanelVacio(){
+  seleccionActual = null;
+  $("sin-seleccion").style.display = "block";
+  $("bloque-seleccionada").style.display = "none";
+}
+
+function seleccionarBandera(codigo){
+  if(acertadas.has(codigo)) return;
+  seleccionActual = codigo;
+  pistaMostrada = false;
+
+  document.querySelectorAll(".celda-bandera").forEach(c=>{
+    c.classList.toggle("seleccionada-celda", c.dataset.codigo === codigo);
+  });
+
+  $("sin-seleccion").style.display = "none";
+  $("bloque-seleccionada").style.display = "block";
+  $("bandera-actual").textContent = codigoAEmoji(codigo);
+  $("input-respuesta").value = "";
+  $("aviso").textContent = "";
+  $("aviso").className = "aviso";
+  $("input-respuesta").focus();
+}
+
+function comprobarRespuestaEscritura(){
+  if(!seleccionActual) return;
+  const texto = $("input-respuesta").value.trim();
+  if(texto.length === 0) return;
+
+  const codigo = seleccionActual;
+  const nombreCorrecto = PAISES[codigo];
+  const respuestaNorm = normaliza(texto);
+  const posibles = [normaliza(nombreCorrecto), ...(ALTERNATIVAS[codigo]||[]).map(normaliza)];
+
+  if(posibles.includes(respuestaNorm)){
+    acertadas.add(codigo);
+    actualizarMarcador();
+    $("aviso").textContent = `¡Correcto! Era ${nombreCorrecto}.`;
+    $("aviso").className = "aviso correcto";
+
+    const celda = document.querySelector(`.celda-bandera[data-codigo="${codigo}"]`);
+    if(celda) celda.classList.add("acertada");
+
+    setTimeout(mostrarPanelVacio, 650);
+  } else {
+    $("aviso").textContent = "No es correcto, inténtalo de nuevo.";
+    $("aviso").className = "aviso incorrecto";
+  }
+}
+
+function mostrarPista(){
+  if(!seleccionActual) return;
+  const nombre = PAISES[seleccionActual];
+  if(!pistaMostrada){
+    $("aviso").textContent = `Pista: empieza por "${nombre.charAt(0).toUpperCase()}" y tiene ${nombre.replace(/[^a-zA-Zá-úÁ-Ú]/g,"").length} letras.`;
+    $("aviso").className = "aviso";
+    pistaMostrada = true;
+  }
+}
+
+// ===================== MODO ELECCIÓN (4 opciones) =====================
+function iniciarModoEleccion(){
+  modoActual = "eleccion";
+  acertadas = new Set();
+  jugando = true;
+  mazoEleccion = baraja(codigosTotales);
+  indiceEleccion = 0;
+
+  mostrarPantalla("pantalla-eleccion");
+  actualizarMarcador();
+  iniciarCronometro();
+  mostrarBanderaEleccion();
+}
+
+function mostrarBanderaEleccion(){
+  if(indiceEleccion >= mazoEleccion.length){
+    terminarPartida();
+    return;
+  }
+  const codigo = mazoEleccion[indiceEleccion];
+  $("bandera-eleccion").textContent = codigoAEmoji(codigo);
+  $("progreso-eleccion").textContent = `Bandera ${indiceEleccion+1} de ${mazoEleccion.length}`;
+  $("aviso-eleccion").textContent = "";
+  $("aviso-eleccion").className = "aviso";
+
+  const nombreCorrecto = PAISES[codigo];
+  const otrosNombres = codigosTotales
+    .filter(c => c !== codigo)
+    .map(c => PAISES[c]);
+  const distractores = baraja(otrosNombres).slice(0,3);
+  const opciones = baraja([nombreCorrecto, ...distractores]);
+
+  const cont = $("opciones-grid");
+  cont.innerHTML = "";
+  opciones.forEach(nombre=>{
+    const btn = document.createElement("button");
+    btn.type = "button";
+    btn.className = "opcion-btn";
+    btn.textContent = nombre;
+    btn.addEventListener("click", ()=> elegirOpcion(nombre, nombreCorrecto, codigo));
+    cont.appendChild(btn);
+  });
+}
+
+function elegirOpcion(elegido, correcto, codigo){
+  const botones = document.querySelectorAll("#opciones-grid .opcion-btn");
+  botones.forEach(b => b.disabled = true);
+
+  if(elegido === correcto){
+    acertadas.add(codigo);
+    actualizarMarcador();
+    botones.forEach(b => { if(b.textContent === correcto) b.classList.add("correcta"); });
+    $("aviso-eleccion").textContent = "¡Correcto!";
+    $("aviso-eleccion").className = "aviso correcto";
+  } else {
+    botones.forEach(b => {
+      if(b.textContent === correcto) b.classList.add("correcta");
+      if(b.textContent === elegido) b.classList.add("incorrecta");
+    });
+    $("aviso-eleccion").textContent = `Incorrecto. Era ${correcto}.`;
+    $("aviso-eleccion").className = "aviso incorrecto";
+  }
+
+  setTimeout(()=>{
+    indiceEleccion++;
+    mostrarBanderaEleccion();
+  }, 1100);
+}
+
+// ===================== RESULTADO (compartido) =====================
+function terminarPartida(){
+  jugando = false;
+  clearInterval(cronoInterval);
+  mostrarPantalla("pantalla-resultado");
+
+  const noAcertadas = codigosTotales.filter(c => !acertadas.has(c));
+
+  $("res-tiempo").textContent = formateaTiempo(segundos);
+  $("res-aciertos").textContent = acertadas.size;
+  $("res-pendientes").textContent = noAcertadas.length;
+
+  const lista = $("lista-pendientes");
+  const bloque = $("bloque-pendientes");
+  lista.innerHTML = "";
+
+  if(noAcertadas.length === 0){
+    bloque.innerHTML = '<div class="sin-pendientes">¡Las acertaste todas! 🏆</div>';
+  } else {
+    bloque.querySelector(".lista-titulo")?.remove();
+    const titulo = document.createElement("div");
+    titulo.className = "lista-titulo";
+    titulo.textContent = "Banderas que no acertaste:";
+    bloque.insertBefore(titulo, lista);
+
+    const codigosOrdenados = noAcertadas.slice().sort((a,b)=> PAISES[a].localeCompare(PAISES[b],"es"));
+    codigosOrdenados.forEach(codigo=>{
+      const fila = document.createElement("div");
+      fila.className = "fila";
+      fila.innerHTML = `<span class="bandera-mini">${codigoAEmoji(codigo)}</span><span>${PAISES[codigo]}</span>`;
+      lista.appendChild(fila);
+    });
+  }
+}
+
+// ---------- Eventos ----------
+$("btn-modo-escritura").addEventListener("click", iniciarModoEscritura);
+$("btn-modo-eleccion").addEventListener("click", iniciarModoEleccion);
+$("btn-reiniciar").addEventListener("click", irAlMenu);
+
+document.querySelectorAll(".btn-finalizar").forEach(btn=>{
+  btn.addEventListener("click", terminarPartida);
+});
+
+$("btn-pista").addEventListener("click", ()=>{ if(jugando) mostrarPista(); });
+
+$("btn-comprobar").addEventListener("click", comprobarRespuestaEscritura);
+$("input-respuesta").addEventListener("keydown", (e)=>{
+  if(e.key === "Enter"){
+    e.preventDefault();
+    comprobarRespuestaEscritura();
+  }
+});
+</script>
+</body>
+</html>
 
