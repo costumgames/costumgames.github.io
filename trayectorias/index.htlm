@@ -1,1 +1,1421 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Adivina la trayectoria</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Archivo+Black&family=Inter:wght@400;500;600;700&display=swap');
+
+  :root{
+    --pitch-dark: #0B3D2E;
+    --pitch-mid: #12492F;
+    --chalk: #F5F3EC;
+    --gold: #E8B84B;
+    --red-card: #C0392B;
+    --ink: #08241A;
+    --line: rgba(245,243,236,0.35);
+  }
+
+  *{ box-sizing: border-box; }
+
+  html,body{
+    margin:0;
+    padding:0;
+    min-height:100%;
+    background-color: var(--pitch-dark);
+    background-image:
+      repeating-linear-gradient(
+        90deg,
+        var(--pitch-dark) 0px,
+        var(--pitch-dark) 48px,
+        var(--pitch-mid) 48px,
+        var(--pitch-mid) 96px
+      );
+    font-family: 'Inter', -apple-system, Segoe UI, sans-serif;
+    color: var(--chalk);
+  }
+
+  .app{
+    max-width: 640px;
+    margin: 0 auto;
+    padding: 28px 20px 60px;
+  }
+
+  .scoreboard{
+    display:flex;
+    gap:10px;
+    justify-content:center;
+    margin-bottom: 22px;
+  }
+
+  .tile{
+    background: var(--ink);
+    border: 1px solid var(--line);
+    border-radius: 6px;
+    padding: 8px 18px;
+    text-align:center;
+    min-width: 92px;
+  }
+
+  .tile .num{
+    font-family:'Archivo Black', Impact, sans-serif;
+    font-size: 26px;
+    line-height: 1;
+    color: var(--gold);
+    display:block;
+  }
+
+  .tile .lbl{
+    font-size: 11px;
+    letter-spacing: 0.03em;
+    color: var(--chalk);
+    opacity: 0.75;
+    display:block;
+    margin-top: 4px;
+  }
+
+  h1.title{
+    font-family:'Archivo Black', Impact, sans-serif;
+    font-weight: 400;
+    font-size: clamp(28px, 6vw, 40px);
+    text-align:center;
+    margin: 0 0 6px;
+    letter-spacing: 0.01em;
+  }
+
+  p.subtitle{
+    text-align:center;
+    max-width: 440px;
+    margin: 0 auto 26px;
+    color: var(--chalk);
+    opacity: 0.8;
+    font-size: 15px;
+    line-height: 1.5;
+  }
+
+  .search-wrap{
+    position: relative;
+    margin-bottom: 8px;
+    display: flex;
+    gap: 8px;
+  }
+
+  #guessInput{
+    flex: 1;
+  }
+
+  .check-btn{
+    background: var(--gold);
+    border: none;
+    color: var(--ink);
+    padding: 0 22px;
+    border-radius: 8px;
+    font-family: inherit;
+    font-weight: 700;
+    font-size: 14px;
+    cursor: pointer;
+    white-space: nowrap;
+  }
+
+  .check-btn:hover{
+    filter: brightness(1.05);
+  }
+
+  #guessInput{
+    width:100%;
+    padding: 14px 16px;
+    font-size: 17px;
+    font-family: inherit;
+    border-radius: 8px;
+    border: 2px solid var(--line);
+    background: var(--chalk);
+    color: var(--ink);
+    outline-offset: 2px;
+  }
+
+  #guessInput:focus{
+    border-color: var(--gold);
+    outline: 3px solid rgba(232,184,75,0.35);
+  }
+
+  .suggestions{
+    list-style:none;
+    margin: 4px 0 0;
+    padding: 0;
+    position: absolute;
+    top: 100%;
+    left: 0;
+    z-index: 5;
+    width: 100%;
+    background: var(--chalk);
+    border-radius: 8px;
+    overflow: hidden;
+    max-height: 240px;
+    overflow-y: auto;
+    box-shadow: 0 8px 20px rgba(0,0,0,0.35);
+  }
+
+  .suggestions li{
+    padding: 10px 16px;
+    color: var(--ink);
+    cursor:pointer;
+    font-size: 15px;
+    border-bottom: 1px solid rgba(8,36,26,0.08);
+  }
+
+  .suggestions li:last-child{ border-bottom:none; }
+
+  .suggestions li:hover,
+  .suggestions li.active{
+    background: var(--gold);
+  }
+
+  .feedback{
+    min-height: 22px;
+    text-align:center;
+    font-weight: 600;
+    font-size: 15px;
+    margin: 10px 0 8px;
+  }
+
+  .feedback.correct{ color: var(--gold); }
+  .feedback.wrong{ color: #ff8b7d; }
+  .feedback.skip{ color: var(--chalk); opacity:0.85; }
+
+  .path{
+    position: relative;
+    margin: 34px 0 10px;
+    padding: 22px 10px 4px;
+  }
+
+  .path::before{
+    content:"";
+    position:absolute;
+    top: 50%;
+    left: 6%;
+    right: 6%;
+    border-top: 2px dashed var(--line);
+  }
+
+  .path-track{
+    position:relative;
+    display:flex;
+    flex-wrap: wrap;
+    justify-content:center;
+    gap: 18px 2px;
+  }
+
+  .badge-col{
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    gap: 6px;
+  }
+
+  .badge{
+    width: 62px;
+    height: 68px;
+    clip-path: polygon(0% 0%, 100% 0%, 100% 62%, 50% 100%, 0% 62%);
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    font-family:'Archivo Black', Impact, sans-serif;
+    font-size: 13px;
+    letter-spacing: 0.02em;
+    box-shadow: 0 3px 0 rgba(0,0,0,0.25);
+    border: 2px solid rgba(255,255,255,0.15);
+    overflow: hidden;
+    cursor: pointer;
+    transition: transform 0.15s ease;
+  }
+
+  .badge:hover{
+    transform: translateY(-2px);
+  }
+
+  .badge-logo{
+    width: 70%;
+    height: 70%;
+    object-fit: contain;
+  }
+
+  .club-name-tag{
+    max-width: 92px;
+    text-align:center;
+    font-size: 11px;
+    color: var(--gold);
+    opacity: 0;
+    height: 0;
+    overflow: hidden;
+    transition: opacity 0.15s ease;
+    line-height: 1.3;
+  }
+
+  .club-name-tag.visible{
+    opacity: 1;
+    height: auto;
+    margin-top: 2px;
+  }
+
+  .fee-line{
+    color: var(--chalk);
+    opacity: 0.75;
+    font-size: 10px;
+    margin-top: 1px;
+  }
+
+  .arrow-col{
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    justify-content:flex-start;
+    padding-top: 18px;
+    min-width: 46px;
+  }
+
+  .arrow-glyph{
+    font-size: 20px;
+    line-height: 1;
+    color: var(--gold);
+  }
+
+  .arrow-fee{
+    font-size: 10px;
+    font-weight: 700;
+    color: var(--gold);
+    white-space: nowrap;
+    margin-top: 3px;
+    text-align:center;
+  }
+
+  .arrow-fee.estimate{
+    color: var(--chalk);
+    opacity: 0.8;
+    font-style: italic;
+    font-weight: 500;
+  }
+
+  .arrow-year{
+    font-size: 9px;
+    color: var(--chalk);
+    opacity: 0.7;
+    white-space: nowrap;
+    margin-top: 1px;
+    text-align:center;
+  }
+
+  .step-num{
+    width: 18px;
+    height:18px;
+    border-radius:50%;
+    background: var(--chalk);
+    color: var(--ink);
+    font-size: 11px;
+    font-weight:700;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+  }
+
+  .controls{
+    display:flex;
+    justify-content:center;
+    gap: 10px;
+    margin-top: 28px;
+  }
+
+  .back-btn{
+    background: transparent;
+    border: 1px solid var(--line);
+    color: var(--chalk);
+    padding: 10px 20px;
+    border-radius: 6px;
+    font-family: inherit;
+    font-size: 14px;
+    cursor:pointer;
+  }
+
+  .back-btn:hover:not(:disabled){
+    border-color: var(--gold);
+    color: var(--gold);
+  }
+
+  .back-btn:disabled{
+    opacity: 0.35;
+    cursor: not-allowed;
+  }
+
+  .skip-btn{
+    background: transparent;
+    border: 1px solid var(--line);
+    color: var(--chalk);
+    padding: 10px 20px;
+    border-radius: 6px;
+    font-family: inherit;
+    font-size: 14px;
+    cursor:pointer;
+  }
+
+  .skip-btn:hover{
+    border-color: var(--gold);
+    color: var(--gold);
+  }
+
+  .final-screen{
+    text-align:center;
+    padding: 40px 10px;
+  }
+
+  .final-screen .big-score{
+    font-family:'Archivo Black', Impact, sans-serif;
+    font-size: 56px;
+    color: var(--gold);
+    margin-bottom: 6px;
+  }
+
+  .final-screen p{
+    opacity:0.85;
+    margin-bottom: 24px;
+  }
+
+  .replay-btn{
+    background: var(--gold);
+    border: none;
+    color: var(--ink);
+    padding: 12px 28px;
+    border-radius: 6px;
+    font-family: inherit;
+    font-weight:700;
+    font-size: 15px;
+    cursor:pointer;
+  }
+
+  .hidden{ display:none !important; }
+
+  .tabs{
+    display:flex;
+    justify-content:center;
+    gap: 6px;
+    margin-bottom: 24px;
+  }
+
+  .tab{
+    background: transparent;
+    border: 1px solid var(--line);
+    color: var(--chalk);
+    opacity: 0.7;
+    padding: 9px 20px;
+    border-radius: 6px;
+    font-family: inherit;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+  }
+
+  .tab.active{
+    background: var(--gold);
+    border-color: var(--gold);
+    color: var(--ink);
+    opacity: 1;
+  }
+
+  .collection-header{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    margin-bottom: 16px;
+    font-size: 14px;
+    opacity: 0.85;
+  }
+
+  .reset-btn{
+    background: transparent;
+    border: 1px solid var(--line);
+    color: var(--chalk);
+    padding: 6px 14px;
+    border-radius: 6px;
+    font-family: inherit;
+    font-size: 12px;
+    cursor:pointer;
+    opacity: 0.75;
+  }
+
+  .reset-btn:hover{
+    color: #ff8b7d;
+    border-color: #ff8b7d;
+    opacity: 1;
+  }
+
+  .collection-grid{
+    display:grid;
+    grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+    gap: 10px;
+  }
+
+  .collection-item{
+    background: var(--ink);
+    border: 1px solid var(--line);
+    border-radius: 6px;
+    padding: 10px 12px;
+    font-size: 13px;
+    display:flex;
+    align-items:center;
+    gap: 8px;
+    opacity: 0.5;
+  }
+
+  .collection-item.completed{
+    opacity: 1;
+    border-color: var(--gold);
+  }
+
+  .collection-item.locked{
+    opacity: 0.4;
+  }
+
+  .locked-label{
+    font-style: italic;
+    opacity: 0.8;
+  }
+
+  .collection-check{
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    border: 1px solid var(--line);
+    flex-shrink: 0;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    font-size: 11px;
+    color: var(--ink);
+  }
+
+  .collection-item.completed .collection-check{
+    background: var(--gold);
+    border-color: var(--gold);
+  }
+
+  @media (max-width: 420px){
+    .badge{ width: 52px; height: 58px; font-size: 11px; }
+  }
+</style>
+</head>
+<body>
+
+<div class="app">
+
+  <div class="scoreboard">
+    <div class="tile">
+      <span class="num" id="scoreVal">0</span>
+      <span class="lbl">ACIERTOS · <span id="totalLabel1"></span></span>
+    </div>
+    <div class="tile">
+      <span class="num" id="progressVal">1</span>
+      <span class="lbl">JUGADOR · <span id="totalLabel2"></span></span>
+    </div>
+  </div>
+
+  <h1 class="title">Adivina la trayectoria</h1>
+  <p class="subtitle">Estos son los escudos de los clubes por los que ha pasado el futbolista, en orden. Escribe su nombre para acertar.</p>
+
+  <div class="tabs">
+    <button class="tab active" id="tabPlay">Jugar</button>
+    <button class="tab" id="tabCollection">Colección</button>
+  </div>
+
+  <div id="playView">
+    <div id="gameArea">
+      <div class="search-wrap">
+        <input id="guessInput" type="text" placeholder="Escribe el nombre del jugador..." autocomplete="off">
+        <button id="checkBtn" class="check-btn">Comprobar</button>
+        <ul class="suggestions hidden" id="suggestions"></ul>
+      </div>
+
+      <div class="feedback" id="feedback"></div>
+
+      <div class="path">
+        <div class="path-track" id="pathTrack"></div>
+      </div>
+
+      <div class="controls">
+        <button class="back-btn" id="backBtn">Volver</button>
+        <button class="skip-btn" id="skipBtn">Pasar jugador</button>
+      </div>
+    </div>
+
+    <div class="final-screen hidden" id="finalScreen">
+      <div class="big-score"><span id="finalScore">0</span>/<span id="totalLabel3"></span></div>
+      <p>jugadores adivinados correctamente</p>
+      <button class="replay-btn" id="replayBtn">Jugar de nuevo</button>
+    </div>
+  </div>
+
+  <div id="collectionView" class="hidden">
+    <div class="collection-header">
+      <span id="collectionCount">0/0 completados</span>
+      <button class="reset-btn" id="resetCollectionBtn">Restablecer progreso</button>
+    </div>
+    <div class="collection-grid" id="collectionGrid"></div>
+  </div>
+
+</div>
+
+<script>
+  // Para cada club puedes añadir "logo": "URL_DE_TU_IMAGEN" (por ejemplo
+  // una imagen que tengas alojada en tu propia web, o una API con licencia
+  // de uso de escudos). Si "logo" está vacío o la imagen falla al cargar,
+  // se muestra automáticamente el escudo de colores con las siglas.
+  const clubData = {
+    "Newell's Old Boys": {abbr:"NOB", bg:"#C8102E", fg:"#0B0B0B", logo:""},
+    "Barcelona": {abbr:"FCB", bg:"#A50044", fg:"#004D98", logo:""},
+    "PSG": {abbr:"PSG", bg:"#001E62", fg:"#DA291C", logo:""},
+    "Inter Miami": {abbr:"IM", bg:"#F7B5CD", fg:"#231F20", logo:""},
+    "Sporting CP": {abbr:"SCP", bg:"#006633", fg:"#FFFFFF", logo:""},
+    "Manchester United": {abbr:"MUFC", bg:"#DA291C", fg:"#FBE122", logo:""},
+    "Real Madrid": {abbr:"RMA", bg:"#1B458F", fg:"#FFFFFF", logo:""},
+    "Juventus": {abbr:"JUV", bg:"#101010", fg:"#FFFFFF", logo:""},
+    "Al Nassr": {abbr:"NAS", bg:"#FEE000", fg:"#1B3F94", logo:""},
+    "Monaco": {abbr:"ASM", bg:"#E2231A", fg:"#FFFFFF", logo:""},
+    "Santos": {abbr:"SAN", bg:"#FFFFFF", fg:"#101010", logo:""},
+    "Al Hilal": {abbr:"HIL", bg:"#1C3F94", fg:"#FFFFFF", logo:""},
+    "Genk": {abbr:"GNK", bg:"#0033A0", fg:"#FFFFFF", logo:""},
+    "Chelsea": {abbr:"CHE", bg:"#034694", fg:"#FFFFFF", logo:""},
+    "Wolfsburg": {abbr:"WOB", bg:"#65B32E", fg:"#FFFFFF", logo:""},
+    "Manchester City": {abbr:"MCI", bg:"#6CABDD", fg:"#1C2C5B", logo:""},
+    "Lech Poznań": {abbr:"LEC", bg:"#0057A8", fg:"#FFFFFF", logo:""},
+    "Borussia Dortmund": {abbr:"BVB", bg:"#FDE100", fg:"#101010", logo:""},
+    "Bayern Munich": {abbr:"BAY", bg:"#DC052D", fg:"#0066B2", logo:""},
+    "Dinamo Zagreb": {abbr:"DZG", bg:"#00529B", fg:"#FFFFFF", logo:""},
+    "Tottenham": {abbr:"THFC", bg:"#132257", fg:"#FFFFFF", logo:""},
+    "Lyon": {abbr:"OL", bg:"#002B5C", fg:"#DA291C", logo:""},
+    "Al Ittihad": {abbr:"ITT", bg:"#101010", fg:"#FFD400", logo:""},
+    "Molde": {abbr:"MOL", bg:"#005DAA", fg:"#FFFFFF", logo:""},
+    "Salzburg": {abbr:"RBS", bg:"#ED1C24", fg:"#FFFFFF", logo:""},
+    "Malmö": {abbr:"MFF", bg:"#6DC7E4", fg:"#003057", logo:""},
+    "Ajax": {abbr:"AFC", bg:"#D2122E", fg:"#FFFFFF", logo:""},
+    "Inter Milan": {abbr:"INT", bg:"#0068A8", fg:"#101010", logo:""},
+    "AC Milan": {abbr:"ACM", bg:"#FB090B", fg:"#101010", logo:""},
+    "LA Galaxy": {abbr:"LAG", bg:"#00245D", fg:"#FFD200", logo:""},
+    "Vissel Kobe": {abbr:"VIS", bg:"#A6192E", fg:"#FFFFFF", logo:""},
+    "Al Sadd": {abbr:"SAD", bg:"#8A1538", fg:"#FFFFFF", logo:""},
+    "Everton": {abbr:"EVE", bg:"#003399", fg:"#FFFFFF", logo:""},
+    "DC United": {abbr:"DCU", bg:"#101010", fg:"#E31B23", logo:""},
+    "Arsenal": {abbr:"ARS", bg:"#EF0107", fg:"#FFFFFF", logo:""},
+    "NY Red Bulls": {abbr:"RBNY", bg:"#ED1E36", fg:"#001C58", logo:""},
+    "Grêmio": {abbr:"GRE", bg:"#005CA9", fg:"#101010", logo:""},
+    "Flamengo": {abbr:"FLA", bg:"#E30613", fg:"#101010", logo:""},
+    "Brescia": {abbr:"BRE", bg:"#0055A4", fg:"#FFFFFF", logo:""},
+    "New York City FC": {abbr:"NYC", bg:"#6CADDF", fg:"#F15A29", logo:""},
+    "Sevilla": {abbr:"SEV", bg:"#D81E2C", fg:"#FFFFFF", logo:""},
+    "Southampton": {abbr:"SOU", bg:"#D71920", fg:"#FFFFFF", logo:""},
+    "LAFC": {abbr:"LAFC", bg:"#101010", fg:"#C39E6D", logo:""},
+    "Nacional": {abbr:"NAC", bg:"#005BAC", fg:"#FFFFFF", logo:""},
+    "Groningen": {abbr:"FCG", bg:"#00843D", fg:"#FFFFFF", logo:""},
+    "Liverpool": {abbr:"LIV", bg:"#C8102E", fg:"#F6EB61", logo:""},
+    "Atlético Madrid": {abbr:"ATM", bg:"#CB3524", fg:"#FFFFFF", logo:""},
+    "São Paulo": {abbr:"SPFC", bg:"#EE1C25", fg:"#101010", logo:""},
+    "Orlando City": {abbr:"ORL", bg:"#61259E", fg:"#FFFFFF", logo:""},
+    "Cruzeiro": {abbr:"CRU", bg:"#003399", fg:"#FFFFFF", logo:""},
+    "PSV": {abbr:"PSV", bg:"#ED1C24", fg:"#FFFFFF", logo:""},
+    "Fenerbahçe": {abbr:"FB", bg:"#FFE800", fg:"#00205B", logo:""},
+    "Porto": {abbr:"FCP", bg:"#00447C", fg:"#FFFFFF", logo:""},
+    "Parma": {abbr:"PAR", bg:"#FFE100", fg:"#00205B", logo:""},
+    "Aston Villa": {abbr:"AVL", bg:"#670E36", fg:"#95BFE5", logo:""},
+    "Le Mans": {abbr:"LM", bg:"#003DA5", fg:"#FFFFFF", logo:""},
+    "Guingamp": {abbr:"EAG", bg:"#E2001A", fg:"#101010", logo:""},
+    "Marseille": {abbr:"OM", bg:"#2FAEE0", fg:"#FFFFFF", logo:""},
+    "Shanghai Shenhua": {abbr:"SHS", bg:"#0033A0", fg:"#FFFFFF", logo:""},
+    "Galatasaray": {abbr:"GS", bg:"#A6192E", fg:"#FDB913", logo:""},
+    "Montreal Impact": {abbr:"MTL", bg:"#000A8C", fg:"#FFFFFF", logo:""},
+    "Phoenix Rising": {abbr:"PHX", bg:"#ED1C24", fg:"#101010", logo:""},
+    "Mallorca": {abbr:"RCD", bg:"#CB1F2D", fg:"#101010", logo:""},
+    "Anzhi Makhachkala": {abbr:"ANZ", bg:"#FFD200", fg:"#101010", logo:""},
+    "Sampdoria": {abbr:"SAM", bg:"#132257", fg:"#E30613", logo:""},
+    "Antalyaspor": {abbr:"ANT", bg:"#C8102E", fg:"#FFFFFF", logo:""},
+    "Cannes": {abbr:"ASC", bg:"#D2122E", fg:"#101010", logo:""},
+    "Bordeaux": {abbr:"FCG", bg:"#0033A0", fg:"#F8B21E", logo:""},
+    "Newcastle United": {abbr:"NUFC", bg:"#241F20", fg:"#FFFFFF", logo:""},
+    "Stoke City": {abbr:"STK", bg:"#E03A3E", fg:"#FFFFFF", logo:""},
+    "West Ham United": {abbr:"WHU", bg:"#7A263A", fg:"#1BB1E7", logo:""},
+    "Leeds United": {abbr:"LUFC", bg:"#FFFFFF", fg:"#1D428A", logo:""},
+    "QPR": {abbr:"QPR", bg:"#1D5BA4", fg:"#FFFFFF", logo:""},
+    "AS Roma": {abbr:"ROM", bg:"#8E1F2F", fg:"#F0BC42", logo:""},
+    "Sparta Prague": {abbr:"ACS", bg:"#A6192E", fg:"#101010", logo:""},
+    "Rennes": {abbr:"SRFC", bg:"#E30613", fg:"#101010", logo:""},
+    "Danubio": {abbr:"DAN", bg:"#FFFFFF", fg:"#E2001A", logo:""},
+    "Palermo": {abbr:"PAL", bg:"#FFC72C", fg:"#8A1538", logo:""},
+    "Napoli": {abbr:"NAP", bg:"#12A0D7", fg:"#FFFFFF", logo:""},
+    "Valencia": {abbr:"VAL", bg:"#EE3524", fg:"#FFFFFF", logo:""},
+    "Boca Juniors": {abbr:"BOC", bg:"#00408B", fg:"#FFD100", logo:""},
+    "River Plate": {abbr:"RIV", bg:"#FFFFFF", fg:"#D91A21", logo:""},
+    "Wolverhampton": {abbr:"WOL", bg:"#FDB913", fg:"#231F20", logo:""},
+    "Botafogo": {abbr:"BOT", bg:"#101010", fg:"#FFFFFF", logo:""},
+    "Independiente": {abbr:"IND", bg:"#DA291C", fg:"#FFFFFF", logo:""},
+    "Real Sociedad": {abbr:"RSO", bg:"#004C9F", fg:"#FFFFFF", logo:""},
+    "Zaragoza": {abbr:"RZ", bg:"#101010", fg:"#3A6EBA", logo:""},
+    "Como": {abbr:"COM", bg:"#003399", fg:"#FFFFFF", logo:""},
+    "Boulogne": {abbr:"USB", bg:"#101010", fg:"#FFFFFF", logo:""},
+    "Brest": {abbr:"SB29", bg:"#D2122E", fg:"#FFFFFF", logo:""},
+    "Metz": {abbr:"FCM", bg:"#7A2E8E", fg:"#B71234", logo:""},
+    "Fiorentina": {abbr:"FIO", bg:"#582C83", fg:"#FFFFFF", logo:""},
+    "Salernitana": {abbr:"SAL", bg:"#800000", fg:"#FFFFFF", logo:""},
+    "VfB Stuttgart": {abbr:"VFB", bg:"#E32219", fg:"#FFFFFF", logo:""},
+    "Chicago Fire": {abbr:"CHI", bg:"#A6192E", fg:"#003399", logo:""},
+    "Schalke 04": {abbr:"S04", bg:"#004D9D", fg:"#FFFFFF", logo:""},
+    "Werder Bremen": {abbr:"SVW", bg:"#1D9053", fg:"#FFFFFF", logo:""},
+    "Istanbul Başakşehir": {abbr:"IBFK", bg:"#FF6600", fg:"#001A70", logo:""},
+    "Bayer Leverkusen": {abbr:"B04", bg:"#E32219", fg:"#101010", logo:""},
+    "Fluminense": {abbr:"FLU", bg:"#7A1E3C", fg:"#006747", logo:""},
+    "Olympiacos": {abbr:"OLY", bg:"#D2122E", fg:"#101010", logo:""},
+    "Bahia": {abbr:"BAH", bg:"#0033A0", fg:"#E2001A", logo:""},
+    "Puebla": {abbr:"PUE", bg:"#00205B", fg:"#FFFFFF", logo:""},
+    "UNAM Pumas": {abbr:"PUM", bg:"#04307A", fg:"#FDB913", logo:""},
+    "Cobreloa": {abbr:"COB", bg:"#8A1538", fg:"#FF7900", logo:""},
+    "Udinese": {abbr:"UDI", bg:"#FFFFFF", fg:"#101010", logo:""},
+    "Lazio": {abbr:"LAZ", bg:"#87CEEB", fg:"#101010", logo:""},
+    "Instituto": {abbr:"ACI", bg:"#D2122E", fg:"#FFFFFF", logo:""},
+    "Le Havre": {abbr:"HAC", bg:"#0033A0", fg:"#87CEEB", logo:""},
+    "Al Ahli": {abbr:"AHL", bg:"#166A3C", fg:"#FFFFFF", logo:""},
+    "Basel": {abbr:"FCB2", bg:"#E2001A", fg:"#101010", logo:""},
+    "Al Mokawloon": {abbr:"AMK", bg:"#101010", fg:"#FFD200", logo:""},
+    "Celtic": {abbr:"CEL", bg:"#018749", fg:"#FFFFFF", logo:""},
+    "Birmingham City": {abbr:"BCFC", bg:"#0000FF", fg:"#FFFFFF", logo:""},
+    "Peñarol": {abbr:"PEN", bg:"#000000", fg:"#FFD100", logo:""},
+    "Den Bosch": {abbr:"FCD", bg:"#D2122E", fg:"#101010", logo:""},
+    "Heerenveen": {abbr:"HEE", bg:"#0033A0", fg:"#FFFFFF", logo:""},
+    "Hamburger SV": {abbr:"HSV", bg:"#0033A0", fg:"#101010", logo:""},
+    "Málaga": {abbr:"MAL", bg:"#0066CC", fg:"#FFFFFF", logo:""},
+    "LA Aztecs": {abbr:"LAA", bg:"#101010", fg:"#FFD200", logo:""},
+    "Washington Diplomats": {abbr:"WDC", bg:"#FFFFFF", fg:"#DA291C", logo:""},
+    "Feyenoord": {abbr:"FEY", bg:"#101010", fg:"#FF0000", logo:""},
+    "Argentinos Juniors": {abbr:"AAAJ", bg:"#B7002C", fg:"#FFFFFF", logo:""},
+    "New York Cosmos": {abbr:"NYC2", bg:"#101010", fg:"#FFFFFF", logo:""},
+    "Fulham": {abbr:"FUL", bg:"#FFFFFF", fg:"#101010", logo:""},
+    "Hibernian": {abbr:"HIB", bg:"#00A650", fg:"#FFFFFF", logo:""},
+    "San Jose Earthquakes": {abbr:"SJE", bg:"#0000A0", fg:"#000000", logo:""},
+    "Fort Lauderdale Strikers": {abbr:"FLS", bg:"#FFD200", fg:"#101010", logo:""},
+    "Nancy": {abbr:"ASNL", bg:"#B7002C", fg:"#FFFFFF", logo:""},
+    "Saint-Étienne": {abbr:"ASSE", bg:"#00843D", fg:"#FFFFFF", logo:""},
+    "Vicenza": {abbr:"VIC", bg:"#FFFFFF", fg:"#D2122E", logo:""},
+    "Bologna": {abbr:"BOL", bg:"#8A1538", fg:"#101010", logo:""},
+    "CSKA Sofia": {abbr:"CSKA", bg:"#DA291C", fg:"#FFFFFF", logo:""},
+    "Tonnerre Yaoundé": {abbr:"TON", bg:"#FFD200", fg:"#101010", logo:""},
+    "Al Jazira": {abbr:"JAZ", bg:"#101010", fg:"#FFD200", logo:""},
+    "Sporting Gijón": {abbr:"SGI", bg:"#D2122E", fg:"#FFFFFF", logo:""},
+    "Querétaro": {abbr:"QRO", bg:"#101010", fg:"#5B2A86", logo:""},
+    "Sagan Tosu": {abbr:"SAG", bg:"#87CEEB", fg:"#101010", logo:""},
+    "Xerez": {abbr:"XER", bg:"#0033A0", fg:"#FFFFFF", logo:""},
+    "Banfield": {abbr:"BAN", bg:"#00A651", fg:"#FFFFFF", logo:""},
+    "Corinthians": {abbr:"COR", bg:"#101010", fg:"#FFFFFF", logo:""},
+    "Palmeiras": {abbr:"PAL2", bg:"#006437", fg:"#FFFFFF", logo:""},
+    "Sydney FC": {abbr:"SYD", bg:"#0033A0", fg:"#87CEEB", logo:""},
+    "Caen": {abbr:"SMC", bg:"#003399", fg:"#B71234", logo:""},
+    "Leicester City": {abbr:"LEI", bg:"#003090", fg:"#FDBE11", logo:""},
+    "Lille": {abbr:"LOSC", bg:"#D2122E", fg:"#101010", logo:""},
+    "Levante": {abbr:"LEV", bg:"#8A1538", fg:"#004C9F", logo:""},
+    "Cagliari": {abbr:"CAG2", bg:"#8A1538", fg:"#0033A0", logo:""},
+    "Villarreal": {abbr:"VIL", bg:"#FFE500", fg:"#101010", logo:""},
+    "Borussia Mönchengladbach": {abbr:"BMG", bg:"#000000", fg:"#FFFFFF", logo:""},
+    "Vancouver Whitecaps": {abbr:"VAN", bg:"#00245D", fg:"#A2B6C4", logo:""},
+    "Kaiserslautern": {abbr:"FCK", bg:"#DA291C", fg:"#FFFFFF", logo:""},
+    "Köln": {abbr:"KOE", bg:"#ED1C24", fg:"#FFFFFF", logo:""},
+    "Górnik Zabrze": {abbr:"GOR", bg:"#101010", fg:"#FFFFFF", logo:""},
+    "Nuremberg": {abbr:"FCN", bg:"#8A1538", fg:"#FFFFFF", logo:""},
+    "Al-Arabi": {abbr:"ARB", bg:"#F7941E", fg:"#101010", logo:""},
+    "Bari": {abbr:"BAR", bg:"#B71234", fg:"#FFFFFF", logo:""},
+    "Genoa": {abbr:"GEN", bg:"#B71234", fg:"#101010", logo:""},
+    "Union Berlin": {abbr:"FCU", bg:"#D2122E", fg:"#FFE800", logo:""},
+    "Livorno": {abbr:"LIV2", bg:"#D2122E", fg:"#101010", logo:""},
+    "Sorrento": {abbr:"SOR", bg:"#8A1538", fg:"#FFFFFF", logo:""},
+    "Torino": {abbr:"TOR", bg:"#8A1538", fg:"#FFFFFF", logo:""},
+    "Pescara": {abbr:"PES", bg:"#87CEEB", fg:"#101010", logo:""},
+    "Beşiktaş": {abbr:"BJK", bg:"#101010", fg:"#FFFFFF", logo:""},
+    "Slovan Bratislava": {abbr:"SLB", bg:"#0033A0", fg:"#FFFFFF", logo:""},
+    "Dalian Pro": {abbr:"DAL", bg:"#0033A0", fg:"#FFFFFF", logo:""},
+    "Trabzonspor": {abbr:"TS", bg:"#7A1E3C", fg:"#87CEEB", logo:""},
+    "Göztepe": {abbr:"GOZ", bg:"#D2122E", fg:"#FFE800", logo:""},
+    "Nice": {abbr:"OGCN", bg:"#D2122E", fg:"#101010", logo:""},
+    "Al-Gharafa": {abbr:"GHA", bg:"#7A1E3C", fg:"#FFFFFF", logo:""},
+    "Red Star Belgrade": {abbr:"RSB", bg:"#D2122E", fg:"#101010", logo:""},
+    "Spartak Moscow": {abbr:"SPM", bg:"#D2122E", fg:"#FFFFFF", logo:""},
+    "Monza": {abbr:"MON", bg:"#D2122E", fg:"#FFFFFF", logo:""},
+    "Panathinaikos": {abbr:"PAO", bg:"#00843D", fg:"#FFFFFF", logo:""},
+    "Bolton Wanderers": {abbr:"BWFC", bg:"#101010", fg:"#FFFFFF", logo:""},
+    "West Bromwich Albion": {abbr:"WBA", bg:"#122F67", fg:"#FFFFFF", logo:""},
+    "Mumbai City": {abbr:"MCFC", bg:"#87CEEB", fg:"#101010", logo:""},
+    "Perth Glory": {abbr:"PER", bg:"#4B2E83", fg:"#FFFFFF", logo:""},
+    "Celta Vigo": {abbr:"CEL2", bg:"#8A9BAD", fg:"#101010", logo:""},
+    "Grenoble": {abbr:"GF38", bg:"#D2122E", fg:"#101010", logo:""},
+    "Strasbourg": {abbr:"RCS", bg:"#0033A0", fg:"#FFFFFF", logo:""},
+    "New York MetroStars": {abbr:"NYMS", bg:"#D2122E", fg:"#101010", logo:""},
+    "Hércules": {abbr:"HER", bg:"#0033A0", fg:"#FFFFFF", logo:""},
+    "Baniyas": {abbr:"BAN2", bg:"#101010", fg:"#FFE800", logo:""},
+    "Deportivo La Coruña": {abbr:"DEP", bg:"#0033A0", fg:"#FFFFFF", logo:""},
+    "Brøndby": {abbr:"BIF", bg:"#FFE800", fg:"#0033A0", logo:""},
+    "Nottingham Forest": {abbr:"NFFC", bg:"#D2122E", fg:"#FFFFFF", logo:""},
+    "Auxerre": {abbr:"AJA2", bg:"#0033A0", fg:"#FFFFFF", logo:""},
+    "Montpellier": {abbr:"MHSC", bg:"#F7941E", fg:"#0033A0", logo:""},
+    "Nîmes": {abbr:"NIM", bg:"#D2122E", fg:"#101010", logo:""},
+    "Dynamo Kyiv": {abbr:"DK", bg:"#0033A0", fg:"#FFFFFF", logo:""},
+    "CD Nacional": {abbr:"CDN", bg:"#D2122E", fg:"#101010", logo:""},
+    "Guangzhou Evergrande": {abbr:"GZE", bg:"#D2122E", fg:"#FFE800", logo:""},
+    "Sivasspor": {abbr:"SIV", bg:"#D2122E", fg:"#101010", logo:""},
+    "Zenit Saint Petersburg": {abbr:"ZEN", bg:"#0033A0", fg:"#87CEEB", logo:""},
+    "Shanghai Port": {abbr:"SHP", bg:"#D2122E", fg:"#FFFFFF", logo:""},
+    "Al-Duhail": {abbr:"DUH", bg:"#F7941E", fg:"#101010", logo:""},
+    "Colo-Colo": {abbr:"CC", bg:"#101010", fg:"#FFFFFF", logo:""},
+    "Envigado": {abbr:"ENV", bg:"#D2122E", fg:"#101010", logo:""},
+    "Al-Rayyan": {abbr:"RAY", bg:"#101010", fg:"#FFE800", logo:""},
+    "León": {abbr:"LEO", bg:"#101010", fg:"#87CEEB", logo:""},
+    "Rayo Vallecano": {abbr:"RAYO", bg:"#D2122E", fg:"#FFFFFF", logo:""},
+    "Independiente Medellín": {abbr:"DIM", bg:"#D2122E", fg:"#101010", logo:""},
+    "Unión Magdalena": {abbr:"UNM", bg:"#D2122E", fg:"#FFFFFF", logo:""},
+    "Millonarios": {abbr:"MIL", bg:"#0033A0", fg:"#FFFFFF", logo:""},
+    "Junior": {abbr:"JUN", bg:"#D2122E", fg:"#FFFFFF", logo:""},
+    "Tampa Bay Mutiny": {abbr:"TBM", bg:"#0033A0", fg:"#FFE800", logo:""},
+    "Miami Fusion": {abbr:"MFU", bg:"#00843D", fg:"#F7941E", logo:""},
+    "Colorado Rapids": {abbr:"COL", bg:"#7A1E3C", fg:"#87CEEB", logo:""},
+    "Shrewsbury Town": {abbr:"SHR", bg:"#0033A0", fg:"#FFE800", logo:""},
+    "Sheffield United": {abbr:"SHU", bg:"#D2122E", fg:"#FFFFFF", logo:""},
+    "Karlsruher SC": {abbr:"KSC", bg:"#0033A0", fg:"#FFFFFF", logo:""},
+    "Rio Ave": {abbr:"RA", bg:"#00843D", fg:"#FFFFFF", logo:""},
+    "Saprissa": {abbr:"SAP", bg:"#D2122E", fg:"#101010", logo:""},
+    "Albacete": {abbr:"ALB", bg:"#FFFFFF", fg:"#101010", logo:""},
+    "Vitória": {abbr:"VIT", bg:"#D2122E", fg:"#101010", logo:""},
+    "Athletico Paranaense": {abbr:"CAP", bg:"#D2122E", fg:"#101010", logo:""},
+    "Shakhtar Donetsk": {abbr:"SHK", bg:"#F7941E", fg:"#101010", logo:""},
+    "Benfica": {abbr:"SLB2", bg:"#D2122E", fg:"#FFFFFF", logo:""},
+    "Hoffenheim": {abbr:"TSG", bg:"#0033A0", fg:"#FFFFFF", logo:""},
+    "Espanyol": {abbr:"ESP", bg:"#0033A0", fg:"#FFFFFF", logo:""},
+    "Vasco da Gama": {abbr:"VAS", bg:"#101010", fg:"#FFFFFF", logo:""},
+    "Internacional": {abbr:"INT2", bg:"#D2122E", fg:"#FFFFFF", logo:""},
+    "Toronto FC": {abbr:"TFC", bg:"#D2122E", fg:"#101010", logo:""},
+    "Burnley": {abbr:"BUR", bg:"#87189D", fg:"#FFFFFF", logo:""},
+    "Nantes": {abbr:"FCN2", bg:"#FFE800", fg:"#101010", logo:""},
+    "Toulouse": {abbr:"TFC2", bg:"#762066", fg:"#FFFFFF", logo:""},
+    "Bastia": {abbr:"SCB", bg:"#0033A0", fg:"#FFFFFF", logo:""},
+    "Beveren": {abbr:"BEV", bg:"#FFE800", fg:"#101010", logo:""},
+    "Atlético Mineiro": {abbr:"CAM", bg:"#101010", fg:"#FFFFFF", logo:""},
+    "Hertha Berlin": {abbr:"BSC", bg:"#005CA9", fg:"#FFFFFF", logo:""},
+    "Eintracht Frankfurt": {abbr:"SGE", bg:"#000000", fg:"#DA291C", logo:""},
+    "Haarlem": {abbr:"HAA", bg:"#D2122E", fg:"#101010", logo:""},
+    "Racing Club": {abbr:"RAC", bg:"#87CEEB", fg:"#FFFFFF", logo:""},
+    "Cerezo Osaka": {abbr:"CER", bg:"#D2122E", fg:"#101010", logo:""},
+    "Kitchee": {abbr:"KIT", bg:"#101010", fg:"#FFD200", logo:""},
+    "Universidad Católica": {abbr:"UC", bg:"#0033A0", fg:"#FFFFFF", logo:""},
+    "St. Gallen": {abbr:"STG", bg:"#00843D", fg:"#FFFFFF", logo:""},
+    "Rangers": {abbr:"RAN", bg:"#0033A0", fg:"#FFFFFF", logo:""},
+    "Colchester United": {abbr:"COL2", bg:"#0033A0", fg:"#FFFFFF", logo:""},
+    "Coventry City": {abbr:"COV", bg:"#87CEEB", fg:"#101010", logo:""},
+    "Anderlecht": {abbr:"AND", bg:"#8A1538", fg:"#87CEEB", logo:""},
+    "Chemnitzer FC": {abbr:"CFC", bg:"#101010", fg:"#FFFFFF", logo:""},
+    "Servette": {abbr:"SER", bg:"#8A1538", fg:"#FFFFFF", logo:""},
+    "Perugia": {abbr:"PER2", bg:"#D2122E", fg:"#101010", logo:""},
+    "Strømsgodset": {abbr:"SIF", bg:"#0033A0", fg:"#FFFFFF", logo:""},
+    "Vitesse": {abbr:"VIT2", bg:"#FFE800", fg:"#101010", logo:""},
+    "Novara": {abbr:"NOV", bg:"#101010", fg:"#FFFFFF", logo:""},
+    "RB Leipzig": {abbr:"RBL", bg:"#D2122E", fg:"#FFFFFF", logo:""},
+    "ATK": {abbr:"ATK", bg:"#8A1538", fg:"#FFD200", logo:""},
+    "Middlesbrough": {abbr:"MID", bg:"#D2122E", fg:"#FFFFFF", logo:""},
+    "Barnet": {abbr:"BAR2", bg:"#101010", fg:"#FFD200", logo:""},
+    "Crystal Palace": {abbr:"CRY", bg:"#1B458F", fg:"#C4122E", logo:""},
+    "Portsmouth": {abbr:"POR", bg:"#001489", fg:"#FFFFFF", logo:""},
+    "Millwall": {abbr:"MIL2", bg:"#001489", fg:"#FFFFFF", logo:""},
+    "Kayserispor": {abbr:"KAY", bg:"#D2122E", fg:"#FFE800", logo:""},
+    "Nagoya Grampus": {abbr:"NAG", bg:"#D2122E", fg:"#101010", logo:""},
+    "Paraná": {abbr:"PARA", bg:"#D2122E", fg:"#101010", logo:""},
+    "Blackburn Rovers": {abbr:"BLB", bg:"#0033A0", fg:"#FFFFFF", logo:""},
+    "Verona": {abbr:"VER", bg:"#FFE800", fg:"#101010", logo:""},
+    "Las Palmas": {abbr:"UDLP", bg:"#FFE800", fg:"#101010", logo:""},
+    "Athletic Bilbao": {abbr:"ATH", bg:"#EE2523", fg:"#FFFFFF", logo:""},
+    "Independiente del Valle": {abbr:"IDV", bg:"#D2122E", fg:"#101010", logo:""},
+    "Brighton": {abbr:"BHA", bg:"#0057B8", fg:"#FFFFFF", logo:""},
+    "Charleroi": {abbr:"CHA", bg:"#101010", fg:"#87CEEB", logo:""},
+    "Dinamo Batumi": {abbr:"DBA", bg:"#101010", fg:"#FFD200", logo:""},
+    "Rubin Kazan": {abbr:"RUB", bg:"#0033A0", fg:"#FFE800", logo:""},
+    "Willem II": {abbr:"WIL", bg:"#D2122E", fg:"#101010", logo:""},
+    "Vojvodina": {abbr:"VOJ", bg:"#D2122E", fg:"#101010", logo:""},
+    "Partizan": {abbr:"PAR2", bg:"#101010", fg:"#FFFFFF", logo:""},
+    "Al-Ettifaq": {abbr:"ETT", bg:"#101010", fg:"#D2122E", logo:""}
+  };
+
+  const players = [
+    {name:"Lionel Messi", aliases:["leo messi"], stops:[{club:"Newell's Old Boys", fee:"Cantera", year:""}, {club:"Barcelona", fee:"Cantera", year:"2000"}, {club:"PSG", fee:"Libre", year:"2021"}, {club:"Inter Miami", fee:"Libre", year:"2023"}]},
+    {name:"Cristiano Ronaldo", aliases:["cristiano", "cr7"], stops:[{club:"Sporting CP", fee:"Cantera", year:""}, {club:"Manchester United", fee:"~€15M", year:"2003"}, {club:"Real Madrid", fee:"~€94M", year:"2009"}, {club:"Juventus", fee:"~€100M", year:"2018"}, {club:"Manchester United", fee:"Libre", year:"2021"}, {club:"Al Nassr", fee:"Libre", year:"2023"}]},
+    {name:"Kylian Mbappé", aliases:["mbappe", "mbappé"], stops:[{club:"Monaco", fee:"Cantera", year:""}, {club:"PSG", fee:"~€180M", year:"2017"}, {club:"Real Madrid", fee:"Libre", year:"2024"}]},
+    {name:"Neymar", aliases:["neymar jr"], stops:[{club:"Santos", fee:"Cantera", year:""}, {club:"Barcelona", fee:"~€86M", year:"2013"}, {club:"PSG", fee:"€222M", year:"2017"}, {club:"Al Hilal", fee:"~€90M", year:"2023"}]},
+    {name:"Kevin De Bruyne", aliases:["de bruyne", "kdb"], stops:[{club:"Genk", fee:"Cantera", year:""}, {club:"Chelsea", fee:"~€8M", year:"2012"}, {club:"Wolfsburg", fee:"~€22M", year:"2014"}, {club:"Manchester City", fee:"€76M", year:"2015"}]},
+    {name:"Robert Lewandowski", aliases:["lewandowski", "lewa"], stops:[{club:"Lech Poznań", fee:"Cantera", year:""}, {club:"Borussia Dortmund", fee:"~€4.5M", year:"2010"}, {club:"Bayern Munich", fee:"Libre", year:"2014"}, {club:"Barcelona", fee:"~€45M", year:"2022"}]},
+    {name:"Luka Modrić", aliases:["modric"], stops:[{club:"Dinamo Zagreb", fee:"Cantera", year:""}, {club:"Tottenham", fee:"~€21M", year:"2008"}, {club:"Real Madrid", fee:"~€35M", year:"2012"}]},
+    {name:"Karim Benzema", aliases:["benzema"], stops:[{club:"Lyon", fee:"Cantera", year:""}, {club:"Real Madrid", fee:"~€35M", year:"2009"}, {club:"Al Ittihad", fee:"Libre", year:"2023"}]},
+    {name:"Erling Haaland", aliases:["haaland"], stops:[{club:"Molde", fee:"Cantera", year:""}, {club:"Salzburg", fee:"~€8M", year:"2019"}, {club:"Borussia Dortmund", fee:"~€20M", year:"2020"}, {club:"Manchester City", fee:"~€60M", year:"2022"}]},
+    {name:"Zlatan Ibrahimović", aliases:["ibrahimovic", "zlatan"], stops:[{club:"Malmö", fee:"Cantera", year:""}, {club:"Ajax", fee:"~€8.7M", year:"2001"}, {club:"Juventus", fee:"~€16M", year:"2004"}, {club:"Inter Milan", fee:"~€25M", year:"2006"}, {club:"Barcelona", fee:"~€46M", year:"2009"}, {club:"AC Milan", fee:"~€24M", year:"2010"}, {club:"PSG", fee:"~€20M (est.)", year:"2012"}, {club:"Manchester United", fee:"Libre", year:"2016"}, {club:"LA Galaxy", fee:"Libre", year:"2018"}]},
+    {name:"Andrés Iniesta", aliases:["iniesta"], stops:[{club:"Barcelona", fee:"Cantera", year:""}, {club:"Vissel Kobe", fee:"Libre", year:"2018"}]},
+    {name:"Xavi Hernández", aliases:["xavi"], stops:[{club:"Barcelona", fee:"Cantera", year:""}, {club:"Al Sadd", fee:"Libre", year:"2015"}]},
+    {name:"Wayne Rooney", aliases:["rooney"], stops:[{club:"Everton", fee:"Cantera", year:""}, {club:"Manchester United", fee:"~€30M", year:"2004"}, {club:"DC United", fee:"Libre", year:"2018"}]},
+    {name:"Thierry Henry", aliases:["henry"], stops:[{club:"Monaco", fee:"Cantera", year:""}, {club:"Juventus", fee:"~€10.5M", year:"1999"}, {club:"Arsenal", fee:"~€13.5M", year:"1999"}, {club:"Barcelona", fee:"~€24M", year:"2007"}, {club:"NY Red Bulls", fee:"Libre", year:"2010"}]},
+    {name:"Ronaldinho", aliases:["ronaldinho gaucho"], stops:[{club:"Grêmio", fee:"Cantera", year:""}, {club:"PSG", fee:"~€5M", year:"2001"}, {club:"Barcelona", fee:"~€30M", year:"2003"}, {club:"AC Milan", fee:"~€21M", year:"2008"}, {club:"Flamengo", fee:"Libre", year:"2011"}]},
+    {name:"David Beckham", aliases:["beckham"], stops:[{club:"Manchester United", fee:"Cantera", year:""}, {club:"Real Madrid", fee:"~€37.5M", year:"2003"}, {club:"LA Galaxy", fee:"~€0.2M (est.)", year:"2007"}, {club:"AC Milan", fee:"Cesión", year:"2009"}, {club:"PSG", fee:"Libre", year:"2013"}]},
+    {name:"Andrea Pirlo", aliases:["pirlo"], stops:[{club:"Brescia", fee:"Cantera", year:""}, {club:"Inter Milan", fee:"~€7M (est.)", year:"1998"}, {club:"AC Milan", fee:"~€18M", year:"2001"}, {club:"Juventus", fee:"Libre", year:"2011"}, {club:"New York City FC", fee:"Libre", year:"2015"}]},
+    {name:"Sergio Ramos", aliases:["ramos"], stops:[{club:"Sevilla", fee:"Cantera", year:""}, {club:"Real Madrid", fee:"~€27M", year:"2005"}, {club:"PSG", fee:"Libre", year:"2021"}]},
+    {name:"Gareth Bale", aliases:["bale"], stops:[{club:"Southampton", fee:"Cantera", year:""}, {club:"Tottenham", fee:"~€10M", year:"2007"}, {club:"Real Madrid", fee:"~€100M", year:"2013"}, {club:"LAFC", fee:"Libre", year:"2022"}]},
+    {name:"Luis Suárez", aliases:["luis suarez", "suarez"], stops:[{club:"Nacional", fee:"Cantera", year:""}, {club:"Groningen", fee:"~€0.8M", year:"2006"}, {club:"Ajax", fee:"~€7.5M", year:"2007"}, {club:"Liverpool", fee:"~€26.5M", year:"2011"}, {club:"Barcelona", fee:"~€82M", year:"2014"}, {club:"Atlético Madrid", fee:"Libre", year:"2020"}, {club:"Inter Miami", fee:"Libre", year:"2022"}]},
+    {name:"Kaká", aliases:["kaka", "ricardo kaka"], stops:[{club:"São Paulo", fee:"Cantera", year:""}, {club:"AC Milan", fee:"~€8.5M", year:"2003"}, {club:"Real Madrid", fee:"~€65M", year:"2009"}, {club:"São Paulo", fee:"Libre", year:"2013"}, {club:"Orlando City", fee:"Libre", year:"2014"}]},
+    {name:"Ronaldo Nazário", aliases:["ronaldo", "el fenomeno", "ronaldo nazario"], stops:[{club:"Cruzeiro", fee:"Cantera", year:""}, {club:"PSV", fee:"~€5.5M (est.)", year:"1994"}, {club:"Barcelona", fee:"~€19.5M", year:"1996"}, {club:"Inter Milan", fee:"~€27M", year:"1997"}, {club:"Real Madrid", fee:"~€45M", year:"2002"}, {club:"AC Milan", fee:"Libre", year:"2007"}, {club:"Corinthians", fee:"Libre", year:"2009"}]},
+    {name:"Roberto Carlos", aliases:["roberto carlos"], stops:[{club:"Palmeiras", fee:"Cantera", year:""}, {club:"Real Madrid", fee:"~€3.5M", year:"1996"}, {club:"Fenerbahçe", fee:"Libre", year:"2007"}]},
+    {name:"Iker Casillas", aliases:["casillas"], stops:[{club:"Real Madrid", fee:"Cantera", year:""}, {club:"Porto", fee:"Libre", year:"2015"}]},
+    {name:"Gianluigi Buffon", aliases:["buffon"], stops:[{club:"Parma", fee:"Cantera", year:""}, {club:"Juventus", fee:"~€52M", year:"2001"}, {club:"PSG", fee:"Libre", year:"2018"}, {club:"Juventus", fee:"Libre", year:"2019"}, {club:"Parma", fee:"Libre", year:"2021"}]},
+    {name:"Alessandro Del Piero", aliases:["del piero"], stops:[{club:"Juventus", fee:"Cantera", year:""}, {club:"Sydney FC", fee:"Libre", year:"2012"}]},
+    {name:"Steven Gerrard", aliases:["gerrard"], stops:[{club:"Liverpool", fee:"Cantera", year:""}, {club:"LA Galaxy", fee:"Libre", year:"2015"}]},
+    {name:"Frank Lampard", aliases:["lampard"], stops:[{club:"West Ham United", fee:"Cantera", year:""}, {club:"Chelsea", fee:"~€14M", year:"2001"}, {club:"Manchester City", fee:"Libre", year:"2014"}, {club:"New York City FC", fee:"Libre", year:"2015"}]},
+    {name:"John Terry", aliases:["terry"], stops:[{club:"Chelsea", fee:"Cantera", year:""}, {club:"Aston Villa", fee:"Libre", year:"2017"}]},
+    {name:"Didier Drogba", aliases:["drogba"], stops:[{club:"Le Mans", fee:"Cantera", year:""}, {club:"Guingamp", fee:"~€1.5M (est.)", year:"2002"}, {club:"Marseille", fee:"~€4M", year:"2003"}, {club:"Chelsea", fee:"~€37M", year:"2004"}, {club:"Shanghai Shenhua", fee:"Libre", year:"2012"}, {club:"Galatasaray", fee:"Libre", year:"2013"}, {club:"Chelsea", fee:"Libre", year:"2014"}, {club:"Montreal Impact", fee:"Libre", year:"2015"}, {club:"Phoenix Rising", fee:"Libre", year:"2017"}]},
+    {name:"Samuel Eto'o", aliases:["etoo", "eto o"], stops:[{club:"Real Madrid", fee:"Cantera", year:""}, {club:"Mallorca", fee:"~€7.5M", year:"2000"}, {club:"Barcelona", fee:"Libre", year:"2004"}, {club:"Inter Milan", fee:"~€26M", year:"2009"}, {club:"Anzhi Makhachkala", fee:"~€28M", year:"2011"}, {club:"Chelsea", fee:"Libre", year:"2013"}, {club:"Everton", fee:"Cesión", year:"2014"}, {club:"Sampdoria", fee:"Libre", year:"2015"}, {club:"Antalyaspor", fee:"Libre", year:"2015"}]},
+    {name:"Zinedine Zidane", aliases:["zidane", "zizou"], stops:[{club:"Cannes", fee:"Cantera", year:""}, {club:"Bordeaux", fee:"~€0.6M (est.)", year:"1992"}, {club:"Juventus", fee:"~€3.2M", year:"1996"}, {club:"Real Madrid", fee:"~€75M", year:"2001"}]},
+    {name:"Michael Owen", aliases:["owen"], stops:[{club:"Liverpool", fee:"Cantera", year:""}, {club:"Real Madrid", fee:"~€8M", year:"2004"}, {club:"Newcastle United", fee:"~€24M", year:"2005"}, {club:"Manchester United", fee:"Libre", year:"2009"}, {club:"Stoke City", fee:"Libre", year:"2012"}]},
+    {name:"Rio Ferdinand", aliases:["ferdinand"], stops:[{club:"West Ham United", fee:"Cantera", year:""}, {club:"Leeds United", fee:"~€25M", year:"2000"}, {club:"Manchester United", fee:"~€40M", year:"2002"}, {club:"QPR", fee:"Libre", year:"2014"}]},
+    {name:"Ashley Cole", aliases:["ashley cole"], stops:[{club:"Arsenal", fee:"Cantera", year:""}, {club:"Chelsea", fee:"~€8.4M (est.)", year:"2006"}, {club:"AS Roma", fee:"Libre", year:"2014"}, {club:"LA Galaxy", fee:"Libre", year:"2016"}]},
+    {name:"Petr Čech", aliases:["petr cech", "cech"], stops:[{club:"Sparta Prague", fee:"Cantera", year:""}, {club:"Rennes", fee:"~€0.5M (est.)", year:"2002"}, {club:"Chelsea", fee:"~€9M", year:"2004"}, {club:"Arsenal", fee:"~€12M", year:"2015"}]},
+    {name:"Edinson Cavani", aliases:["cavani"], stops:[{club:"Danubio", fee:"Cantera", year:""}, {club:"Palermo", fee:"~€4.5M (est.)", year:"2007"}, {club:"Napoli", fee:"~€17M", year:"2010"}, {club:"PSG", fee:"~€64.5M", year:"2013"}, {club:"Manchester United", fee:"Libre", year:"2020"}, {club:"Valencia", fee:"Libre", year:"2022"}, {club:"Boca Juniors", fee:"Libre", year:"2023"}]},
+    {name:"Radamel Falcao", aliases:["falcao"], stops:[{club:"River Plate", fee:"Cantera", year:""}, {club:"Porto", fee:"~€5.4M", year:"2009"}, {club:"Atlético Madrid", fee:"~€40M", year:"2011"}, {club:"Monaco", fee:"~€60M", year:"2013"}, {club:"Manchester United", fee:"Cesión", year:"2014"}, {club:"Chelsea", fee:"Cesión", year:"2015"}, {club:"Galatasaray", fee:"Libre", year:"2019"}]},
+    {name:"Diego Costa", aliases:["diego costa"], stops:[{club:"Atlético Madrid", fee:"Cantera", year:""}, {club:"Chelsea", fee:"~€38M", year:"2014"}, {club:"Atlético Madrid", fee:"~€55M", year:"2017"}, {club:"Wolverhampton", fee:"Libre", year:"2021"}, {club:"Botafogo", fee:"Libre", year:"2022"}]},
+    {name:"Sergio Agüero", aliases:["aguero", "kun aguero"], stops:[{club:"Independiente", fee:"Cantera", year:""}, {club:"Atlético Madrid", fee:"~€23M", year:"2006"}, {club:"Manchester City", fee:"~€45M", year:"2011"}, {club:"Barcelona", fee:"Libre", year:"2021"}]},
+    {name:"David Silva", aliases:["david silva"], stops:[{club:"Valencia", fee:"Cantera", year:""}, {club:"Manchester City", fee:"~€33M", year:"2010"}, {club:"Real Sociedad", fee:"Libre", year:"2020"}]},
+    {name:"Gerard Piqué", aliases:["pique"], stops:[{club:"Barcelona", fee:"Cantera", year:""}, {club:"Manchester United", fee:"Libre", year:"2004"}, {club:"Zaragoza", fee:"Cesión", year:"2006"}, {club:"Barcelona", fee:"Libre", year:"2008"}]},
+    {name:"Cesc Fàbregas", aliases:["fabregas", "cesc"], stops:[{club:"Arsenal", fee:"Cantera", year:""}, {club:"Barcelona", fee:"~€29M", year:"2011"}, {club:"Chelsea", fee:"~€33M", year:"2014"}, {club:"Monaco", fee:"~€13M", year:"2019"}, {club:"Como", fee:"Libre", year:"2023"}]},
+    {name:"Arjen Robben", aliases:["robben"], stops:[{club:"Groningen", fee:"Cantera", year:""}, {club:"PSV", fee:"~€3.6M", year:"2002"}, {club:"Chelsea", fee:"~€18M", year:"2004"}, {club:"Real Madrid", fee:"~€35M", year:"2007"}, {club:"Bayern Munich", fee:"~€25M", year:"2009"}, {club:"Groningen", fee:"Libre", year:"2019"}]},
+    {name:"Franck Ribéry", aliases:["ribery"], stops:[{club:"Boulogne", fee:"Cantera", year:""}, {club:"Brest", fee:"~€0.5M (est.)", year:"2003"}, {club:"Metz", fee:"~€0.7M (est.)", year:"2004"}, {club:"Galatasaray", fee:"~€3.4M", year:"2005"}, {club:"Marseille", fee:"~€8M", year:"2005"}, {club:"Bayern Munich", fee:"~€25M", year:"2007"}, {club:"Fiorentina", fee:"Libre", year:"2019"}, {club:"Salernitana", fee:"Libre", year:"2021"}]},
+    {name:"Bastian Schweinsteiger", aliases:["schweinsteiger", "basti"], stops:[{club:"Bayern Munich", fee:"Cantera", year:""}, {club:"Manchester United", fee:"~€15M", year:"2015"}, {club:"Chicago Fire", fee:"Libre", year:"2017"}]},
+    {name:"Manuel Neuer", aliases:["neuer"], stops:[{club:"Schalke 04", fee:"Cantera", year:""}, {club:"Bayern Munich", fee:"~€30M", year:"2011"}]},
+    {name:"Mesut Özil", aliases:["ozil", "mesut ozil"], stops:[{club:"Schalke 04", fee:"Cantera", year:""}, {club:"Werder Bremen", fee:"~€4.5M (est.)", year:"2008"}, {club:"Real Madrid", fee:"~€15M", year:"2010"}, {club:"Arsenal", fee:"~€50M", year:"2013"}, {club:"Fenerbahçe", fee:"Libre", year:"2021"}, {club:"Istanbul Başakşehir", fee:"Libre", year:"2021"}]},
+    {name:"Toni Kroos", aliases:["kroos"], stops:[{club:"Bayern Munich", fee:"Cantera", year:""}, {club:"Bayer Leverkusen", fee:"Cesión", year:"2009"}, {club:"Real Madrid", fee:"~€25M", year:"2014"}]},
+    {name:"Sergio Busquets", aliases:["busquets"], stops:[{club:"Barcelona", fee:"Cantera", year:""}, {club:"Inter Miami", fee:"Libre", year:"2023"}]},
+    {name:"Thiago Silva", aliases:["thiago silva"], stops:[{club:"Fluminense", fee:"Cantera", year:""}, {club:"AC Milan", fee:"~€10M", year:"2009"}, {club:"PSG", fee:"~€42M", year:"2012"}, {club:"Chelsea", fee:"Libre", year:"2020"}, {club:"Fluminense", fee:"Libre", year:"2024"}]},
+    {name:"Marcelo", aliases:["marcelo vieira"], stops:[{club:"Fluminense", fee:"Cantera", year:""}, {club:"Real Madrid", fee:"~€6.8M", year:"2007"}, {club:"Olympiacos", fee:"Libre", year:"2022"}]},
+    {name:"Dani Alves", aliases:["dani alves"], stops:[{club:"Bahia", fee:"Cantera", year:""}, {club:"Sevilla", fee:"~€7.8M", year:"2002"}, {club:"Barcelona", fee:"~€32.5M", year:"2008"}, {club:"Juventus", fee:"Libre", year:"2016"}, {club:"PSG", fee:"Libre", year:"2017"}, {club:"São Paulo", fee:"Libre", year:"2019"}, {club:"Barcelona", fee:"Libre", year:"2021"}, {club:"Puebla", fee:"Libre", year:"2022"}, {club:"UNAM Pumas", fee:"Libre", year:"2022"}, {club:"Bahia", fee:"Libre", year:"2023"}]},
+    {name:"Alexis Sánchez", aliases:["alexis sanchez"], stops:[{club:"Cobreloa", fee:"Cantera", year:""}, {club:"Udinese", fee:"~€6M", year:"2008"}, {club:"Barcelona", fee:"~€26M", year:"2011"}, {club:"Arsenal", fee:"~€35M", year:"2014"}, {club:"Manchester United", fee:"Canje (sin cifra)", year:"2018"}, {club:"Inter Milan", fee:"Cesión", year:"2019"}, {club:"Marseille", fee:"Libre", year:"2022"}, {club:"Udinese", fee:"Libre", year:"2023"}]},
+    {name:"Pedro Rodríguez", aliases:["pedro"], stops:[{club:"Barcelona", fee:"Cantera", year:""}, {club:"Chelsea", fee:"~€25M", year:"2015"}, {club:"AS Roma", fee:"~€4.5M", year:"2021"}, {club:"Lazio", fee:"Libre", year:"2021"}, {club:"Flamengo", fee:"Libre", year:"2023"}]},
+    {name:"Antoine Griezmann", aliases:["griezmann"], stops:[{club:"Real Sociedad", fee:"Cantera", year:""}, {club:"Atlético Madrid", fee:"~€30M", year:"2014"}, {club:"Barcelona", fee:"~€120M", year:"2019"}, {club:"Atlético Madrid", fee:"~€20M", year:"2021"}]},
+    {name:"Ousmane Dembélé", aliases:["dembele", "dembélé"], stops:[{club:"Rennes", fee:"Cantera", year:""}, {club:"Borussia Dortmund", fee:"~€15M", year:"2016"}, {club:"Barcelona", fee:"~€105M", year:"2017"}, {club:"PSG", fee:"~€50M", year:"2023"}]},
+    {name:"Paulo Dybala", aliases:["dybala"], stops:[{club:"Instituto", fee:"Cantera", year:""}, {club:"Palermo", fee:"~€12M", year:"2012"}, {club:"Juventus", fee:"~€40M", year:"2015"}, {club:"AS Roma", fee:"Libre", year:"2022"}]},
+    {name:"Paul Pogba", aliases:["pogba"], stops:[{club:"Manchester United", fee:"Cantera", year:""}, {club:"Juventus", fee:"Libre", year:"2012"}, {club:"Manchester United", fee:"~€105M", year:"2016"}, {club:"Juventus", fee:"Libre", year:"2022"}]},
+    {name:"N'Golo Kanté", aliases:["kante", "n golo kante"], stops:[{club:"Boulogne", fee:"Cantera", year:""}, {club:"Caen", fee:"Libre", year:"2013"}, {club:"Guingamp", fee:"~€0.5M (est.)", year:"2014"}, {club:"Leicester City", fee:"~€5.6M", year:"2015"}, {club:"Chelsea", fee:"~€32M", year:"2016"}, {club:"Al Ittihad", fee:"Libre", year:"2023"}]},
+    {name:"Eden Hazard", aliases:["hazard"], stops:[{club:"Lille", fee:"Cantera", year:""}, {club:"Chelsea", fee:"~€40M", year:"2012"}, {club:"Real Madrid", fee:"~€100M", year:"2019"}]},
+    {name:"Riyad Mahrez", aliases:["mahrez"], stops:[{club:"Le Havre", fee:"Cantera", year:""}, {club:"Leicester City", fee:"~€0.5M", year:"2014"}, {club:"Manchester City", fee:"~€67.8M", year:"2018"}, {club:"Al Ahli", fee:"~€35M", year:"2023"}]},
+    {name:"Sadio Mané", aliases:["mane", "sadio mane"], stops:[{club:"Metz", fee:"Cantera", year:""}, {club:"Salzburg", fee:"~€4M", year:"2012"}, {club:"Southampton", fee:"~€12M", year:"2014"}, {club:"Liverpool", fee:"~€41M", year:"2016"}, {club:"Bayern Munich", fee:"~€35M", year:"2022"}, {club:"Al Nassr", fee:"Libre", year:"2023"}]},
+    {name:"Mohamed Salah", aliases:["salah", "mo salah"], stops:[{club:"Al Mokawloon", fee:"Cantera", year:""}, {club:"Basel", fee:"~€1.7M", year:"2012"}, {club:"Chelsea", fee:"~€14M", year:"2014"}, {club:"Fiorentina", fee:"Cesión", year:"2015"}, {club:"AS Roma", fee:"~€15M (est.)", year:"2016"}, {club:"Liverpool", fee:"~€42M", year:"2017"}]},
+    {name:"Virgil van Dijk", aliases:["van dijk"], stops:[{club:"Groningen", fee:"Cantera", year:""}, {club:"Celtic", fee:"~€2.5M", year:"2013"}, {club:"Southampton", fee:"~€13M", year:"2015"}, {club:"Liverpool", fee:"~€84.5M", year:"2018"}]},
+    {name:"Harry Kane", aliases:["kane"], stops:[{club:"Tottenham", fee:"Cantera", year:""}, {club:"Bayern Munich", fee:"~€100M", year:"2023"}]},
+    {name:"Raheem Sterling", aliases:["sterling"], stops:[{club:"Liverpool", fee:"Cantera", year:""}, {club:"Manchester City", fee:"~€49M", year:"2015"}, {club:"Chelsea", fee:"~€56.4M", year:"2022"}, {club:"Arsenal", fee:"Cesión", year:"2024"}]},
+    {name:"Jack Grealish", aliases:["grealish"], stops:[{club:"Aston Villa", fee:"Cantera", year:""}, {club:"Manchester City", fee:"~€117.5M", year:"2021"}, {club:"Everton", fee:"Cesión", year:"2025"}]},
+    {name:"Jude Bellingham", aliases:["bellingham"], stops:[{club:"Birmingham City", fee:"Cantera", year:""}, {club:"Borussia Dortmund", fee:"~€30M", year:"2020"}, {club:"Real Madrid", fee:"~€103M", year:"2023"}]},
+    {name:"Vinícius Júnior", aliases:["vinicius junior", "vini jr"], stops:[{club:"Flamengo", fee:"Cantera", year:""}, {club:"Real Madrid", fee:"~€45M", year:"2018"}]},
+    {name:"Rodrygo", aliases:["rodrygo goes"], stops:[{club:"Santos", fee:"Cantera", year:""}, {club:"Real Madrid", fee:"~€45M", year:"2019"}]},
+    {name:"Federico Valverde", aliases:["valverde"], stops:[{club:"Peñarol", fee:"Cantera", year:""}, {club:"Real Madrid", fee:"~€5M", year:"2017"}]},
+    {name:"Casemiro", aliases:["casemiro"], stops:[{club:"São Paulo", fee:"Cantera", year:""}, {club:"Real Madrid", fee:"~€6M", year:"2013"}, {club:"Manchester United", fee:"~€70.6M", year:"2022"}]},
+    {name:"Robert Pirès", aliases:["pires", "robert pires"], stops:[{club:"Metz", fee:"Cantera", year:""}, {club:"Marseille", fee:"~€4M (est.)", year:"1998"}, {club:"Arsenal", fee:"~€2.4M", year:"2000"}, {club:"Villarreal", fee:"~€1.5M (est.)", year:"2006"}, {club:"Aston Villa", fee:"Libre", year:"2010"}]},
+    {name:"Patrick Vieira", aliases:["vieira", "patrick vieira"], stops:[{club:"Cannes", fee:"Cantera", year:""}, {club:"AC Milan", fee:"~€3.5M (est.)", year:"1995"}, {club:"Arsenal", fee:"~€4.3M", year:"1996"}, {club:"Juventus", fee:"~€17M", year:"2005"}, {club:"Inter Milan", fee:"~€9M", year:"2006"}, {club:"Manchester City", fee:"Libre", year:"2010"}]},
+    {name:"Ruud van Nistelrooy", aliases:["van nistelrooy"], stops:[{club:"Den Bosch", fee:"Cantera", year:""}, {club:"Heerenveen", fee:"~€1M (est.)", year:"1997"}, {club:"PSV", fee:"~€8M", year:"1998"}, {club:"Manchester United", fee:"~€22.5M", year:"2001"}, {club:"Real Madrid", fee:"~€41M", year:"2006"}, {club:"Hamburger SV", fee:"Libre", year:"2010"}, {club:"Málaga", fee:"Libre", year:"2011"}]},
+    {name:"Dennis Bergkamp", aliases:["bergkamp"], stops:[{club:"Ajax", fee:"Cantera", year:""}, {club:"Inter Milan", fee:"~€8M", year:"1993"}, {club:"Arsenal", fee:"~€7.5M", year:"1995"}]},
+    {name:"Marco van Basten", aliases:["van basten"], stops:[{club:"Ajax", fee:"Cantera", year:""}, {club:"AC Milan", fee:"~€1.8M", year:"1987"}]},
+    {name:"Johan Cruyff", aliases:["cruyff"], stops:[{club:"Ajax", fee:"Cantera", year:""}, {club:"Barcelona", fee:"~€2M", year:"1973"}, {club:"LA Aztecs", fee:"Libre", year:"1979"}, {club:"Washington Diplomats", fee:"Libre", year:"1980"}, {club:"Levante", fee:"Cesión", year:"1981"}, {club:"Ajax", fee:"Libre", year:"1981"}, {club:"Feyenoord", fee:"~€0.2M (est.)", year:"1983"}]},
+    {name:"Diego Maradona", aliases:["maradona"], stops:[{club:"Argentinos Juniors", fee:"Cantera", year:""}, {club:"Boca Juniors", fee:"~€4M (est.)", year:"1981"}, {club:"Barcelona", fee:"~€7.3M", year:"1982"}, {club:"Napoli", fee:"~€10.5M", year:"1984"}, {club:"Sevilla", fee:"~€5.6M (est.)", year:"1992"}, {club:"Newell's Old Boys", fee:"Libre", year:"1993"}]},
+    {name:"Pelé", aliases:["pele"], stops:[{club:"Santos", fee:"Cantera", year:""}, {club:"New York Cosmos", fee:"Libre", year:"1975"}]},
+    {name:"George Best", aliases:["george best"], stops:[{club:"Manchester United", fee:"Cantera", year:""}, {club:"LA Aztecs", fee:"Libre", year:"1976"}, {club:"Fulham", fee:"Libre", year:"1976"}, {club:"Hibernian", fee:"Libre", year:"1979"}, {club:"San Jose Earthquakes", fee:"Libre", year:"1980"}]},
+    {name:"Franz Beckenbauer", aliases:["beckenbauer", "der kaiser"], stops:[{club:"Bayern Munich", fee:"Cantera", year:""}, {club:"New York Cosmos", fee:"Libre", year:"1977"}, {club:"Hamburger SV", fee:"~€0.5M (est.)", year:"1980"}]},
+    {name:"Gerd Müller", aliases:["gerd muller"], stops:[{club:"Bayern Munich", fee:"Cantera", year:""}, {club:"Fort Lauderdale Strikers", fee:"Libre", year:"1979"}]},
+    {name:"Michel Platini", aliases:["platini"], stops:[{club:"Nancy", fee:"Cantera", year:""}, {club:"Saint-Étienne", fee:"~€1.1M (est.)", year:"1979"}, {club:"Juventus", fee:"~€1.8M (est.)", year:"1982"}]},
+    {name:"Roberto Baggio", aliases:["baggio", "il divin codino"], stops:[{club:"Vicenza", fee:"Cantera", year:""}, {club:"Fiorentina", fee:"~€2.7M (est.)", year:"1985"}, {club:"Juventus", fee:"~€13M", year:"1990"}, {club:"AC Milan", fee:"~€9.7M (est.)", year:"1995"}, {club:"Bologna", fee:"~€4M (est.)", year:"1997"}, {club:"Inter Milan", fee:"~€5.7M (est.)", year:"1998"}, {club:"Brescia", fee:"~€1M (est.)", year:"2000"}]},
+    {name:"Alessandro Nesta", aliases:["nesta"], stops:[{club:"Lazio", fee:"Cantera", year:""}, {club:"AC Milan", fee:"~€30.9M", year:"2002"}, {club:"Montreal Impact", fee:"Libre", year:"2012"}]},
+    {name:"Fabio Cannavaro", aliases:["cannavaro"], stops:[{club:"Napoli", fee:"Cantera", year:""}, {club:"Parma", fee:"~€2.5M (est.)", year:"1995"}, {club:"Inter Milan", fee:"~€23M (est.)", year:"2002"}, {club:"Juventus", fee:"Libre", year:"2004"}, {club:"Real Madrid", fee:"~€6.5M", year:"2006"}, {club:"Juventus", fee:"Libre", year:"2009"}, {club:"Al Ahli", fee:"Libre", year:"2010"}]},
+    {name:"Gianfranco Zola", aliases:["zola", "gianfranco zola"], stops:[{club:"Napoli", fee:"Cantera", year:""}, {club:"Parma", fee:"~€10M", year:"1993"}, {club:"Chelsea", fee:"~€6.3M", year:"1996"}, {club:"Cagliari", fee:"Libre", year:"2003"}]},
+    {name:"Hristo Stoichkov", aliases:["stoichkov"], stops:[{club:"CSKA Sofia", fee:"Cantera", year:""}, {club:"Barcelona", fee:"~€2.5M", year:"1990"}, {club:"Parma", fee:"~€9M", year:"1995"}, {club:"Barcelona", fee:"~€4.5M", year:"1996"}, {club:"Al Nassr", fee:"Libre", year:"1998"}, {club:"Chicago Fire", fee:"Libre", year:"2000"}, {club:"DC United", fee:"Libre", year:"2003"}]},
+    {name:"George Weah", aliases:["weah"], stops:[{club:"Tonnerre Yaoundé", fee:"Cantera", year:""}, {club:"Monaco", fee:"~€0.1M (est.)", year:"1988"}, {club:"PSG", fee:"~€18M", year:"1992"}, {club:"AC Milan", fee:"~€9.1M", year:"1995"}, {club:"Chelsea", fee:"Cesión", year:"2000"}, {club:"Manchester City", fee:"Cesión", year:"2000"}, {club:"Marseille", fee:"Libre", year:"2001"}, {club:"Al Jazira", fee:"Libre", year:"2002"}]},
+    {name:"Fernando Torres", aliases:["torres", "el nino"], stops:[{club:"Atlético Madrid", fee:"Cantera", year:""}, {club:"Liverpool", fee:"~€38M", year:"2007"}, {club:"Chelsea", fee:"~€58.5M", year:"2011"}, {club:"AC Milan", fee:"Cesión", year:"2014"}, {club:"Atlético Madrid", fee:"Libre", year:"2015"}, {club:"Sagan Tosu", fee:"Libre", year:"2018"}]},
+    {name:"David Villa", aliases:["david villa"], stops:[{club:"Sporting Gijón", fee:"Cantera", year:""}, {club:"Valencia", fee:"~€12M", year:"2003"}, {club:"Barcelona", fee:"~€40M", year:"2010"}, {club:"Atlético Madrid", fee:"~€5.1M", year:"2013"}, {club:"New York City FC", fee:"Libre", year:"2014"}, {club:"Vissel Kobe", fee:"Libre", year:"2019"}, {club:"Querétaro", fee:"Libre", year:"2020"}]},
+    {name:"Raúl González", aliases:["raul", "raul gonzalez"], stops:[{club:"Real Madrid", fee:"Cantera", year:""}, {club:"Schalke 04", fee:"Libre", year:"2010"}, {club:"Al Sadd", fee:"Libre", year:"2012"}, {club:"New York Cosmos", fee:"Libre", year:"2014"}]},
+    {name:"Cafú", aliases:["cafu"], stops:[{club:"São Paulo", fee:"Cantera", year:""}, {club:"Zaragoza", fee:"~€3M (est.)", year:"1994"}, {club:"Palmeiras", fee:"~€2M (est.)", year:"1995"}, {club:"AS Roma", fee:"Libre", year:"1997"}, {club:"AC Milan", fee:"Libre", year:"2003"}]},
+    {name:"Xabi Alonso", aliases:["xabi alonso"], stops:[{club:"Real Sociedad", fee:"Cantera", year:""}, {club:"Liverpool", fee:"~€10.5M", year:"2004"}, {club:"Real Madrid", fee:"Libre", year:"2009"}, {club:"Bayern Munich", fee:"Libre", year:"2014"}]},
+    {name:"Javier Zanetti", aliases:["zanetti", "javier zanetti"], stops:[{club:"Banfield", fee:"Cantera", year:""}, {club:"Inter Milan", fee:"~€3.3M", year:"1995"}]},
+    {name:"Carles Puyol", aliases:["puyol"], stops:[{club:"Barcelona", fee:"Cantera", year:""}]},
+    {name:"Ronald Koeman", aliases:["koeman"], stops:[{club:"Groningen", fee:"Cantera", year:""}, {club:"Ajax", fee:"~€0.6M", year:"1983"}, {club:"PSV", fee:"~€1.7M", year:"1986"}, {club:"Barcelona", fee:"~€3M", year:"1989"}, {club:"Feyenoord", fee:"Libre", year:"1995"}]},
+    {name:"Marco Reus", aliases:["reus"], stops:[{club:"Borussia Mönchengladbach", fee:"Cantera", year:""}, {club:"Borussia Dortmund", fee:"~€17.1M", year:"2012"}]},
+    {name:"Mario Götze", aliases:["gotze", "mario gotze"], stops:[{club:"Borussia Dortmund", fee:"Cantera", year:""}, {club:"Bayern Munich", fee:"~€37M", year:"2013"}, {club:"Borussia Dortmund", fee:"~€22M", year:"2016"}, {club:"PSV", fee:"Libre", year:"2020"}, {club:"Eintracht Frankfurt", fee:"Libre", year:"2022"}]},
+    {name:"Thomas Müller", aliases:["muller", "thomas muller"], stops:[{club:"Bayern Munich", fee:"Cantera", year:""}, {club:"Vancouver Whitecaps", fee:"Libre", year:"2025"}]},
+    {name:"Miroslav Klose", aliases:["klose"], stops:[{club:"Kaiserslautern", fee:"Cantera", year:""}, {club:"Werder Bremen", fee:"~€6.2M", year:"2004"}, {club:"Bayern Munich", fee:"Libre", year:"2007"}, {club:"Lazio", fee:"Libre", year:"2011"}]},
+    {name:"Lukas Podolski", aliases:["podolski"], stops:[{club:"Köln", fee:"Cantera", year:""}, {club:"Bayern Munich", fee:"~€10M", year:"2006"}, {club:"Köln", fee:"~€15M", year:"2009"}, {club:"Inter Milan", fee:"Cesión", year:"2015"}, {club:"Galatasaray", fee:"Cesión", year:"2015"}, {club:"Vissel Kobe", fee:"Libre", year:"2017"}, {club:"Antalyaspor", fee:"Libre", year:"2019"}, {club:"Górnik Zabrze", fee:"Libre", year:"2021"}]},
+    {name:"Philipp Lahm", aliases:["lahm"], stops:[{club:"VfB Stuttgart", fee:"Cesión", year:"2003"}, {club:"Bayern Munich", fee:"Cantera", year:"2005"}]},
+    {name:"Mats Hummels", aliases:["hummels"], stops:[{club:"Bayern Munich", fee:"Cantera", year:""}, {club:"Borussia Dortmund", fee:"~€4M", year:"2008"}, {club:"Bayern Munich", fee:"~€35M", year:"2016"}, {club:"Borussia Dortmund", fee:"~€30.5M", year:"2019"}, {club:"AS Roma", fee:"Libre", year:"2023"}]},
+    {name:"Jérôme Boateng", aliases:["boateng", "jerome boateng"], stops:[{club:"Hamburger SV", fee:"Cantera", year:""}, {club:"Manchester City", fee:"~€13.5M", year:"2010"}, {club:"Bayern Munich", fee:"~€17M", year:"2011"}, {club:"Lyon", fee:"Libre", year:"2021"}, {club:"Salernitana", fee:"Libre", year:"2022"}]},
+    {name:"İlkay Gündoğan", aliases:["gundogan", "ilkay gundogan"], stops:[{club:"Nuremberg", fee:"Cantera", year:""}, {club:"Borussia Dortmund", fee:"~€4M", year:"2011"}, {club:"Manchester City", fee:"~€27M", year:"2016"}, {club:"Barcelona", fee:"Libre", year:"2023"}, {club:"Manchester City", fee:"Libre", year:"2024"}]},
+    {name:"Marco Verratti", aliases:["verratti"], stops:[{club:"Pescara", fee:"Cantera", year:""}, {club:"PSG", fee:"~€12M", year:"2012"}, {club:"Al-Arabi", fee:"Libre", year:"2024"}]},
+    {name:"Andrea Barzagli", aliases:["barzagli"], stops:[{club:"Palermo", fee:"Cantera", year:""}, {club:"Wolfsburg", fee:"~€3.3M", year:"2008"}, {club:"Juventus", fee:"Libre", year:"2011"}]},
+    {name:"Leonardo Bonucci", aliases:["bonucci"], stops:[{club:"Inter Milan", fee:"Cantera", year:""}, {club:"Bari", fee:"Cesión", year:"2009"}, {club:"Genoa", fee:"Cesión", year:"2010"}, {club:"Juventus", fee:"~€15.5M", year:"2010"}, {club:"AC Milan", fee:"~€35M", year:"2017"}, {club:"Union Berlin", fee:"Cesión", year:"2023"}, {club:"Fenerbahçe", fee:"Libre", year:"2024"}]},
+    {name:"Giorgio Chiellini", aliases:["chiellini"], stops:[{club:"Fiorentina", fee:"Cantera", year:""}, {club:"Livorno", fee:"Cesión", year:"2004"}, {club:"Juventus", fee:"~€13M", year:"2005"}, {club:"LAFC", fee:"Libre", year:"2022"}]},
+    {name:"Ciro Immobile", aliases:["immobile"], stops:[{club:"Sorrento", fee:"Cantera", year:""}, {club:"Juventus", fee:"~€1M (est.)", year:"2010"}, {club:"Genoa", fee:"Cesión", year:"2011"}, {club:"Torino", fee:"Cesión", year:"2011"}, {club:"Pescara", fee:"Cesión", year:"2012"}, {club:"Borussia Dortmund", fee:"~€18.5M", year:"2014"}, {club:"Sevilla", fee:"Cesión", year:"2015"}, {club:"Torino", fee:"~€8.5M (est.)", year:"2015"}, {club:"Lazio", fee:"~€10.5M", year:"2016"}, {club:"Beşiktaş", fee:"Libre", year:"2024"}]},
+    {name:"Marek Hamšík", aliases:["hamsik"], stops:[{club:"Slovan Bratislava", fee:"Cantera", year:""}, {club:"Brescia", fee:"~€5.5M", year:"2004"}, {club:"Napoli", fee:"~€12M", year:"2007"}, {club:"Dalian Pro", fee:"~€20M", year:"2019"}, {club:"Trabzonspor", fee:"Libre", year:"2021"}, {club:"Göztepe", fee:"Libre", year:"2023"}]},
+    {name:"Wesley Sneijder", aliases:["sneijder"], stops:[{club:"Ajax", fee:"Cantera", year:""}, {club:"Real Madrid", fee:"~€27M", year:"2007"}, {club:"Inter Milan", fee:"~€15M", year:"2009"}, {club:"Galatasaray", fee:"~€7.5M", year:"2013"}, {club:"Nice", fee:"Libre", year:"2017"}, {club:"Al-Gharafa", fee:"Libre", year:"2018"}]},
+    {name:"Robin van Persie", aliases:["van persie", "rvp"], stops:[{club:"Feyenoord", fee:"Cantera", year:""}, {club:"Arsenal", fee:"~€2.75M", year:"2004"}, {club:"Manchester United", fee:"~€24M", year:"2012"}, {club:"Fenerbahçe", fee:"Libre", year:"2015"}]},
+    {name:"Nemanja Vidić", aliases:["vidic"], stops:[{club:"Red Star Belgrade", fee:"Cantera", year:""}, {club:"Spartak Moscow", fee:"~€8M", year:"2004"}, {club:"Manchester United", fee:"~€9.6M", year:"2006"}, {club:"Inter Milan", fee:"Libre", year:"2014"}]},
+    {name:"Patrice Evra", aliases:["evra"], stops:[{club:"Marseille", fee:"Cantera", year:""}, {club:"Monza", fee:"Cesión", year:"2000"}, {club:"Nice", fee:"~€1M (est.)", year:"2002"}, {club:"Monaco", fee:"~€3M (est.)", year:"2002"}, {club:"Manchester United", fee:"~€4.3M", year:"2006"}, {club:"Juventus", fee:"Libre", year:"2014"}, {club:"Marseille", fee:"Libre", year:"2017"}, {club:"West Ham United", fee:"Libre", year:"2018"}]},
+    {name:"Yaya Touré", aliases:["yaya toure"], stops:[{club:"Beveren", fee:"Cantera", year:""}, {club:"Olympiacos", fee:"~€2.5M", year:"2005"}, {club:"Monaco", fee:"~€6M", year:"2006"}, {club:"Barcelona", fee:"~€10M", year:"2007"}, {club:"Manchester City", fee:"~€28M", year:"2010"}, {club:"Olympiacos", fee:"Libre", year:"2018"}]},
+    {name:"Kolo Touré", aliases:["kolo toure"], stops:[{club:"Arsenal", fee:"Cantera", year:""}, {club:"Manchester City", fee:"~€16.3M", year:"2009"}, {club:"Liverpool", fee:"Libre", year:"2013"}, {club:"Celtic", fee:"Libre", year:"2016"}]},
+    {name:"Michael Essien", aliases:["essien"], stops:[{club:"Bastia", fee:"Cantera", year:""}, {club:"Lyon", fee:"~€9.6M", year:"2003"}, {club:"Chelsea", fee:"~€38M", year:"2005"}, {club:"Real Madrid", fee:"Cesión", year:"2012"}, {club:"AC Milan", fee:"Libre", year:"2014"}, {club:"Panathinaikos", fee:"Libre", year:"2017"}]},
+    {name:"Nicolas Anelka", aliases:["anelka"], stops:[{club:"PSG", fee:"Cantera", year:""}, {club:"Arsenal", fee:"~€0.5M", year:"1997"}, {club:"Real Madrid", fee:"~€35M", year:"1999"}, {club:"PSG", fee:"~€34.5M", year:"2000"}, {club:"Liverpool", fee:"Cesión", year:"2002"}, {club:"Manchester City", fee:"~€13M", year:"2002"}, {club:"Bolton Wanderers", fee:"~€1M", year:"2005"}, {club:"Chelsea", fee:"~€15M", year:"2008"}, {club:"Shanghai Shenhua", fee:"Libre", year:"2012"}, {club:"Juventus", fee:"Cesión", year:"2013"}, {club:"West Bromwich Albion", fee:"Libre", year:"2013"}, {club:"Mumbai City", fee:"Libre", year:"2014"}]},
+    {name:"William Gallas", aliases:["gallas"], stops:[{club:"Caen", fee:"Cantera", year:""}, {club:"Marseille", fee:"~€2M (est.)", year:"1997"}, {club:"Chelsea", fee:"~€8.5M", year:"2001"}, {club:"Arsenal", fee:"~€5M (est.)", year:"2006"}, {club:"Tottenham", fee:"Libre", year:"2010"}, {club:"Perth Glory", fee:"Libre", year:"2013"}]},
+    {name:"Claude Makélélé", aliases:["makelele"], stops:[{club:"Nantes", fee:"Cantera", year:""}, {club:"Marseille", fee:"~€4M (est.)", year:"1997"}, {club:"Celta Vigo", fee:"~€3M (est.)", year:"1998"}, {club:"Real Madrid", fee:"~€11.4M", year:"2000"}, {club:"Chelsea", fee:"~€21.4M", year:"2003"}, {club:"PSG", fee:"Libre", year:"2008"}]},
+    {name:"Emmanuel Petit", aliases:["petit", "emmanuel petit"], stops:[{club:"Monaco", fee:"Cantera", year:""}, {club:"Arsenal", fee:"~€3.5M", year:"1997"}, {club:"Barcelona", fee:"~€10M", year:"2000"}, {club:"Chelsea", fee:"~€10M", year:"2001"}]},
+    {name:"Marcel Desailly", aliases:["desailly"], stops:[{club:"Nantes", fee:"Cantera", year:""}, {club:"Marseille", fee:"~€4M", year:"1990"}, {club:"AC Milan", fee:"~€4.8M", year:"1993"}, {club:"Chelsea", fee:"~€6.5M", year:"1998"}]},
+    {name:"Lilian Thuram", aliases:["thuram"], stops:[{club:"Monaco", fee:"Cantera", year:""}, {club:"Parma", fee:"~€4.3M", year:"1996"}, {club:"Juventus", fee:"~€19.5M", year:"2001"}, {club:"Barcelona", fee:"Libre", year:"2006"}]},
+    {name:"Fabien Barthez", aliases:["barthez"], stops:[{club:"Toulouse", fee:"Cantera", year:""}, {club:"Marseille", fee:"~€1.8M", year:"1992"}, {club:"Monaco", fee:"~€5.3M", year:"1995"}, {club:"Manchester United", fee:"~€11.4M", year:"2000"}, {club:"Marseille", fee:"~€3M", year:"2003"}, {club:"Nantes", fee:"Libre", year:"2006"}]},
+    {name:"Youri Djorkaeff", aliases:["djorkaeff"], stops:[{club:"Grenoble", fee:"Cantera", year:""}, {club:"Strasbourg", fee:"N/D", year:"1986"}, {club:"Monaco", fee:"~€2.4M", year:"1989"}, {club:"PSG", fee:"~€19.8M", year:"1995"}, {club:"Inter Milan", fee:"~€10.5M", year:"1996"}, {club:"Kaiserslautern", fee:"~€4.5M", year:"1999"}, {club:"Bolton Wanderers", fee:"Libre", year:"2002"}, {club:"New York MetroStars", fee:"Libre", year:"2005"}]},
+    {name:"David Trezeguet", aliases:["trezeguet"], stops:[{club:"Monaco", fee:"Cantera", year:""}, {club:"Juventus", fee:"~€20M", year:"2000"}, {club:"Hércules", fee:"Libre", year:"2010"}, {club:"Baniyas", fee:"Libre", year:"2011"}, {club:"River Plate", fee:"Libre", year:"2012"}, {club:"Newell's Old Boys", fee:"Libre", year:"2013"}]},
+    {name:"Sylvain Wiltord", aliases:["wiltord"], stops:[{club:"Rennes", fee:"Cantera", year:""}, {club:"Deportivo La Coruña", fee:"~€8M", year:"1997"}, {club:"Arsenal", fee:"~€19M", year:"2000"}, {club:"Lyon", fee:"~€7M", year:"2004"}, {club:"Rennes", fee:"Libre", year:"2008"}]},
+    {name:"Peter Schmeichel", aliases:["schmeichel"], stops:[{club:"Brøndby", fee:"Cantera", year:""}, {club:"Manchester United", fee:"~€700k", year:"1991"}, {club:"Sporting CP", fee:"Libre", year:"1999"}, {club:"Aston Villa", fee:"Libre", year:"2001"}, {club:"Manchester City", fee:"Libre", year:"2002"}]},
+    {name:"Roy Keane", aliases:["roy keane"], stops:[{club:"Nottingham Forest", fee:"N/D", year:"1990"}, {club:"Manchester United", fee:"~€4.7M", year:"1993"}, {club:"Celtic", fee:"Libre", year:"2005"}]},
+    {name:"Eric Cantona", aliases:["cantona"], stops:[{club:"Auxerre", fee:"Cantera", year:""}, {club:"Marseille", fee:"~€2.2M", year:"1988"}, {club:"Bordeaux", fee:"Cesión", year:"1989"}, {club:"Montpellier", fee:"N/D", year:"1989"}, {club:"Nîmes", fee:"N/D", year:"1990"}, {club:"Leeds United", fee:"~€1.2M", year:"1992"}, {club:"Manchester United", fee:"~€1.5M", year:"1992"}]},
+    {name:"Andriy Shevchenko", aliases:["shevchenko"], stops:[{club:"Dynamo Kyiv", fee:"Cantera", year:""}, {club:"AC Milan", fee:"~€25M", year:"1999"}, {club:"Chelsea", fee:"~€43.9M", year:"2006"}, {club:"AC Milan", fee:"Cesión", year:"2008"}, {club:"Dynamo Kyiv", fee:"Libre", year:"2009"}]},
+    {name:"Pavel Nedvěd", aliases:["nedved"], stops:[{club:"Sparta Prague", fee:"Cantera", year:""}, {club:"Lazio", fee:"~€4.7M", year:"1996"}, {club:"Juventus", fee:"~€41.3M", year:"2001"}]},
+    {name:"Rui Costa", aliases:["rui costa"], stops:[{club:"Fiorentina", fee:"~€10M", year:"1994"}, {club:"AC Milan", fee:"~€28M", year:"2001"}]},
+    {name:"Luís Figo", aliases:["figo"], stops:[{club:"Sporting CP", fee:"Cantera", year:""}, {club:"Barcelona", fee:"~€2.25M (est.)", year:"1995"}, {club:"Real Madrid", fee:"~€62M", year:"2000"}, {club:"Inter Milan", fee:"~€2M (est.)", year:"2005"}]},
+    {name:"Deco", aliases:["deco"], stops:[{club:"CD Nacional", fee:"Cantera", year:""}, {club:"Porto", fee:"~€3.7M (est.)", year:"1999"}, {club:"Barcelona", fee:"~€21M", year:"2004"}, {club:"Chelsea", fee:"~€10M", year:"2008"}, {club:"Fluminense", fee:"Libre", year:"2010"}]},
+    {name:"Ricardo Carvalho", aliases:["ricardo carvalho"], stops:[{club:"Porto", fee:"Cantera", year:""}, {club:"Chelsea", fee:"~€19.85M", year:"2004"}, {club:"Real Madrid", fee:"Libre", year:"2010"}, {club:"Monaco", fee:"Libre", year:"2015"}, {club:"Shanghai Port", fee:"Libre", year:"2015"}]},
+    {name:"Júlio César", aliases:["julio cesar"], stops:[{club:"Flamengo", fee:"Cantera", year:""}, {club:"Inter Milan", fee:"~€3.8M", year:"2005"}, {club:"QPR", fee:"Libre", year:"2012"}, {club:"Toronto FC", fee:"Cesión", year:"2014"}, {club:"Benfica", fee:"Libre", year:"2015"}, {club:"Flamengo", fee:"Libre", year:"2016"}]},
+    {name:"Robinho", aliases:["robinho"], stops:[{club:"Santos", fee:"Cantera", year:""}, {club:"Real Madrid", fee:"~€24M", year:"2005"}, {club:"Manchester City", fee:"~€42.5M", year:"2008"}, {club:"Santos", fee:"Cesión", year:"2010"}, {club:"AC Milan", fee:"~€18M", year:"2010"}, {club:"Santos", fee:"Libre", year:"2014"}, {club:"Guangzhou Evergrande", fee:"~€5M (est.)", year:"2015"}, {club:"Sivasspor", fee:"Libre", year:"2017"}, {club:"Istanbul Başakşehir", fee:"Libre", year:"2019"}]},
+    {name:"Adriano", aliases:["adriano imperador"], stops:[{club:"Flamengo", fee:"Cantera", year:""}, {club:"Inter Milan", fee:"~€1M (est.)", year:"2001"}, {club:"Parma", fee:"Cesión", year:"2002"}, {club:"Inter Milan", fee:"~€16M", year:"2004"}, {club:"São Paulo", fee:"Cesión", year:"2009"}, {club:"Corinthians", fee:"Libre", year:"2009"}, {club:"Flamengo", fee:"Libre", year:"2010"}, {club:"Athletico Paranaense", fee:"Libre", year:"2013"}]},
+    {name:"Hulk", aliases:["hulk"], stops:[{club:"Vitória", fee:"Cantera", year:""}, {club:"Porto", fee:"~€8.5M (est.)", year:"2008"}, {club:"Zenit Saint Petersburg", fee:"~€60M", year:"2012"}, {club:"Shanghai Port", fee:"~€55.8M", year:"2016"}, {club:"Atlético Mineiro", fee:"Libre", year:"2019"}]},
+    {name:"Oscar", aliases:["oscar dos santos"], stops:[{club:"Internacional", fee:"Cantera", year:""}, {club:"Chelsea", fee:"~€32M", year:"2012"}, {club:"Shanghai Port", fee:"~€60M", year:"2017"}]},
+    {name:"Willian", aliases:["willian borges"], stops:[{club:"Corinthians", fee:"Cantera", year:""}, {club:"Shakhtar Donetsk", fee:"~€12M", year:"2007"}, {club:"Anzhi Makhachkala", fee:"~€35M", year:"2010"}, {club:"Shakhtar Donetsk", fee:"Libre", year:"2013"}, {club:"Chelsea", fee:"~€35M", year:"2013"}, {club:"Arsenal", fee:"Libre", year:"2020"}, {club:"Corinthians", fee:"Libre", year:"2020"}, {club:"Fulham", fee:"Libre", year:"2023"}]},
+    {name:"David Luiz", aliases:["david luiz"], stops:[{club:"Vitória", fee:"Cantera", year:""}, {club:"Benfica", fee:"~€1.5M (est.)", year:"2007"}, {club:"Chelsea", fee:"~€25M", year:"2011"}, {club:"PSG", fee:"~€50M", year:"2014"}, {club:"Chelsea", fee:"~€34M", year:"2016"}, {club:"Arsenal", fee:"Libre", year:"2019"}, {club:"Flamengo", fee:"Libre", year:"2021"}]},
+    {name:"Fernandinho", aliases:["fernandinho"], stops:[{club:"Athletico Paranaense", fee:"Cantera", year:""}, {club:"Shakhtar Donetsk", fee:"~€6M", year:"2005"}, {club:"Manchester City", fee:"~€34M", year:"2013"}, {club:"Athletico Paranaense", fee:"Libre", year:"2022"}]},
+    {name:"Gabriel Jesus", aliases:["gabriel jesus"], stops:[{club:"Palmeiras", fee:"Cantera", year:""}, {club:"Manchester City", fee:"~€32M", year:"2017"}, {club:"Arsenal", fee:"~€52.2M", year:"2022"}]},
+    {name:"Roberto Firmino", aliases:["firmino"], stops:[{club:"Bahia", fee:"Cantera", year:""}, {club:"Hoffenheim", fee:"~€4.5M", year:"2011"}, {club:"Liverpool", fee:"~€41M", year:"2015"}, {club:"Al Ahli", fee:"Libre", year:"2023"}]},
+    {name:"Philippe Coutinho", aliases:["coutinho"], stops:[{club:"Vasco da Gama", fee:"Cantera", year:""}, {club:"Inter Milan", fee:"~€6.5M", year:"2008"}, {club:"Espanyol", fee:"Cesión", year:"2012"}, {club:"Liverpool", fee:"~€10M", year:"2013"}, {club:"Barcelona", fee:"~€135M", year:"2018"}, {club:"Bayern Munich", fee:"Cesión", year:"2019"}, {club:"Aston Villa", fee:"~€20M", year:"2022"}, {club:"Al-Duhail", fee:"Libre", year:"2023"}]},
+    {name:"Douglas Costa", aliases:["douglas costa"], stops:[{club:"Grêmio", fee:"Cantera", year:""}, {club:"Shakhtar Donetsk", fee:"~€6M", year:"2010"}, {club:"Bayern Munich", fee:"~€30M", year:"2015"}, {club:"Juventus", fee:"~€40M", year:"2017"}, {club:"Bayern Munich", fee:"Cesión", year:"2019"}, {club:"Grêmio", fee:"Libre", year:"2021"}, {club:"LA Galaxy", fee:"Libre", year:"2023"}]},
+    {name:"Arturo Vidal", aliases:["vidal", "arturo vidal"], stops:[{club:"Colo-Colo", fee:"Cantera", year:""}, {club:"Bayer Leverkusen", fee:"~€10.4M", year:"2007"}, {club:"Juventus", fee:"~€10.5M", year:"2011"}, {club:"Bayern Munich", fee:"~€37M", year:"2015"}, {club:"Barcelona", fee:"~€25M", year:"2018"}, {club:"Inter Milan", fee:"Libre", year:"2020"}, {club:"Athletico Paranaense", fee:"Libre", year:"2022"}, {club:"Colo-Colo", fee:"Libre", year:"2023"}]},
+    {name:"James Rodríguez", aliases:["james rodriguez"], stops:[{club:"Envigado", fee:"Cantera", year:""}, {club:"Banfield", fee:"Cesión", year:"2008"}, {club:"Porto", fee:"~€5.5M", year:"2010"}, {club:"Monaco", fee:"~€45M", year:"2013"}, {club:"Real Madrid", fee:"~€75M", year:"2014"}, {club:"Bayern Munich", fee:"Cesión", year:"2017"}, {club:"Real Madrid", fee:"Libre", year:"2019"}, {club:"Everton", fee:"Libre", year:"2020"}, {club:"Al-Rayyan", fee:"Libre", year:"2021"}, {club:"Olympiacos", fee:"Libre", year:"2022"}, {club:"São Paulo", fee:"Libre", year:"2023"}, {club:"Rayo Vallecano", fee:"Libre", year:"2024"}, {club:"León", fee:"Libre", year:"2024"}]},
+    {name:"Juan Cuadrado", aliases:["cuadrado"], stops:[{club:"Independiente Medellín", fee:"Cantera", year:""}, {club:"Udinese", fee:"~€3.6M", year:"2009"}, {club:"Fiorentina", fee:"Cesión", year:"2014"}, {club:"Chelsea", fee:"~€31.2M", year:"2015"}, {club:"Juventus", fee:"~€20M", year:"2015"}, {club:"Inter Milan", fee:"Libre", year:"2023"}]},
+    {name:"Carlos Valderrama", aliases:["valderrama", "el pibe"], stops:[{club:"Unión Magdalena", fee:"Cantera", year:""}, {club:"Millonarios", fee:"N/D", year:"1985"}, {club:"Montpellier", fee:"~€1.3M", year:"1988"}, {club:"Junior", fee:"N/D", year:"1991"}, {club:"Tampa Bay Mutiny", fee:"Libre", year:"1996"}, {club:"Miami Fusion", fee:"N/D", year:"1999"}, {club:"Colorado Rapids", fee:"N/D", year:"2002"}]},
+    {name:"Marc-André ter Stegen", aliases:["ter stegen"], stops:[{club:"Borussia Mönchengladbach", fee:"Cantera", year:""}, {club:"Barcelona", fee:"~€12M", year:"2014"}]},
+    {name:"Jan Oblak", aliases:["oblak"], stops:[{club:"Benfica", fee:"Cantera", year:""}, {club:"Real Sociedad", fee:"Cesión", year:"2013"}, {club:"Atlético Madrid", fee:"~€16M", year:"2014"}]},
+    {name:"Thibaut Courtois", aliases:["courtois"], stops:[{club:"Genk", fee:"Cantera", year:""}, {club:"Chelsea", fee:"~€6M", year:"2011"}, {club:"Atlético Madrid", fee:"~€35M", year:"2011"}, {club:"Chelsea", fee:"Libre", year:"2014"}, {club:"Real Madrid", fee:"~€35M", year:"2018"}]},
+    {name:"Gianluigi Donnarumma", aliases:["donnarumma"], stops:[{club:"AC Milan", fee:"Cantera", year:""}, {club:"PSG", fee:"Libre", year:"2021"}, {club:"Manchester City", fee:"~€30M (est.)", year:"2025"}]},
+    {name:"Alisson Becker", aliases:["alisson"], stops:[{club:"Internacional", fee:"Cantera", year:""}, {club:"AS Roma", fee:"~€8.5M", year:"2016"}, {club:"Liverpool", fee:"~€62.5M", year:"2018"}]},
+    {name:"Ederson", aliases:["ederson moraes"], stops:[{club:"Rio Ave", fee:"Cantera", year:""}, {club:"Benfica", fee:"~€4M", year:"2015"}, {club:"Manchester City", fee:"~€40M", year:"2017"}]},
+    {name:"Keylor Navas", aliases:["keylor navas"], stops:[{club:"Saprissa", fee:"Cantera", year:""}, {club:"Albacete", fee:"Cesión", year:"2010"}, {club:"Levante", fee:"~€0.5M (est.)", year:"2011"}, {club:"Real Madrid", fee:"~€10M", year:"2014"}, {club:"PSG", fee:"~€15M", year:"2019"}, {club:"Nottingham Forest", fee:"Libre", year:"2023"}]},
+    {name:"David de Gea", aliases:["de gea"], stops:[{club:"Atlético Madrid", fee:"Cantera", year:""}, {club:"Manchester United", fee:"~€22.7M", year:"2011"}, {club:"Fiorentina", fee:"Libre", year:"2023"}]},
+    {name:"Joe Hart", aliases:["joe hart"], stops:[{club:"Shrewsbury Town", fee:"Cantera", year:""}, {club:"Manchester City", fee:"~€1.5M", year:"2006"}, {club:"Birmingham City", fee:"Cesión", year:"2009"}, {club:"Torino", fee:"Libre", year:"2016"}, {club:"West Ham United", fee:"Cesión", year:"2018"}, {club:"Celtic", fee:"Libre", year:"2021"}, {club:"Sheffield United", fee:"Libre", year:"2022"}]},
+    {name:"Edwin van der Sar", aliases:["van der sar"], stops:[{club:"Ajax", fee:"Cantera", year:""}, {club:"Juventus", fee:"~€4M", year:"1999"}, {club:"Fulham", fee:"~€10M", year:"2001"}, {club:"Manchester United", fee:"~€3.5M", year:"2005"}]},
+    {name:"Oliver Kahn", aliases:["kahn", "oliver kahn"], stops:[{club:"Karlsruher SC", fee:"Cantera", year:""}, {club:"Bayern Munich", fee:"~€3.4M", year:"1994"}]},
+    {name:"Ruud Gullit", aliases:["gullit"], stops:[{club:"Haarlem", fee:"Cantera", year:""}, {club:"Feyenoord", fee:"~€0.3M (est.)", year:"1982"}, {club:"PSV", fee:"~€1.7M (est.)", year:"1985"}, {club:"AC Milan", fee:"~€6M", year:"1987"}, {club:"Sampdoria", fee:"~€5.5M", year:"1993"}, {club:"Chelsea", fee:"Libre", year:"1995"}]},
+    {name:"Frank Rijkaard", aliases:["rijkaard"], stops:[{club:"Ajax", fee:"Cantera", year:""}, {club:"Sporting CP", fee:"~€0.5M (est.)", year:"1986"}, {club:"Zaragoza", fee:"~€0.8M (est.)", year:"1987"}, {club:"AC Milan", fee:"~€4.6M", year:"1988"}, {club:"Ajax", fee:"Libre", year:"1993"}]},
+    {name:"Clarence Seedorf", aliases:["seedorf"], stops:[{club:"Ajax", fee:"Cantera", year:""}, {club:"Sampdoria", fee:"~€9M", year:"1995"}, {club:"Real Madrid", fee:"~€5.6M", year:"1996"}, {club:"Inter Milan", fee:"~€24M", year:"1999"}, {club:"AC Milan", fee:"~€15M", year:"2002"}, {club:"Botafogo", fee:"Libre", year:"2012"}]},
+    {name:"Edgar Davids", aliases:["davids"], stops:[{club:"Ajax", fee:"Cantera", year:""}, {club:"AC Milan", fee:"~€9M", year:"1996"}, {club:"Juventus", fee:"~€10M", year:"1997"}, {club:"Barcelona", fee:"Cesión", year:"2003"}, {club:"Inter Milan", fee:"Cesión", year:"2004"}, {club:"Tottenham", fee:"Libre", year:"2005"}, {club:"Ajax", fee:"Libre", year:"2007"}, {club:"Crystal Palace", fee:"Libre", year:"2009"}, {club:"Barnet", fee:"Libre", year:"2012"}]},
+    {name:"Gabriel Batistuta", aliases:["batistuta", "bati gol"], stops:[{club:"Newell's Old Boys", fee:"Cantera", year:""}, {club:"River Plate", fee:"~€1M", year:"1988"}, {club:"Boca Juniors", fee:"~€1.5M", year:"1990"}, {club:"Fiorentina", fee:"~€8.9M", year:"1991"}, {club:"AS Roma", fee:"~€36.2M", year:"2000"}, {club:"Inter Milan", fee:"~€19M", year:"2003"}, {club:"Al-Arabi", fee:"Libre", year:"2005"}]},
+    {name:"Hernán Crespo", aliases:["crespo"], stops:[{club:"River Plate", fee:"Cantera", year:""}, {club:"Parma", fee:"~€7.5M", year:"1996"}, {club:"Lazio", fee:"~€56.8M", year:"2000"}, {club:"Inter Milan", fee:"~€27.7M", year:"2002"}, {club:"Chelsea", fee:"~€24.8M", year:"2003"}, {club:"AC Milan", fee:"Cesión", year:"2004"}, {club:"Inter Milan", fee:"Cesión", year:"2005"}, {club:"Genoa", fee:"Cesión", year:"2008"}, {club:"Parma", fee:"Libre", year:"2009"}]},
+    {name:"Juan Román Riquelme", aliases:["riquelme"], stops:[{club:"Argentinos Juniors", fee:"Cantera", year:""}, {club:"Boca Juniors", fee:"~€2M", year:"1996"}, {club:"Barcelona", fee:"~€10M", year:"2002"}, {club:"Villarreal", fee:"~€10M", year:"2003"}, {club:"Boca Juniors", fee:"~€4.5M", year:"2007"}]},
+    {name:"Javier Saviola", aliases:["saviola"], stops:[{club:"River Plate", fee:"Cantera", year:""}, {club:"Barcelona", fee:"~€30M", year:"2001"}, {club:"Monaco", fee:"Cesión", year:"2004"}, {club:"Sevilla", fee:"Cesión", year:"2005"}, {club:"Real Madrid", fee:"~€10M", year:"2007"}, {club:"Benfica", fee:"Cesión", year:"2009"}, {club:"Málaga", fee:"Cesión", year:"2011"}, {club:"Olympiacos", fee:"Libre", year:"2011"}, {club:"Verona", fee:"Libre", year:"2012"}, {club:"River Plate", fee:"Libre", year:"2014"}]},
+    {name:"Diego Forlán", aliases:["forlan"], stops:[{club:"Independiente", fee:"Cantera", year:""}, {club:"Manchester United", fee:"~€3.8M", year:"2002"}, {club:"Villarreal", fee:"~€21M", year:"2004"}, {club:"Atlético Madrid", fee:"~€21M", year:"2007"}, {club:"Inter Milan", fee:"Libre", year:"2011"}, {club:"Cerezo Osaka", fee:"Cesión", year:"2012"}, {club:"Peñarol", fee:"Libre", year:"2014"}, {club:"Kitchee", fee:"Libre", year:"2015"}, {club:"Mumbai City", fee:"Libre", year:"2016"}]},
+    {name:"Iván Zamorano", aliases:["zamorano"], stops:[{club:"Universidad Católica", fee:"Cantera", year:""}, {club:"St. Gallen", fee:"~€0.3M (est.)", year:"1988"}, {club:"Sevilla", fee:"~€1.5M", year:"1990"}, {club:"Real Madrid", fee:"~€3.3M", year:"1992"}, {club:"Inter Milan", fee:"~€13.6M", year:"1996"}, {club:"Málaga", fee:"Libre", year:"2001"}]},
+    {name:"Gary Lineker", aliases:["lineker"], stops:[{club:"Leicester City", fee:"Cantera", year:""}, {club:"Everton", fee:"~€1.1M", year:"1985"}, {club:"Barcelona", fee:"~€3M", year:"1986"}, {club:"Tottenham", fee:"~€1.6M", year:"1989"}, {club:"Nagoya Grampus", fee:"Libre", year:"1992"}]},
+    {name:"Alan Shearer", aliases:["shearer"], stops:[{club:"Southampton", fee:"Cantera", year:""}, {club:"Blackburn Rovers", fee:"~€4M", year:"1992"}, {club:"Newcastle United", fee:"~€15M", year:"1996"}]},
+    {name:"Paul Gascoigne", aliases:["gascoigne", "gazza"], stops:[{club:"Newcastle United", fee:"Cantera", year:""}, {club:"Tottenham", fee:"~€3.3M", year:"1988"}, {club:"Lazio", fee:"~€8.9M", year:"1992"}, {club:"Rangers", fee:"~€3.9M", year:"1995"}, {club:"Middlesbrough", fee:"Libre", year:"1998"}, {club:"Everton", fee:"Libre", year:"2000"}, {club:"Burnley", fee:"Libre", year:"2002"}]},
+    {name:"Teddy Sheringham", aliases:["sheringham"], stops:[{club:"Millwall", fee:"Cantera", year:""}, {club:"Nottingham Forest", fee:"~€3M", year:"1991"}, {club:"Tottenham", fee:"~€3.5M", year:"1992"}, {club:"Manchester United", fee:"~€5.8M", year:"1997"}, {club:"Tottenham", fee:"Libre", year:"2001"}, {club:"Portsmouth", fee:"Libre", year:"2004"}, {club:"West Ham United", fee:"Libre", year:"2005"}, {club:"Colchester United", fee:"Libre", year:"2007"}]},
+    {name:"Peter Crouch", aliases:["crouch"], stops:[{club:"Tottenham", fee:"Cantera", year:""}, {club:"QPR", fee:"Cesión", year:"2000"}, {club:"Portsmouth", fee:"~€2.5M", year:"2001"}, {club:"Aston Villa", fee:"~€6M", year:"2002"}, {club:"Southampton", fee:"~€3M", year:"2004"}, {club:"Liverpool", fee:"~€9M", year:"2005"}, {club:"Portsmouth", fee:"~€12M", year:"2008"}, {club:"Tottenham", fee:"~€12M", year:"2009"}, {club:"Stoke City", fee:"~€12M", year:"2011"}, {club:"Burnley", fee:"Libre", year:"2018"}]},
+    {name:"Robbie Keane", aliases:["robbie keane"], stops:[{club:"Wolverhampton", fee:"Cantera", year:""}, {club:"Coventry City", fee:"~€8.6M", year:"1999"}, {club:"Inter Milan", fee:"~€19M", year:"2000"}, {club:"Leeds United", fee:"~€15.8M", year:"2001"}, {club:"Tottenham", fee:"~€9M", year:"2002"}, {club:"Liverpool", fee:"~€23M", year:"2008"}, {club:"Tottenham", fee:"~€16M", year:"2009"}, {club:"West Ham United", fee:"Cesión", year:"2010"}, {club:"LA Galaxy", fee:"Libre", year:"2011"}, {club:"Aston Villa", fee:"Cesión", year:"2015"}, {club:"ATK", fee:"Libre", year:"2016"}]},
+    {name:"Vincent Kompany", aliases:["kompany"], stops:[{club:"Anderlecht", fee:"Cantera", year:""}, {club:"Hamburger SV", fee:"~€9M", year:"2006"}, {club:"Manchester City", fee:"~€9.75M", year:"2008"}]},
+    {name:"Emmanuel Adebayor", aliases:["adebayor"], stops:[{club:"Metz", fee:"Cantera", year:""}, {club:"Monaco", fee:"~€2M", year:"2003"}, {club:"Arsenal", fee:"~€5.4M", year:"2006"}, {club:"Manchester City", fee:"~€30M", year:"2009"}, {club:"Real Madrid", fee:"Cesión", year:"2011"}, {club:"Tottenham", fee:"~€6M", year:"2012"}, {club:"Istanbul Başakşehir", fee:"Libre", year:"2015"}, {club:"Olympiacos", fee:"Libre", year:"2017"}, {club:"Kayserispor", fee:"Libre", year:"2018"}, {club:"Paraná", fee:"Libre", year:"2019"}]},
+    {name:"Michael Ballack", aliases:["ballack"], stops:[{club:"Chemnitzer FC", fee:"Cantera", year:""}, {club:"Kaiserslautern", fee:"~€0.5M (est.)", year:"1997"}, {club:"Bayer Leverkusen", fee:"~€6.3M", year:"1999"}, {club:"Bayern Munich", fee:"Libre", year:"2002"}, {club:"Chelsea", fee:"Libre", year:"2006"}, {club:"Bayer Leverkusen", fee:"Libre", year:"2010"}]},
+    {name:"Lothar Matthäus", aliases:["matthaus"], stops:[{club:"Borussia Mönchengladbach", fee:"Cantera", year:""}, {club:"Bayern Munich", fee:"~€2.4M", year:"1984"}, {club:"Inter Milan", fee:"~€5.9M", year:"1988"}, {club:"Bayern Munich", fee:"~€1.3M", year:"1992"}, {club:"New York MetroStars", fee:"Libre", year:"2000"}]},
+    {name:"Jürgen Klinsmann", aliases:["klinsmann"], stops:[{club:"VfB Stuttgart", fee:"Cantera", year:""}, {club:"Inter Milan", fee:"~€5.8M", year:"1989"}, {club:"Monaco", fee:"~€3.6M", year:"1992"}, {club:"Tottenham", fee:"~€1.1M", year:"1994"}, {club:"Bayern Munich", fee:"~€8.3M", year:"1995"}, {club:"Sampdoria", fee:"~€4.7M", year:"1997"}, {club:"Tottenham", fee:"Libre", year:"1997"}]},
+    {name:"Karl-Heinz Rummenigge", aliases:["rummenigge"], stops:[{club:"Bayern Munich", fee:"Cantera", year:""}, {club:"Inter Milan", fee:"~€5.9M", year:"1984"}, {club:"Servette", fee:"Libre", year:"1987"}]},
+    {name:"Paolo Rossi", aliases:["paolo rossi"], stops:[{club:"Perugia", fee:"Cantera", year:""}, {club:"Juventus", fee:"~€2.6M", year:"1980"}, {club:"AC Milan", fee:"Cesión", year:"1985"}]},
+    {name:"Martin Ødegaard", aliases:["odegaard"], stops:[{club:"Strømsgodset", fee:"Cantera", year:""}, {club:"Real Madrid", fee:"~€3.5M", year:"2015"}, {club:"Heerenveen", fee:"Cesión", year:"2017"}, {club:"Vitesse", fee:"Cesión", year:"2018"}, {club:"Real Sociedad", fee:"~€6.2M", year:"2019"}, {club:"Arsenal", fee:"~€35M", year:"2021"}]},
+    {name:"Bruno Fernandes", aliases:["bruno fernandes"], stops:[{club:"Novara", fee:"Cesión", year:"2012"}, {club:"Udinese", fee:"~€2.3M", year:"2012"}, {club:"Sampdoria", fee:"~€6.6M", year:"2017"}, {club:"Manchester United", fee:"~€63M", year:"2020"}]},
+    {name:"Joško Gvardiol", aliases:["gvardiol"], stops:[{club:"Dinamo Zagreb", fee:"Cantera", year:""}, {club:"RB Leipzig", fee:"~€18.5M", year:"2021"}, {club:"Manchester City", fee:"~€90M", year:"2023"}]},
+    {name:"Rodri", aliases:["rodrigo hernandez", "rodri hernandez"], stops:[{club:"Villarreal", fee:"Cantera", year:""}, {club:"Atlético Madrid", fee:"~€20M (est.)", year:"2018"}, {club:"Manchester City", fee:"~€70M", year:"2019"}]},
+    {name:"Achraf Hakimi", aliases:["hakimi"], stops:[{club:"Real Madrid", fee:"Cantera", year:""}, {club:"Borussia Dortmund", fee:"Cesión", year:"2018"}, {club:"Inter Milan", fee:"~€40M", year:"2020"}, {club:"PSG", fee:"~€60M", year:"2021"}]},
+    {name:"Marquinhos", aliases:["marquinhos"], stops:[{club:"Corinthians", fee:"Cantera", year:""}, {club:"AS Roma", fee:"~€5.5M", year:"2012"}, {club:"PSG", fee:"~€31.4M", year:"2013"}]},
+    {name:"Lautaro Martínez", aliases:["lautaro martinez", "el toro"], stops:[{club:"Racing Club", fee:"Cantera", year:""}, {club:"Inter Milan", fee:"~€23.4M", year:"2018"}]},
+    {name:"Julián Álvarez", aliases:["julian alvarez", "la araña"], stops:[{club:"River Plate", fee:"Cantera", year:""}, {club:"Manchester City", fee:"~€21M", year:"2022"}, {club:"Atlético Madrid", fee:"~€75M", year:"2024"}]},
+    {name:"Pedri", aliases:["pedri gonzalez"], stops:[{club:"Las Palmas", fee:"Cantera", year:""}, {club:"Barcelona", fee:"~€5M", year:"2020"}]},
+    {name:"Gavi", aliases:["gavi paez"], stops:[{club:"Barcelona", fee:"Cantera", year:""}]},
+    {name:"Nico Williams", aliases:["nico williams"], stops:[{club:"Athletic Bilbao", fee:"Cantera", year:""}]},
+    {name:"Lamine Yamal", aliases:["lamine yamal"], stops:[{club:"Barcelona", fee:"Cantera", year:""}]},
+    {name:"Declan Rice", aliases:["declan rice"], stops:[{club:"West Ham United", fee:"Cantera", year:""}, {club:"Arsenal", fee:"~€116.6M", year:"2023"}]},
+    {name:"Bukayo Saka", aliases:["saka", "bukayo saka"], stops:[{club:"Arsenal", fee:"Cantera", year:""}]},
+    {name:"Phil Foden", aliases:["foden", "phil foden"], stops:[{club:"Manchester City", fee:"Cantera", year:""}]},
+    {name:"Cole Palmer", aliases:["cole palmer"], stops:[{club:"Manchester City", fee:"Cantera", year:""}, {club:"Chelsea", fee:"~€47.5M", year:"2023"}]},
+    {name:"Moisés Caicedo", aliases:["caicedo", "moises caicedo"], stops:[{club:"Independiente del Valle", fee:"Cantera", year:""}, {club:"Brighton", fee:"~€5M", year:"2021"}, {club:"Chelsea", fee:"~€133M", year:"2023"}]},
+    {name:"Enzo Fernández", aliases:["enzo fernandez"], stops:[{club:"River Plate", fee:"Cantera", year:""}, {club:"Benfica", fee:"~€10M", year:"2022"}, {club:"Chelsea", fee:"~€121M", year:"2023"}]},
+    {name:"Alexis Mac Allister", aliases:["mac allister"], stops:[{club:"Argentinos Juniors", fee:"Cantera", year:""}, {club:"Brighton", fee:"~€10M", year:"2019"}, {club:"Liverpool", fee:"~€42M", year:"2023"}]},
+    {name:"Federico Chiesa", aliases:["chiesa"], stops:[{club:"Fiorentina", fee:"Cantera", year:""}, {club:"Juventus", fee:"~€40M", year:"2020"}, {club:"Liverpool", fee:"~€12M", year:"2024"}]},
+    {name:"Nicolò Barella", aliases:["barella"], stops:[{club:"Cagliari", fee:"Cantera", year:""}, {club:"Inter Milan", fee:"~€40M", year:"2019"}]},
+    {name:"Victor Osimhen", aliases:["osimhen"], stops:[{club:"Charleroi", fee:"Cantera", year:""}, {club:"Lille", fee:"~€12M", year:"2019"}, {club:"Napoli", fee:"~€75M", year:"2020"}, {club:"Galatasaray", fee:"~€75M", year:"2025"}]},
+    {name:"Khvicha Kvaratskhelia", aliases:["kvaratskhelia", "kvara"], stops:[{club:"Dinamo Batumi", fee:"Cantera", year:""}, {club:"Rubin Kazan", fee:"~€1M", year:"2021"}, {club:"Napoli", fee:"~€10M", year:"2022"}, {club:"PSG", fee:"~€70M", year:"2025"}]},
+    {name:"Bernardo Silva", aliases:["bernardo silva"], stops:[{club:"Benfica", fee:"Cantera", year:""}, {club:"Monaco", fee:"~€15.5M", year:"2015"}, {club:"Manchester City", fee:"~€50M", year:"2017"}]},
+    {name:"João Félix", aliases:["joao felix"], stops:[{club:"Benfica", fee:"Cantera", year:""}, {club:"Atlético Madrid", fee:"~€126M", year:"2019"}, {club:"Chelsea", fee:"Cesión", year:"2023"}, {club:"Barcelona", fee:"Cesión", year:"2024"}, {club:"AC Milan", fee:"~€32.5M", year:"2025"}]},
+    {name:"Ansu Fati", aliases:["ansu fati"], stops:[{club:"Barcelona", fee:"Cantera", year:""}, {club:"Brighton", fee:"Cesión", year:"2023"}, {club:"AC Milan", fee:"Cesión", year:"2024"}]},
+    {name:"Frenkie de Jong", aliases:["de jong", "frenkie de jong"], stops:[{club:"Willem II", fee:"Cantera", year:""}, {club:"Ajax", fee:"~€1M", year:"2015"}, {club:"Barcelona", fee:"~€75M", year:"2019"}]},
+    {name:"Matthijs de Ligt", aliases:["de ligt"], stops:[{club:"Ajax", fee:"Cantera", year:""}, {club:"Juventus", fee:"~€75M", year:"2019"}, {club:"Bayern Munich", fee:"~€67M", year:"2022"}, {club:"Manchester United", fee:"~€50.4M", year:"2024"}]},
+    {name:"Memphis Depay", aliases:["memphis depay"], stops:[{club:"PSV", fee:"Cantera", year:""}, {club:"Manchester United", fee:"~€34M", year:"2015"}, {club:"Lyon", fee:"~€16M", year:"2017"}, {club:"Barcelona", fee:"Libre", year:"2021"}, {club:"Atlético Madrid", fee:"~€3M", year:"2023"}, {club:"Corinthians", fee:"Libre", year:"2024"}]},
+    {name:"Georginio Wijnaldum", aliases:["wijnaldum"], stops:[{club:"Feyenoord", fee:"Cantera", year:""}, {club:"PSV", fee:"~€4M", year:"2011"}, {club:"Newcastle United", fee:"~€16M", year:"2015"}, {club:"Liverpool", fee:"~€25M", year:"2016"}, {club:"PSG", fee:"Libre", year:"2021"}, {club:"AS Roma", fee:"Cesión", year:"2022"}, {club:"Al-Ettifaq", fee:"Libre", year:"2023"}]},
+    {name:"Denzel Dumfries", aliases:["dumfries"], stops:[{club:"Heerenveen", fee:"Cantera", year:""}, {club:"PSV", fee:"~€1.4M", year:"2018"}, {club:"Inter Milan", fee:"~€12.5M", year:"2021"}]},
+    {name:"Sergej Milinković-Savić", aliases:["milinkovic-savic", "sergej milinkovic savic"], stops:[{club:"Vojvodina", fee:"Cantera", year:""}, {club:"Genk", fee:"~€2M", year:"2015"}, {club:"Lazio", fee:"~€8M", year:"2015"}, {club:"Al Hilal", fee:"~€40M", year:"2023"}]},
+    {name:"Dušan Vlahović", aliases:["vlahovic"], stops:[{club:"Partizan", fee:"Cantera", year:""}, {club:"Fiorentina", fee:"~€2M", year:"2018"}, {club:"Juventus", fee:"~€70M", year:"2022"}]},
+    {name:"Álvaro Morata", aliases:["morata"], stops:[{club:"Real Madrid", fee:"Cantera", year:""}, {club:"Juventus", fee:"~€20M", year:"2014"}, {club:"Real Madrid", fee:"~€30M", year:"2016"}, {club:"Chelsea", fee:"~€66M", year:"2017"}, {club:"Atlético Madrid", fee:"~€58M", year:"2019"}, {club:"Juventus", fee:"Cesión", year:"2020"}, {club:"AC Milan", fee:"~€13M", year:"2024"}, {club:"Como", fee:"Libre", year:"2025"}]},
+    {name:"Marco Asensio", aliases:["asensio"], stops:[{club:"Mallorca", fee:"Cantera", year:""}, {club:"Real Madrid", fee:"~€3.9M", year:"2014"}, {club:"PSG", fee:"Libre", year:"2023"}, {club:"Fenerbahçe", fee:"Libre", year:"2025"}]},
+    {name:"Dani Olmo", aliases:["dani olmo"], stops:[{club:"Barcelona", fee:"Cantera", year:""}, {club:"Dinamo Zagreb", fee:"~€0.5M", year:"2014"}, {club:"RB Leipzig", fee:"~€20M", year:"2020"}, {club:"Barcelona", fee:"~€55M", year:"2024"}]},
+    {name:"Kai Havertz", aliases:["havertz"], stops:[{club:"Bayer Leverkusen", fee:"Cantera", year:""}, {club:"Chelsea", fee:"~€80M", year:"2020"}, {club:"Arsenal", fee:"~€75M", year:"2023"}]},
+    {name:"Jamal Musiala", aliases:["musiala"], stops:[{club:"Chelsea", fee:"Cantera", year:""}, {club:"Bayern Munich", fee:"Libre", year:"2019"}]},
+    {name:"Florian Wirtz", aliases:["wirtz"], stops:[{club:"Bayer Leverkusen", fee:"Cantera", year:""}, {club:"Liverpool", fee:"~€125M", year:"2025"}]},
+    {name:"Xavi Simons", aliases:["xavi simons"], stops:[{club:"Barcelona", fee:"Cantera", year:""}, {club:"PSG", fee:"Libre", year:"2019"}, {club:"PSV", fee:"Cesión", year:"2022"}, {club:"RB Leipzig", fee:"Cesión", year:"2023"}, {club:"RB Leipzig", fee:"~€50M", year:"2024"}, {club:"Tottenham", fee:"~€60M", year:"2025"}]}
+  ];
+
+  const decoyNames = ["Ángel Di María", "Rodrigo De Paul", "Enzo Fernández", "Alexis Mac Allister", "Nicolás Otamendi", "Emiliano Martínez", "Giovani Lo Celso", "Leandro Paredes", "Paulo Guerrero", "Claudio Pizarro", "Jefferson Farfán", "James Milner", "Ian Rush", "Kenny Dalglish", "Michael Laudrup", "Brian Laudrup", "Allan Simonsen", "Nicklas Bendtner", "Christian Eriksen", "Simon Kjær", "Kasper Schmeichel", "Pierre-Emerick Aubameyang", "Sadio Keita", "Yaya Sanogo", "Didier Zokora", "Bacary Sagna", "Laurent Blanc", "Christophe Dugarry", "Bixente Lizarazu", "Alain Boghossian", "Vincent Candela", "Jean-Pierre Papin", "Karim Ziani", "Sidney Govou", "Florent Malouda", "Jérémy Ménez", "Loïc Rémy", "André-Pierre Gignac", "Olivier Giroud", "Kingsley Coman", "Ferland Mendy", "Presnel Kimpembe", "Raphaël Varane", "Lucas Hernández", "Theo Hernández", "Aurélien Tchouaméni", "Adrien Rabiot", "Moussa Dembélé", "Wissam Ben Yedder", "Alexandre Lacazette", "Anthony Martial", "Ivan Perišić", "Mario Mandžukić", "Dejan Lovren", "Šime Vrsaljko", "Domagoj Vida", "Ivan Rakitić", "Niko Kovač", "Robert Prosinečki", "Davor Šuker", "Zvonimir Boban", "Alen Bokšić", "Slaven Bilić", "Boris Kollar", "Marek Špilár", "Milan Baroš", "Tomáš Rosický", "Vladimír Šmicer", "Pavel Kuka", "Karel Poborský", "Jan Koller", "Petr Škoda", "Tomáš Necid", "Antonín Panenka", "Zbigniew Boniek", "Grzegorz Lato", "Kazimierz Deyna", "Włodzimierz Lubański", "Jakub Błaszczykowski", "Wojciech Szczęsny", "Arkadiusz Milik", "Piotr Zieliński", "Grzegorz Krychowiak", "Kamil Glik", "Łukasz Fabiański", "Zbigniew Bońcek", "Krzysztof Piątek", "Marcin Wasilewski", "Ludovic Obraniak", "Marek Jankulovski", "Tomáš Ujfaluši", "László Kubala", "Ferenc Puskás", "Sándor Kocsis", "Nándor Hidegkuti", "Florián Albert", "Tibor Nyilasi", "Lajos Detári", "Krisztián Lisztes", "Zoltán Gera", "Balázs Dzsudzsák", "Dominik Szoboszlai", "Ádám Szalai", "Kolo Muani", "Marcus Thuram", "Randal Kolo Muani", "Christopher Nkunku", "Eduardo Camavinga", "Youssouf Fofana", "William Saliba", "Jules Koundé", "Benjamin Pavard", "Kylian Sané", "Leroy Sané", "Serge Gnabry", "Kai Havertz", "Timo Werner", "Julian Brandt", "Julian Draxler", "André Schürrle", "Mario Gómez", "Lukas Hradecky", "Manuel Akanji", "Antonio Rüdiger", "Niklas Süle", "Robin Gosens", "Joshua Kimmich", "Leon Goretzka", "Kimmich Joshua", "Emre Can", "Julian Weigl", "Sami Khedira", "Sebastian Vettel", "Miroslav Stoch", "Marek Suchý", "Aleksandar Kolarov", "Nemanja Matić", "Dušan Tadić", "Filip Kostić", "Sergej Milinković-Savić", "Aleksandar Mitrović", "Luka Jović", "Dušan Vlahović", "Darko Pančev", "Predrag Mijatović", "Dejan Savićević", "Siniša Mihajlović", "Vladimir Jugović", "Dragan Stojković", "Safet Sušić", "Ivica Osim", "Faruk Hadžibegić", "Enver Marić", "Elvir Baljić", "Edin Džeko", "Miralem Pjanić", "Sead Kolašinac", "Zvjezdan Misimović", "Hasan Salihamidžić", "Vedad Ibišević", "Asmir Begović", "Emir Spahić", "Naohiro Takahara", "Shunsuke Nakamura", "Hidetoshi Nakata", "Keisuke Honda", "Shinji Kagawa", "Shinji Okazaki", "Takumi Minamino", "Kaoru Mitoma", "Wataru Endo", "Takefusa Kubo", "Ritsu Dōan", "Ao Tanaka", "Son Heung-min", "Ki Sung-yueng", "Park Ji-sung", "Cha Bum-kun", "Ali Daei", "Sardar Azmoun", "Mehdi Taremi", "Karim Bagheri", "Yasser Al-Qahtani", "Sami Al-Jaber", "Majed Abdullah", "Salem Al-Dawsari", "Fahad Al-Muwallad", "Younes Belhanda", "Hakim Ziyech", "Sofiane Boufal", "Nayef Aguerd", "Romain Saïss", "Achraf Dari", "Noussair Mazraoui", "Yassine Bounou", "Abdelhamid Sabiri", "Riyad Boudebouz", "Islam Slimani", "Andy Delort", "Baghdad Bounedjah", "Riyad Karim", "Yacine Brahimi", "Sofiane Feghouli", "Rachid Ghezzal", "Adam Ounas", "Ismaël Bennacer", "Youcef Belaïli", "El Hadji Diouf", "Papa Bouba Diop", "Henri Camara", "Khalilou Fadiga", "Salif Diao", "Diomansy Kamara", "Demba Ba", "Mame Biram Diouf", "Papiss Cissé", "Idrissa Gueye", "Cheikhou Kouyaté", "Kalidou Koulibaly", "Ismaïla Sarr", "Boulaye Dia", "Nicolas Jackson", "John Mensah", "Asamoah Gyan", "Stephen Appiah", "Abédi Pelé", "Sulley Muntari", "Kwadwo Asamoah", "André Ayew", "Jordan Ayew", "Thomas Partey", "Mohammed Kudus", "Jay-Jay Okocha", "Nwankwo Kanu", "Rashidi Yekini", "Sunday Oliseh", "Austin Okocha", "Victor Moses", "Ahmed Musa", "Odion Ighalo", "Wilfred Ndidi", "Victor Osimhen", "Alex Iwobi", "Kelechi Iheanacho", "Samuel Kalu", "William Troost-Ekong", "Vincent Enyeama", "Peter Rufai", "Taribo West", "Celestine Babayaro", "Joseph Yobo", "Emmanuel Emenike", "Obafemi Martins", "Yakubu Aiyegbeni", "Roger Milla", "Patrick Mboma", "François Omam-Biyik", "Rigobert Song", "Marc-Vivien Foé", "Geremi Njitap", "Lauren Etame", "Éric Djemba-Djemba", "Vincent Aboubakar", "Karl Toko Ekambi", "André Onana", "Bertrand Traoré"];
+
+  const STORAGE_KEY = 'trayectorias_completados_v1';
+
+  let order = [];       // orden aleatorio de índices sobre "players"
+  let currentIndex = 0; // posición dentro de "order"
+  let score = 0;
+  let completed = loadCompleted();
+  let answeredThisRound = new Set(); // posiciones de "order" ya acertadas en esta partida
+
+  const scoreVal = document.getElementById('scoreVal');
+  const progressVal = document.getElementById('progressVal');
+  const totalLabel1 = document.getElementById('totalLabel1');
+  const totalLabel2 = document.getElementById('totalLabel2');
+  const totalLabel3 = document.getElementById('totalLabel3');
+  const pathTrack = document.getElementById('pathTrack');
+  const feedback = document.getElementById('feedback');
+  const input = document.getElementById('guessInput');
+  const suggestions = document.getElementById('suggestions');
+  const skipBtn = document.getElementById('skipBtn');
+  const backBtn = document.getElementById('backBtn');
+  const checkBtn = document.getElementById('checkBtn');
+  const gameArea = document.getElementById('gameArea');
+  const finalScreen = document.getElementById('finalScreen');
+  const finalScore = document.getElementById('finalScore');
+  const replayBtn = document.getElementById('replayBtn');
+  const tabPlay = document.getElementById('tabPlay');
+  const tabCollection = document.getElementById('tabCollection');
+  const playView = document.getElementById('playView');
+  const collectionView = document.getElementById('collectionView');
+  const collectionGrid = document.getElementById('collectionGrid');
+  const collectionCount = document.getElementById('collectionCount');
+  const resetCollectionBtn = document.getElementById('resetCollectionBtn');
+
+  function normalize(str){
+    return str.normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase().trim().replace(/\s+/g,' ');
+  }
+
+  // Índice de búsqueda: nombres jugables + nombres "señuelo" (jugadores reales
+  // que no están en la base de datos del juego). Así el buscador siempre
+  // ofrece muchas coincidencias y no delata cuál es la respuesta correcta.
+  const searchIndex = [...new Set([...players.map(p => p.name), ...decoyNames])]
+    .sort((a, b) => a.localeCompare(b, 'es'));
+
+  function hideSuggestions(){
+    suggestions.innerHTML = '';
+    suggestions.classList.add('hidden');
+  }
+
+  input.addEventListener('input', () => {
+    const val = normalize(input.value);
+    if(!val){ hideSuggestions(); return; }
+    const matches = searchIndex
+      .filter(name => normalize(name).includes(val))
+      .slice(0, 8);
+    if(matches.length === 0){ hideSuggestions(); return; }
+    suggestions.innerHTML = '';
+    matches.forEach(name => {
+      const li = document.createElement('li');
+      li.textContent = name;
+      li.addEventListener('click', () => {
+        input.value = name;
+        hideSuggestions();
+        input.focus();
+      });
+      suggestions.appendChild(li);
+    });
+    suggestions.classList.remove('hidden');
+  });
+
+  document.addEventListener('click', (e) => {
+    if(!e.target.closest('.search-wrap')) hideSuggestions();
+  });
+
+  function loadCompleted(){
+    try{
+      const raw = localStorage.getItem(STORAGE_KEY);
+      return raw ? new Set(JSON.parse(raw)) : new Set();
+    }catch(e){
+      return new Set();
+    }
+  }
+
+  function saveCompleted(){
+    try{
+      localStorage.setItem(STORAGE_KEY, JSON.stringify([...completed]));
+    }catch(e){
+      // si el navegador bloquea el almacenamiento, el progreso solo dura la sesión
+    }
+  }
+
+  function shuffle(arr){
+    const a = arr.slice();
+    for(let i = a.length - 1; i > 0; i--){
+      const j = Math.floor(Math.random() * (i + 1));
+      [a[i], a[j]] = [a[j], a[i]];
+    }
+    return a;
+  }
+
+  function newOrder(){
+    const pending = players
+      .map((p, i) => i)
+      .filter(i => !completed.has(players[i].name));
+    // Si ya se completó la colección entera, se vuelve a barajar con todos
+    order = shuffle(pending.length > 0 ? pending : players.map((_, i) => i));
+  }
+
+  function currentPlayer(){
+    return players[order[currentIndex]];
+  }
+
+  function renderPath(){
+    const player = currentPlayer();
+    pathTrack.innerHTML = '';
+    player.stops.forEach((stop, i) => {
+      const clubName = stop.club;
+      const club = clubData[clubName];
+      const col = document.createElement('div');
+      col.className = 'badge-col';
+
+      const step = document.createElement('div');
+      step.className = 'step-num';
+      step.textContent = i + 1;
+
+      const badge = document.createElement('div');
+      badge.className = 'badge';
+      badge.style.background = club.bg;
+      badge.style.color = club.fg;
+
+      if(club.logo){
+        const img = document.createElement('img');
+        img.src = club.logo;
+        img.alt = clubName;
+        img.className = 'badge-logo';
+        img.onerror = () => {
+          img.remove();
+          badge.textContent = club.abbr;
+        };
+        badge.appendChild(img);
+      } else {
+        badge.textContent = club.abbr;
+      }
+
+      const nameTag = document.createElement('div');
+      nameTag.className = 'club-name-tag';
+      nameTag.textContent = clubName;
+
+      badge.addEventListener('click', () => {
+        nameTag.classList.toggle('visible');
+      });
+
+      col.appendChild(badge);
+      col.appendChild(step);
+      col.appendChild(nameTag);
+      pathTrack.appendChild(col);
+
+      if(i < player.stops.length - 1){
+        const nextStop = player.stops[i + 1];
+        const arrowCol = document.createElement('div');
+        arrowCol.className = 'arrow-col';
+
+        const arrow = document.createElement('div');
+        arrow.className = 'arrow-glyph';
+        arrow.textContent = '➜';
+
+        const arrowFee = document.createElement('div');
+        const isEstimate = nextStop.fee.includes('(est.)');
+        arrowFee.className = 'arrow-fee' + (isEstimate ? ' estimate' : '');
+        arrowFee.textContent = nextStop.fee;
+
+        arrowCol.appendChild(arrow);
+        arrowCol.appendChild(arrowFee);
+
+        if(nextStop.year){
+          const arrowYear = document.createElement('div');
+          arrowYear.className = 'arrow-year';
+          arrowYear.textContent = nextStop.year;
+          arrowCol.appendChild(arrowYear);
+        }
+
+        pathTrack.appendChild(arrowCol);
+      }
+    });
+  }
+
+  function updateHeader(){
+    scoreVal.textContent = score;
+    progressVal.textContent = Math.min(currentIndex + 1, order.length);
+    totalLabel1.textContent = order.length;
+    totalLabel2.textContent = order.length;
+    backBtn.disabled = currentIndex === 0;
+  }
+
+  function showFeedback(kind, text){
+    feedback.className = 'feedback ' + kind;
+    feedback.textContent = text;
+  }
+
+  function clearFeedbackSoon(){
+    setTimeout(() => { feedback.textContent = ''; feedback.className = 'feedback'; }, 1600);
+  }
+
+  function advance(){
+    currentIndex++;
+    if(currentIndex >= order.length){
+      showFinal();
+    } else {
+      renderPath();
+      updateHeader();
+    }
+  }
+
+  function goBack(){
+    if(currentIndex === 0) return;
+    currentIndex--;
+    feedback.textContent = '';
+    feedback.className = 'feedback';
+    input.value = '';
+    hideSuggestions();
+    renderPath();
+    updateHeader();
+  }
+
+  function showFinal(){
+    gameArea.classList.add('hidden');
+    finalScreen.classList.remove('hidden');
+    finalScore.textContent = score;
+    totalLabel3.textContent = order.length;
+  }
+
+  function resetGame(){
+    newOrder();
+    currentIndex = 0;
+    score = 0;
+    answeredThisRound = new Set();
+    gameArea.classList.remove('hidden');
+    finalScreen.classList.add('hidden');
+    renderPath();
+    updateHeader();
+    feedback.textContent = '';
+    input.value = '';
+  }
+
+  function checkGuess(rawValue){
+    const norm = normalize(rawValue);
+    if(!norm) return;
+    const player = currentPlayer();
+    const candidates = [player.name, ...player.aliases].map(normalize);
+    if(candidates.includes(norm)){
+      if(!answeredThisRound.has(currentIndex)){
+        answeredThisRound.add(currentIndex);
+        score++;
+        completed.add(player.name);
+        saveCompleted();
+      }
+      showFeedback('correct', '¡Correcto! Era ' + player.name);
+      clearFeedbackSoon();
+      advance();
+    } else {
+      showFeedback('wrong', 'Incorrecto, sigue intentando');
+    }
+    input.value = '';
+    hideSuggestions();
+  }
+
+  input.addEventListener('keydown', (e) => {
+    if(e.key === 'Enter'){
+      checkGuess(input.value);
+    }
+  });
+
+  checkBtn.addEventListener('click', () => {
+    checkGuess(input.value);
+  });
+
+  skipBtn.addEventListener('click', () => {
+    showFeedback('skip', 'Jugador saltado');
+    clearFeedbackSoon();
+    advance();
+  });
+
+  backBtn.addEventListener('click', goBack);
+
+  replayBtn.addEventListener('click', resetGame);
+
+  // --- Colección ---
+
+  function renderCollection(){
+    collectionGrid.innerHTML = '';
+    const sorted = players.slice().sort((a, b) => a.name.localeCompare(b.name, 'es'));
+    sorted.forEach(player => {
+      const isDone = completed.has(player.name);
+      const item = document.createElement('div');
+      item.className = 'collection-item' + (isDone ? ' completed' : ' locked');
+
+      const check = document.createElement('span');
+      check.className = 'collection-check';
+      check.textContent = isDone ? '✓' : '?';
+
+      const label = document.createElement('span');
+      label.textContent = isDone ? player.name : 'Jugador bloqueado';
+      if(!isDone) label.className = 'locked-label';
+
+      item.appendChild(check);
+      item.appendChild(label);
+      collectionGrid.appendChild(item);
+    });
+    collectionCount.textContent = completed.size + '/' + players.length + ' completados';
+  }
+
+  function showTab(tab){
+    if(tab === 'collection'){
+      playView.classList.add('hidden');
+      collectionView.classList.remove('hidden');
+      tabCollection.classList.add('active');
+      tabPlay.classList.remove('active');
+      renderCollection();
+    } else {
+      collectionView.classList.add('hidden');
+      playView.classList.remove('hidden');
+      tabPlay.classList.add('active');
+      tabCollection.classList.remove('active');
+    }
+  }
+
+  tabPlay.addEventListener('click', () => showTab('play'));
+  tabCollection.addEventListener('click', () => showTab('collection'));
+
+  resetCollectionBtn.addEventListener('click', () => {
+    if(confirm('¿Seguro que quieres borrar tu progreso de la colección?')){
+      completed = new Set();
+      saveCompleted();
+      renderCollection();
+    }
+  });
+
+  newOrder();
+  renderPath();
+  updateHeader();
+</script>
+
+</body>
+</html>
 
