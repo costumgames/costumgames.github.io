@@ -1,1 +1,835 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>4 en Raya</title>
+<style>
+  :root {
+    --bg: #1a1a2e;
+    --panel: #16213e;
+    --accent: #e94560;
+    --accent2: #0f3460;
+    --x-color: #e94560;
+    --o-color: #ffd23f;
+    --text: #f1f1f1;
+    --muted: #8a8fa3;
+  }
+
+  * { box-sizing: border-box; }
+
+  body {
+    margin: 0;
+    min-height: 100vh;
+    background: linear-gradient(135deg, var(--bg), #0f0f1e);
+    color: var(--text);
+    font-family: 'Segoe UI', system-ui, sans-serif;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+  }
+
+  .app {
+    width: 100%;
+    max-width: 460px;
+    text-align: center;
+  }
+
+  h1 {
+    font-size: 1.7rem;
+    margin-bottom: 4px;
+    letter-spacing: 1px;
+  }
+
+  .subtitle {
+    color: var(--muted);
+    font-size: 0.9rem;
+    margin-bottom: 16px;
+  }
+
+  .placement-select {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 12px;
+    background: var(--panel);
+    padding: 6px;
+    border-radius: 12px;
+  }
+
+  .placement-btn {
+    flex: 1;
+    padding: 10px 6px;
+    border: none;
+    border-radius: 8px;
+    background: transparent;
+    color: var(--muted);
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.2s;
+    font-size: 0.85rem;
+  }
+
+  .placement-btn.active {
+    background: #533483;
+    color: white;
+  }
+
+  .mode-select {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 12px;
+    background: var(--panel);
+    padding: 6px;
+    border-radius: 12px;
+  }
+
+  .mode-btn {
+    flex: 1;
+    padding: 10px;
+    border: none;
+    border-radius: 8px;
+    background: transparent;
+    color: var(--muted);
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+    font-size: 0.9rem;
+  }
+
+  .mode-btn.active {
+    background: var(--accent);
+    color: white;
+  }
+
+  .status {
+    font-size: 1.1rem;
+    margin-bottom: 16px;
+    min-height: 28px;
+    font-weight: 600;
+  }
+
+  .board {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 6px;
+    background: var(--panel);
+    padding: 8px;
+    border-radius: 16px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.4);
+  }
+
+  .cell {
+    aspect-ratio: 1;
+    background: var(--accent2);
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 4px;
+    transition: background 0.15s, transform 0.1s;
+  }
+
+  .cell:hover:not(:disabled) {
+    background: #164a7d;
+  }
+
+  .cell:disabled {
+    cursor: default;
+  }
+
+  .cell.win {
+    background: #2d6a4f;
+    animation: pop 0.3s ease;
+  }
+
+  @keyframes pop {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.08); }
+    100% { transform: scale(1); }
+  }
+
+  .disc {
+    width: 80%;
+    height: 80%;
+    border-radius: 50%;
+    background: rgba(0,0,0,0.25);
+    transition: background 0.15s;
+  }
+
+  .disc-x {
+    background: var(--x-color);
+    box-shadow: 0 2px 6px rgba(0,0,0,0.4);
+  }
+
+  .disc-o {
+    background: var(--o-color);
+    box-shadow: 0 2px 6px rgba(0,0,0,0.4);
+  }
+
+  .controls {
+    margin-top: 20px;
+    display: flex;
+    gap: 10px;
+    justify-content: center;
+  }
+
+  .btn {
+    padding: 10px 20px;
+    border: none;
+    border-radius: 10px;
+    background: var(--accent);
+    color: white;
+    font-weight: 600;
+    cursor: pointer;
+    font-size: 0.9rem;
+    transition: opacity 0.2s;
+  }
+
+  .btn:hover { opacity: 0.85; }
+
+  .btn.secondary {
+    background: var(--panel);
+    border: 1px solid var(--accent2);
+  }
+
+  .online-panel {
+    margin-bottom: 16px;
+    background: var(--panel);
+    padding: 14px;
+    border-radius: 12px;
+    text-align: center;
+  }
+
+  .join-row {
+    display: flex;
+    gap: 8px;
+    margin-top: 10px;
+  }
+
+  .join-row input {
+    flex: 1;
+    padding: 9px 10px;
+    border-radius: 8px;
+    border: 1px solid var(--accent2);
+    background: #0f1830;
+    color: var(--text);
+    font-size: 0.9rem;
+    text-transform: uppercase;
+  }
+
+  .room-code {
+    font-size: 1.6rem;
+    font-weight: bold;
+    letter-spacing: 4px;
+    margin: 8px 0;
+    color: var(--o-color);
+  }
+
+  .connection-status {
+    margin-top: 10px;
+    font-size: 0.85rem;
+    color: var(--muted);
+    min-height: 18px;
+  }
+
+  .online-panel .btn {
+    margin-top: 4px;
+  }
+
+  .scoreboard {
+    display: flex;
+    justify-content: space-around;
+    margin-top: 20px;
+    background: var(--panel);
+    border-radius: 12px;
+    padding: 12px;
+  }
+
+  .score-item {
+    text-align: center;
+  }
+
+  .score-label {
+    font-size: 0.75rem;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+
+  .score-value {
+    font-size: 1.4rem;
+    font-weight: bold;
+    margin-top: 4px;
+  }
+</style>
+</head>
+<body>
+
+<div class="app">
+  <h1>🔴 4 en Raya 🟡</h1>
+  <div class="subtitle" id="subtitle">Conecta 4 fichas en línea antes que tu rival</div>
+
+  <div class="placement-select">
+    <button class="placement-btn active" data-placement="gravity">La ficha cae</button>
+    <button class="placement-btn" data-placement="free">Modo libre</button>
+  </div>
+
+  <div class="mode-select">
+    <button class="mode-btn active" data-mode="bot">Vs Bot</button>
+    <button class="mode-btn" data-mode="2p">2 Jugadores</button>
+    <button class="mode-btn" data-mode="online">Online</button>
+  </div>
+
+  <div class="online-panel" id="onlinePanel" style="display:none;">
+    <div id="onlineActions">
+      <button class="btn" id="createRoomBtn">Crear sala</button>
+      <div class="join-row">
+        <input type="text" id="joinCodeInput" placeholder="Código de sala" maxlength="8">
+        <button class="btn secondary" id="joinRoomBtn">Unirse</button>
+      </div>
+    </div>
+    <div id="roomInfo" style="display:none;">
+      <div>Código de tu sala:</div>
+      <div class="room-code" id="roomCodeDisplay"></div>
+      <button class="btn secondary" id="copyCodeBtn">Copiar código</button>
+    </div>
+    <div class="connection-status" id="connectionStatus"></div>
+    <button class="btn secondary" id="leaveRoomBtn" style="display:none;">Salir de la sala</button>
+  </div>
+
+  <div class="status" id="status">Tu turno (❌)</div>
+
+  <div class="board" id="board"></div>
+
+  <div class="controls">
+    <button class="btn" id="resetBtn">Nueva partida</button>
+    <button class="btn secondary" id="resetScoreBtn">Reiniciar marcador</button>
+  </div>
+
+  <div class="scoreboard">
+    <div class="score-item">
+      <div class="score-label">❌ Jugador</div>
+      <div class="score-value" id="scoreX">0</div>
+    </div>
+    <div class="score-item">
+      <div class="score-label">Empates</div>
+      <div class="score-value" id="scoreD">0</div>
+    </div>
+    <div class="score-item">
+      <div class="score-label" id="oLabel">⭕ Bot</div>
+      <div class="score-value" id="scoreO">0</div>
+    </div>
+  </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/peerjs/1.5.2/peerjs.min.js"></script>
+<script>
+(function() {
+  const ROWS = 6;
+  const COLS = 7;
+  const WIN_LENGTH = 4;
+
+  const boardEl = document.getElementById('board');
+  const statusEl = document.getElementById('status');
+  const subtitleEl = document.getElementById('subtitle');
+  const resetBtn = document.getElementById('resetBtn');
+  const resetScoreBtn = document.getElementById('resetScoreBtn');
+  const oLabel = document.getElementById('oLabel');
+
+  let placementMode = 'gravity'; // 'gravity' | 'free'
+  let board = Array(ROWS * COLS).fill(null);
+  let currentPlayer = 'X';
+  let gameOver = false;
+  let mode = 'bot'; // 'bot' | '2p' | 'online'
+  let scores = { X: 0, O: 0, D: 0 };
+
+  // ---- Online (WebRTC vía PeerJS) ----
+  let peer = null;
+  let conn = null;
+  let onlineRole = null;      // 'X' (anfitrión) o 'O' (invitado)
+  let onlineConnected = false;
+
+  function computeWinLines(rows, cols, winLength) {
+    const lines = [];
+    const dirs = [[0,1], [1,0], [1,1], [1,-1]];
+    for (let r = 0; r < rows; r++) {
+      for (let c = 0; c < cols; c++) {
+        for (const [dr, dc] of dirs) {
+          const endR = r + dr * (winLength - 1);
+          const endC = c + dc * (winLength - 1);
+          if (endR >= 0 && endR < rows && endC >= 0 && endC < cols) {
+            const line = [];
+            for (let k = 0; k < winLength; k++) {
+              line.push((r + dr * k) * cols + (c + dc * k));
+            }
+            lines.push(line);
+          }
+        }
+      }
+    }
+    return lines;
+  }
+
+  const WIN_LINES = computeWinLines(ROWS, COLS, WIN_LENGTH);
+
+  function createBoard() {
+    boardEl.innerHTML = '';
+    for (let i = 0; i < ROWS * COLS; i++) {
+      const cell = document.createElement('button');
+      cell.className = 'cell';
+      cell.dataset.index = i;
+      cell.addEventListener('click', () => handleCellClick(i));
+      boardEl.appendChild(cell);
+    }
+  }
+
+  function render() {
+    const cells = boardEl.querySelectorAll('.cell');
+    board.forEach((val, i) => {
+      cells[i].innerHTML = '';
+      const disc = document.createElement('div');
+      disc.className = 'disc' + (val === 'X' ? ' disc-x' : val === 'O' ? ' disc-o' : '');
+      cells[i].appendChild(disc);
+      cells[i].classList.remove('win');
+
+      let disabled = gameOver || !!val && placementMode === 'free';
+      if (placementMode === 'gravity') {
+        const col = i % COLS;
+        disabled = gameOver || board[col] !== null; // columna llena si la fila de arriba está ocupada
+      } else {
+        disabled = gameOver || val !== null;
+      }
+      if (mode === 'online' && !onlineConnected) disabled = true;
+      cells[i].disabled = disabled;
+    });
+  }
+
+  function checkWinner(b) {
+    for (const line of WIN_LINES) {
+      const first = b[line[0]];
+      if (first && line.every(idx => b[idx] === first)) {
+        return { winner: first, line };
+      }
+    }
+    if (b.every(cell => cell)) return { winner: 'draw', line: null };
+    return null;
+  }
+
+  // ---- Aplicación de jugadas (según el modo de colocación) ----
+  function applyMove(b, move, player) {
+    if (placementMode === 'free') {
+      if (b[move] !== null) return -1;
+      b[move] = player;
+      return move;
+    } else {
+      for (let r = ROWS - 1; r >= 0; r--) {
+        const idx = r * COLS + move;
+        if (b[idx] === null) {
+          b[idx] = player;
+          return idx;
+        }
+      }
+      return -1;
+    }
+  }
+
+  function undoMove(b, move, idx) {
+    if (placementMode === 'free') {
+      b[move] = null;
+    } else {
+      b[idx] = null;
+    }
+  }
+
+  function getValidMoves(b) {
+    if (placementMode === 'free') {
+      return b.map((v, i) => v ? null : i).filter(v => v !== null);
+    } else {
+      const valid = [];
+      for (let c = 0; c < COLS; c++) {
+        if (b[c] === null) valid.push(c);
+      }
+      return valid;
+    }
+  }
+
+  function handleCellClick(i) {
+    if (gameOver) return;
+    if (mode === 'bot' && currentPlayer === 'O') return;
+    if (mode === 'online') {
+      if (!onlineConnected || currentPlayer !== onlineRole) return;
+    }
+
+    let move;
+    if (placementMode === 'free') {
+      if (board[i]) return;
+      move = i;
+    } else {
+      move = i % COLS;
+      if (board[move] !== null) return; // columna llena
+    }
+
+    const idx = applyMove(board, move, currentPlayer);
+    if (idx === -1) return;
+    render();
+
+    if (mode === 'online' && conn) conn.send({ type: 'move', move });
+
+    const result = checkWinner(board);
+    if (result) {
+      endGame(result);
+      return;
+    }
+
+    currentPlayer = currentPlayer === 'X' ? 'O' : 'X';
+    updateStatus();
+
+    if (mode === 'bot' && currentPlayer === 'O' && !gameOver) {
+      statusEl.textContent = 'El bot está pensando...';
+      setTimeout(botMove, 400);
+    }
+  }
+
+  function updateStatus() {
+    if (gameOver) return;
+    if (mode === 'online') {
+      if (!onlineConnected) {
+        statusEl.textContent = 'Crea o únete a una sala para jugar';
+      } else if (currentPlayer === onlineRole) {
+        statusEl.textContent = `Tu turno (${onlineRole === 'X' ? '❌' : '⭕'})`;
+      } else {
+        statusEl.textContent = 'Turno de tu rival...';
+      }
+    } else if (mode === 'bot') {
+      statusEl.textContent = currentPlayer === 'X' ? 'Tu turno (❌)' : 'Turno del bot (⭕)';
+    } else {
+      statusEl.textContent = `Turno de ${currentPlayer === 'X' ? '❌' : '⭕'}`;
+    }
+  }
+
+  function endGame(result) {
+    gameOver = true;
+    render();
+    if (result.winner === 'draw') {
+      statusEl.textContent = '¡Empate! 🤝';
+      scores.D++;
+    } else {
+      const cells = boardEl.querySelectorAll('.cell');
+      result.line.forEach(idx => cells[idx].classList.add('win'));
+      if (mode === 'bot') {
+        statusEl.textContent = result.winner === 'X' ? '¡Ganaste! 🎉' : 'Ganó el bot 🤖';
+      } else if (mode === 'online') {
+        statusEl.textContent = result.winner === onlineRole ? '¡Ganaste! 🎉' : 'Ganó tu rival 😅';
+      } else {
+        statusEl.textContent = `¡Ganó ${result.winner === 'X' ? '❌' : '⭕'}! 🎉`;
+      }
+      scores[result.winner]++;
+    }
+    updateScoreboard();
+  }
+
+  function updateScoreboard() {
+    document.getElementById('scoreX').textContent = scores.X;
+    document.getElementById('scoreO').textContent = scores.O;
+    document.getElementById('scoreD').textContent = scores.D;
+  }
+
+  // ---- Evaluación heurística (para la búsqueda con profundidad limitada) ----
+  function evaluateWindow(window, player) {
+    const opponent = player === 'O' ? 'X' : 'O';
+    const countPlayer = window.filter(v => v === player).length;
+    const countOpp = window.filter(v => v === opponent).length;
+    const countEmpty = window.filter(v => v === null).length;
+    if (countPlayer > 0 && countOpp > 0) return 0;
+    if (countPlayer === window.length) return 100000;
+    if (countPlayer === window.length - 1 && countEmpty === 1) return 50;
+    if (countPlayer === window.length - 2 && countEmpty === 2) return 10;
+    if (countOpp === window.length - 1 && countEmpty === 1) return -80;
+    return 0;
+  }
+
+  function heuristic(b) {
+    let score = 0;
+    for (const line of WIN_LINES) {
+      score += evaluateWindow(line.map(i => b[i]), 'O');
+    }
+    const centerCol = Math.floor(COLS / 2);
+    for (let r = 0; r < ROWS; r++) {
+      const v = b[r * COLS + centerCol];
+      if (v === 'O') score += 6;
+      else if (v === 'X') score -= 6;
+    }
+    return score;
+  }
+
+  // ---- Minimax con poda alfa-beta ----
+  function minimax(b, depth, alpha, beta, isMaximizing) {
+    const result = checkWinner(b);
+    if (result) {
+      if (result.winner === 'O') return 100000 + depth;
+      if (result.winner === 'X') return -100000 - depth;
+      return 0;
+    }
+    if (depth === 0) return heuristic(b);
+
+    const moves = getValidMoves(b);
+    if (isMaximizing) {
+      let best = -Infinity;
+      for (const move of moves) {
+        const idx = applyMove(b, move, 'O');
+        best = Math.max(best, minimax(b, depth - 1, alpha, beta, false));
+        undoMove(b, move, idx);
+        alpha = Math.max(alpha, best);
+        if (alpha >= beta) break;
+      }
+      return best;
+    } else {
+      let best = Infinity;
+      for (const move of moves) {
+        const idx = applyMove(b, move, 'X');
+        best = Math.min(best, minimax(b, depth - 1, alpha, beta, true));
+        undoMove(b, move, idx);
+        beta = Math.min(beta, best);
+        if (beta <= alpha) break;
+      }
+      return best;
+    }
+  }
+
+  function bestMove(depth) {
+    const moves = getValidMoves(board);
+    let bestScore = -Infinity;
+    let move = moves[0];
+    for (const m of moves) {
+      const idx = applyMove(board, m, 'O');
+      const score = minimax(board, depth - 1, -Infinity, Infinity, false);
+      undoMove(board, m, idx);
+      if (score > bestScore) {
+        bestScore = score;
+        move = m;
+      }
+    }
+    return move;
+  }
+
+  function randomMove() {
+    const moves = getValidMoves(board);
+    return moves[Math.floor(Math.random() * moves.length)];
+  }
+
+  // Nivel único de bot: fuerte pero vencible.
+  // En modo libre hay muchas más jugadas posibles (hasta 42), así que se
+  // busca menos profundo para que responda rápido; con gravedad (máx. 7
+  // columnas por turno) puede permitirse mirar más adelante.
+  const MISTAKE_CHANCE = 0.15;
+
+  function getSearchDepth() {
+    return placementMode === 'gravity' ? 4 : 2;
+  }
+
+  function botMove() {
+    if (gameOver) return;
+    const move = Math.random() < MISTAKE_CHANCE
+      ? randomMove()
+      : bestMove(getSearchDepth());
+    const idx = applyMove(board, move, 'O');
+    render();
+    const result = checkWinner(board);
+    if (result) {
+      endGame(result);
+      return;
+    }
+    currentPlayer = 'X';
+    updateStatus();
+  }
+
+  // ---- Lógica de sala online (WebRTC vía PeerJS) ----
+  function generateRoomCode() {
+    return Math.random().toString(36).substring(2, 8).toUpperCase();
+  }
+
+  function lockPlacementControls(locked) {
+    document.querySelectorAll('.placement-btn').forEach(b => b.disabled = locked);
+  }
+
+  function updateSubtitle() {
+    subtitleEl.textContent = placementMode === 'gravity'
+      ? 'Conecta 4 fichas en línea; las fichas caen hasta el fondo de la columna'
+      : 'Conecta 4 fichas en línea; coloca cada ficha donde quieras';
+  }
+
+  function setPlacementMode(newMode) {
+    placementMode = newMode;
+    document.querySelectorAll('.placement-btn').forEach(b => b.classList.toggle('active', b.dataset.placement === newMode));
+    updateSubtitle();
+    resetGame();
+  }
+
+  function setupConnectionHandlers() {
+    conn.on('data', handleOnlineData);
+    conn.on('close', () => {
+      document.getElementById('connectionStatus').textContent = 'Tu rival se desconectó.';
+      onlineConnected = false;
+      lockPlacementControls(false);
+      render();
+      updateStatus();
+    });
+  }
+
+  function handleOnlineData(data) {
+    if (data.type === 'init') {
+      setPlacementMode(data.placementMode);
+    } else if (data.type === 'move') {
+      const idx = applyMove(board, data.move, currentPlayer);
+      if (idx === -1) return;
+      render();
+      const result = checkWinner(board);
+      if (result) {
+        endGame(result);
+        return;
+      }
+      currentPlayer = currentPlayer === 'X' ? 'O' : 'X';
+      updateStatus();
+    } else if (data.type === 'reset') {
+      resetGame();
+    }
+  }
+
+  function createRoom() {
+    if (typeof Peer === 'undefined') {
+      document.getElementById('connectionStatus').textContent = 'No se pudo cargar la librería de conexión.';
+      return;
+    }
+    const code = generateRoomCode();
+    document.getElementById('connectionStatus').textContent = 'Creando sala...';
+    peer = new Peer('ttt-' + code);
+    peer.on('open', () => {
+      document.getElementById('roomCodeDisplay').textContent = code;
+      document.getElementById('roomInfo').style.display = 'block';
+      document.getElementById('onlineActions').style.display = 'none';
+      document.getElementById('leaveRoomBtn').style.display = 'inline-block';
+      document.getElementById('connectionStatus').textContent = 'Esperando a que se una tu rival...';
+    });
+    peer.on('connection', (c) => {
+      conn = c;
+      onlineRole = 'X';
+      setupConnectionHandlers();
+      conn.on('open', () => {
+        onlineConnected = true;
+        document.getElementById('connectionStatus').textContent = '¡Conectado! Tú eres ❌';
+        lockPlacementControls(true);
+        conn.send({ type: 'init', placementMode: placementMode });
+        resetGame();
+      });
+    });
+    peer.on('error', () => {
+      document.getElementById('connectionStatus').textContent = 'Error al crear la sala. Intenta de nuevo.';
+    });
+  }
+
+  function joinRoom() {
+    if (typeof Peer === 'undefined') {
+      document.getElementById('connectionStatus').textContent = 'No se pudo cargar la librería de conexión.';
+      return;
+    }
+    const codeInput = document.getElementById('joinCodeInput').value.trim().toUpperCase();
+    if (!codeInput) return;
+    document.getElementById('connectionStatus').textContent = 'Conectando...';
+    peer = new Peer();
+    onlineRole = 'O';
+    peer.on('open', () => {
+      conn = peer.connect('ttt-' + codeInput, { reliable: true });
+      setupConnectionHandlers();
+      conn.on('open', () => {
+        onlineConnected = true;
+        document.getElementById('connectionStatus').textContent = '¡Conectado! Tú eres ⭕';
+        document.getElementById('onlineActions').style.display = 'none';
+        document.getElementById('leaveRoomBtn').style.display = 'inline-block';
+        lockPlacementControls(true);
+      });
+    });
+    peer.on('error', () => {
+      document.getElementById('connectionStatus').textContent = 'No se pudo conectar. Revisa el código.';
+    });
+  }
+
+  function leaveRoom() {
+    if (conn) { try { conn.close(); } catch (e) {} conn = null; }
+    if (peer) { try { peer.destroy(); } catch (e) {} peer = null; }
+    onlineConnected = false;
+    onlineRole = null;
+    lockPlacementControls(false);
+    document.getElementById('roomInfo').style.display = 'none';
+    document.getElementById('onlineActions').style.display = 'block';
+    document.getElementById('leaveRoomBtn').style.display = 'none';
+    document.getElementById('connectionStatus').textContent = '';
+    document.getElementById('joinCodeInput').value = '';
+  }
+
+  document.getElementById('createRoomBtn').addEventListener('click', createRoom);
+  document.getElementById('joinRoomBtn').addEventListener('click', joinRoom);
+  document.getElementById('leaveRoomBtn').addEventListener('click', () => {
+    leaveRoom();
+    resetGame();
+  });
+  document.getElementById('copyCodeBtn').addEventListener('click', () => {
+    const code = document.getElementById('roomCodeDisplay').textContent;
+    navigator.clipboard.writeText(code).then(() => {
+      const btn = document.getElementById('copyCodeBtn');
+      const original = btn.textContent;
+      btn.textContent = '¡Copiado!';
+      setTimeout(() => { btn.textContent = original; }, 1500);
+    }).catch(() => {});
+  });
+
+  // ---- Controles ----
+  function resetGame() {
+    board = Array(ROWS * COLS).fill(null);
+    currentPlayer = 'X';
+    gameOver = false;
+    render();
+    updateStatus();
+  }
+
+  resetBtn.addEventListener('click', () => {
+    resetGame();
+    if (mode === 'online' && conn && onlineConnected) conn.send({ type: 'reset' });
+  });
+
+  resetScoreBtn.addEventListener('click', () => {
+    scores = { X: 0, O: 0, D: 0 };
+    updateScoreboard();
+  });
+
+  document.querySelectorAll('.placement-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      setPlacementMode(btn.dataset.placement);
+    });
+  });
+
+  document.querySelectorAll('.mode-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('.mode-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      const newMode = btn.dataset.mode;
+      if (mode === 'online' && newMode !== 'online') leaveRoom();
+      mode = newMode;
+      document.getElementById('onlinePanel').style.display = mode === 'online' ? 'block' : 'none';
+      oLabel.textContent = mode === 'bot' ? '⭕ Bot' : (mode === 'online' ? '⭕ Rival' : '⭕ Jugador');
+      scores = { X: 0, O: 0, D: 0 };
+      updateScoreboard();
+      resetGame();
+    });
+  });
+
+  createBoard();
+  resetGame();
+})();
+</script>
+
+</body>
+</html>
 
