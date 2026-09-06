@@ -2033,8 +2033,13 @@ function updateBoss(){
     if(boss.t%210===105) bossShootAimed(boss,4,3.8);
   }
 
-  if(dist(boss,player) < boss.r+player.r && player.invuln<=0){
-    hitPlayer(threatDamage(1));
+if(dist(boss,player) < boss.r+player.r && player.invuln<=0){
+  hitPlayer(threatDamage(1));
+
+  // Si el golpe nos ha matado, gameOver() pone boss=null.
+  // Salimos inmediatamente para no intentar usar boss.r después.
+  if(gameState !== 'playing' || !boss) return;
+  }
   }
 }
 
