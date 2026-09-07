@@ -361,9 +361,39 @@
   }
 
   function randomPiece(){
-    const shape = normalizeShape(SHAPES[Math.floor(Math.random()*SHAPES.length)]);
+    const shape = weightedRandomShape(getDifficultyLevel());
     const color = COLORS[Math.floor(Math.random()*COLORS.length)];
     return { shape, color };
+  }
+
+  // Nivel de dificultad de 0 (inicio) a 1 (máxima dificultad), según la puntuación.
+  // Sube progresivamente y se estabiliza en el máximo tras DIFFICULTY_SCORE_CAP puntos.
+  const DIFFICULTY_SCORE_CAP = 1400;
+  function getDifficultyLevel(){
+    return Math.min(1, score / DIFFICULTY_SCORE_CAP);
+  }
+
+  // Cuanto más grande/irregular es una pieza (más celdas), más difícil es encajarla.
+  // A nivel 0 se favorecen las piezas pequeñas; a nivel 1, las grandes.
+  function pieceWeight(size, level){
+    const easyW = 7 - size;   // piezas pequeñas: peso alto al principio
+    const hardW = size;       // piezas grandes: peso alto al final
+    return Math.max(0.15, easyW * (1 - level) + hardW * level);
+  }
+
+  function weightedRandomShape(level){
+    const items = SHAPES.map(s=>{
+      const shape = normalizeShape(s);
+      return { shape, size: shape.length };
+    });
+    const weights = items.map(it => pieceWeight(it.size, level));
+    const total = weights.reduce((a,b)=>a+b, 0);
+    let r = Math.random() * total;
+    for(let i=0;i<items.length;i++){
+      r -= weights[i];
+      if(r <= 0) return items[i].shape;
+    }
+    return items[items.length - 1].shape;
   }
 
   function buildBoard(){
