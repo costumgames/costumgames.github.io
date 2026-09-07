@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link rel="icon" type="image/png" href="./costum-favicon.png">
+<link rel="icon" type="image/png" href="./costum-favicon.png">
     
     <title>COSTUM — Juegos</title>
 
@@ -48,6 +48,17 @@
             height: auto;
             display: block;
             margin: 0 auto 10px;
+        }
+
+        .brand {
+            margin: 0;
+            font-size: clamp(48px, 8vw, 76px);
+            font-weight: 900;
+            letter-spacing: 5px;
+        }
+
+        .brand span {
+            color: #65e6a5;
         }
 
         .subtitle {
@@ -96,7 +107,8 @@
             width: 100%;
             height: 220px;
             border-radius: 17px;
-            background: linear-gradient(135deg, #0b3d2e, #145b45);
+            background:
+                linear-gradient(135deg, #0b3d2e, #145b45);
             display: flex;
             align-items: center;
             justify-content: center;
@@ -110,21 +122,8 @@
             object-fit: contain;
         }
 
-        /* ESTILO PARA EL CANVAS EN LA TARJETA */
-        .game-canvas-container {
-            width: 100%;
-            height: 220px;
-            border-radius: 17px;
-            overflow: hidden;
-            margin-bottom: 20px;
-            background: #000;
-            border: 1px solid #65e6a5;
-        }
-
-        .game-canvas-container canvas {
-            width: 100%;
-            height: 100%;
-            display: block;
+        .placeholder {
+            font-size: 80px;
         }
 
         .game-name {
@@ -173,7 +172,7 @@
                 font-size: 29px;
             }
 
-            .game-image, .game-canvas-container {
+            .game-image {
                 height: 190px;
             }
         }
@@ -184,52 +183,76 @@
 
 <div class="container">
 
-    <header>
-        <img src="costum-logo.png" alt="COSTUM" class="costum-logo">
-        <p class="subtitle">Tu plataforma de juegos</p>
-    </header>
+  <header>
+    <img src="costum-logo.png" alt="COSTUM" class="costum-logo">
+
+    <p class="subtitle">
+        Tu plataforma de juegos
+    </p>
+</header>
+
 
     <main>
 
-        <h2 class="section-title">Juegos</h2>
+        <h2 class="section-title">
+            Juegos
+        </h2>
+
 
         <div class="games">
 
-            <!-- JUEGO INTERACTIVO EN TARJETA -->
-            <div class="game-card">
-                <div class="game-canvas-container">
-                    <canvas id="gameCanvas" width="300" height="220"></canvas>
-                </div>
-                <div class="game-name">Minijuego Arcade</div>
-                <div class="game-description">
-                    Juega directamente aquí. Usa las flechas (o A/D) para moverte.
-                </div>
-                <span class="play-button" style="cursor: default;">En vivo</span>
-            </div>
-
             <!-- VALORCRACKS -->
+
             <a class="game-card" href="valorcracks/">
+
                 <div class="game-image">
-                    <img src="valorcracks/valorcracks-logo.png" alt="ValorCracks">
+                    <img
+                        src="valorcracks/valorcracks-logo.png"
+                        alt="ValorCracks"
+                    >
                 </div>
-                <div class="game-name">ValorCracks</div>
+
+                <div class="game-name">
+                    ValorCracks
+                </div>
+
                 <div class="game-description">
-                    Compara los valores de mercado de jugadores de fútbol y demuestra cuánto sabes.
+                    Compara los valores de mercado de
+                    jugadores de fútbol y demuestra cuánto sabes.
                 </div>
-                <span class="play-button">Jugar</span>
+
+                <span class="play-button">
+                    Jugar
+                </span>
+
             </a>
+
 
             <!-- CRIPTA: DESCENSO -->
+
             <a class="game-card" href="cripta/">
+
                 <div class="game-image">
-                    <img src="cripta/logo.png" alt="Cripta: Descenso">
+                    <img
+                        src="cripta/logo.png"
+                        alt="Cripta: Descenso"
+                    >
                 </div>
-                <div class="game-name">Cripta: Descenso</div>
+
+                <div class="game-name">
+                    Cripta: Descenso
+                </div>
+
                 <div class="game-description">
-                    Has cruzado el umbral de la cripta invertida. Cuanto más escalas hacia las torres olvidadas, más profundo te arrastra la maldición del abismo.
+<p>Has cruzado el umbral de la cripta invertida. Aquí, las leyes del mundo exterior se disuelven: cuanto más escalas hacia las torres olvidadas, más profundo te arrastra la maldición del abismo. Tu viaje no busca la superficie, sino el corazón insondable de la ruina.</p>
                 </div>
-                <span class="play-button">Jugar</span>
+
+                <span class="play-button">
+                    Jugar
+                </span>
+
             </a>
+
 
             <!-- 4 EN RAYA -->
             <a class="game-card" href="4%20en%20raya/">
@@ -291,9 +314,22 @@
                 <span class="play-button">Jugar</span>
             </a>
 
+            <!-- JUEGO INTEGRADO EN TARJETA -->
+            <div class="game-card">
+                <div class="game-image" style="background: #000; padding: 0;">
+                    <canvas id="gameCanvas" width="300" height="220" style="width: 100%; height: 100%; border-radius: 17px; display: block;"></canvas>
+                </div>
+                <div class="game-name">Minijuego Arcade</div>
+                <div class="game-description">
+                    Juega directamente aquí. Usa las flechas (o A/D) para moverte.
+                </div>
+                <span class="play-button" style="cursor: default;">En vivo</span>
+            </div>
+
         </div>
 
     </main>
+
 
     <footer>
         © COSTUM
