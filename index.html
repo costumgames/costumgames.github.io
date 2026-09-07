@@ -202,57 +202,28 @@
         <div class="games">
 
             <!-- VALORCRACKS -->
-
             <a class="game-card" href="valorcracks/">
-
                 <div class="game-image">
-                    <img
-                        src="valorcracks/valorcracks-logo.png"
-                        alt="ValorCracks"
-                    >
+                    <img src="valorcracks/valorcracks-logo.png" alt="ValorCracks">
                 </div>
-
-                <div class="game-name">
-                    ValorCracks
-                </div>
-
+                <div class="game-name">ValorCracks</div>
                 <div class="game-description">
-                    Compara los valores de mercado de
-                    jugadores de fútbol y demuestra cuánto sabes.
+                    Compara los valores de mercado de jugadores de fútbol y demuestra cuánto sabes.
                 </div>
-
-                <span class="play-button">
-                    Jugar
-                </span>
-
+                <span class="play-button">Jugar</span>
             </a>
 
-
             <!-- CRIPTA: DESCENSO -->
-
             <a class="game-card" href="cripta/">
-
                 <div class="game-image">
-                    <img
-                        src="cripta/logo.png"
-                        alt="Cripta: Descenso"
-                    >
+                    <img src="cripta/logo.png" alt="Cripta: Descenso">
                 </div>
-
-                <div class="game-name">
-                    Cripta: Descenso
-                </div>
-
+                <div class="game-name">Cripta: Descenso</div>
                 <div class="game-description">
 <p>Has cruzado el umbral de la cripta invertida. Aquí, las leyes del mundo exterior se disuelven: cuanto más escalas hacia las torres olvidadas, más profundo te arrastra la maldición del abismo. Tu viaje no busca la superficie, sino el corazón insondable de la ruina.</p>
                 </div>
-
-                <span class="play-button">
-                    Jugar
-                </span>
-
+                <span class="play-button">Jugar</span>
             </a>
-
 
             <!-- 4 EN RAYA -->
             <a class="game-card" href="4%20en%20raya/">
@@ -314,68 +285,27 @@
                 <span class="play-button">Jugar</span>
             </a>
 
-            <!-- JUEGO INTEGRADO EN TARJETA -->
-            <div class="game-card">
-                <div class="game-image" style="background: #000; padding: 0;">
-                    <canvas id="gameCanvas" width="300" height="220" style="width: 100%; height: 100%; border-radius: 17px; display: block;"></canvas>
+            <!-- CIMA INFINITA -->
+            <a class="game-card" href="cima%20infinita/">
+                <div class="game-image">
+                    <img src="cima%20infinita/logo.png" alt="Cima Infinita">
                 </div>
-                <div class="game-name">Minijuego Arcade</div>
+                <div class="game-name">Cima Infinita</div>
                 <div class="game-description">
-                    Juega directamente aquí. Usa las flechas (o A/D) para moverte.
+                    Llega a lo más alto y supera todos los obstáculos en Cima Infinita.
                 </div>
-                <span class="play-button" style="cursor: default;">En vivo</span>
-            </div>
+                <span class="play-button">Jugar</span>
+            </a>
 
         </div>
 
     </main>
-
 
     <footer>
         © COSTUM
     </footer>
 
 </div>
-
-<!-- SCRIPT DEL JUEGO INTEGRADO -->
-<script>
-    const canvas = document.getElementById('gameCanvas');
-    const ctx = canvas.getContext('2d');
-
-    let x = canvas.width / 2;
-    let y = canvas.height - 25;
-    let dx = 0;
-
-    function drawPlayer() {
-        ctx.fillStyle = '#65e6a5';
-        ctx.fillRect(x - 15, y - 10, 30, 15);
-    }
-
-    function update() {
-        ctx.clearRect(0, 0, canvas.width, canvas.height);
-        
-        ctx.fillStyle = '#06100c';
-        ctx.fillRect(0, 0, canvas.width, canvas.height);
-
-        x += dx;
-        if (x < 15) x = 15;
-        if (x > canvas.width - 15) x = canvas.width - 15;
-
-        drawPlayer();
-        requestAnimationFrame(update);
-    }
-
-    document.addEventListener('keydown', (e) => {
-        if (e.key === 'ArrowLeft' || e.key === 'a') dx = -3;
-        if (e.key === 'ArrowRight' || e.key === 'd') dx = 3;
-    });
-
-    document.addEventListener('keyup', (e) => {
-        if (['ArrowLeft', 'ArrowRight', 'a', 'd'].includes(e.key)) dx = 0;
-    });
-
-    update();
-</script>
 
 </body>
 </html>
