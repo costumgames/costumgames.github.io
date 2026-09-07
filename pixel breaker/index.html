@@ -1,1 +1,394 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<title>Pixel Breaker</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    background: radial-gradient(circle at center, #1a1a2e 0%, #0a0a12 100%);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 100vh;
+    font-family: 'Segoe UI', Tahoma, sans-serif;
+    color: #fff;
+    overflow: hidden;
+    user-select: none;
+  }
+  h1 {
+    letter-spacing: 6px;
+    font-size: 28px;
+    margin-bottom: 10px;
+    background: linear-gradient(90deg, #00f2fe, #4facfe, #f093fb);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+    text-shadow: 0 0 20px rgba(79,172,254,0.4);
+  }
+  #hud {
+    display: flex;
+    gap: 30px;
+    margin-bottom: 12px;
+    font-size: 16px;
+    font-weight: bold;
+  }
+  #hud span { color: #4facfe; }
+  #wrap {
+    position: relative;
+    border-radius: 12px;
+    box-shadow: 0 0 40px rgba(79,172,254,0.25), inset 0 0 20px rgba(0,0,0,0.5);
+  }
+  canvas {
+    display: block;
+    background: #05050a;
+    border: 2px solid #2a2a4a;
+    border-radius: 12px;
+  }
+  #overlay {
+    position: absolute;
+    top: 0; left: 0; right: 0; bottom: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    background: rgba(5,5,10,0.85);
+    border-radius: 12px;
+    text-align: center;
+    gap: 14px;
+  }
+  #overlay h2 {
+    font-size: 26px;
+    color: #f093fb;
+  }
+  #overlay p { color: #aab; max-width: 280px; font-size: 14px; line-height: 1.4; }
+  button {
+    background: linear-gradient(90deg, #00f2fe, #4facfe);
+    border: none;
+    padding: 12px 28px;
+    border-radius: 30px;
+    color: #05050a;
+    font-weight: bold;
+    font-size: 15px;
+    cursor: pointer;
+    letter-spacing: 1px;
+    transition: transform 0.15s ease;
+  }
+  button:hover { transform: scale(1.06); }
+  #hint {
+    margin-top: 14px;
+    font-size: 12px;
+    color: #667;
+    letter-spacing: 1px;
+  }
+</style>
+</head>
+<body>
+<h1>PIXEL BREAKER</h1>
+<div id="hud">
+  <div>Puntos: <span id="score">0</span></div>
+  <div>Vidas: <span id="lives">3</span></div>
+  <div>Nivel: <span id="level">1</span></div>
+</div>
+<div id="wrap">
+  <canvas id="game" width="640" height="480"></canvas>
+  <div id="overlay">
+    <h2 id="overlayTitle">¡Prepárate!</h2>
+    <p id="overlayText">Mueve el ratón, las flechas ← → o A/D. Espacio o clic para lanzar. Hay muros grises indestructibles: cuela la bola por sus huecos para llegar a los píxeles y romperlos. Infinito y cada vez más difícil.</p>
+    <button id="startBtn">Jugar</button>
+  </div>
+</div>
+<div id="hint">← → · A / D · o ratón para mover · ESPACIO / clic para lanzar · Modo infinito</div>
+
+<script>
+const canvas = document.getElementById('game');
+const ctx = canvas.getContext('2d');
+const W = canvas.width, H = canvas.height;
+
+const scoreEl = document.getElementById('score');
+const livesEl = document.getElementById('lives');
+const levelEl = document.getElementById('level');
+const overlay = document.getElementById('overlay');
+const overlayTitle = document.getElementById('overlayTitle');
+const overlayText = document.getElementById('overlayText');
+const startBtn = document.getElementById('startBtn');
+
+let score = 0, lives = 3, level = 1;
+let running = false, launched = false;
+
+// Paddle
+const paddle = { w: 90, h: 14, x: W/2 - 45, y: H - 30, speed: 8, dx: 0 };
+
+// Ball
+const ball = { r: 4, x: W/2, y: paddle.y - 10, dx: 4, dy: -4, speed: 5 };
+
+// Bricks
+const rowColors = ['#f093fb','#f5576c','#4facfe','#00f2fe','#43e97b','#fbbf24'];
+let bricks = [];
+let brickInfo = { cols: 16, pad: 3, left: 0, w: 0 };
+
+function buildLevel(lv) {
+  brickInfo.w = (W - brickInfo.pad * (brickInfo.cols + 1)) / brickInfo.cols;
+  brickInfo.left = brickInfo.pad;
+  bricks = [];
+
+  // --- Muros indestructibles con huecos ---
+  const wallH = 14;
+  const wallRows = lv > 10 ? 2 : 1;
+  const gapsPerRow = Math.max(1, 3 - Math.floor(lv / 6));
+  let wallTop = 44;
+  for (let wr = 0; wr < wallRows; wr++) {
+    const gapCols = new Set();
+    while (gapCols.size < gapsPerRow) {
+      gapCols.add(Math.floor(Math.random() * brickInfo.cols));
+    }
+    const y = wallTop + wr * (wallH + brickInfo.pad);
+    for (let c = 0; c < brickInfo.cols; c++) {
+      if (gapCols.has(c)) continue; // hueco: aquí puede pasar la bola
+      bricks.push({
+        x: brickInfo.left + c * (brickInfo.w + brickInfo.pad),
+        y: y, w: brickInfo.w, h: wallH,
+        alive: true, hp: Infinity, maxHp: Infinity,
+        type: 'wall', color: '#4a4a5e'
+      });
+    }
+  }
+
+  // --- Campo denso de píxeles destruibles detrás del muro ---
+  const pixelH = 11;
+  const pixelPad = 2;
+  const pixelTop = wallTop + wallRows * (wallH + brickInfo.pad) + 10;
+  const pixelRows = Math.min(8 + Math.floor(lv / 2), 20);
+  const maxHp = Math.min(1 + Math.floor(lv / 4), 4);
+  for (let r = 0; r < pixelRows; r++) {
+    for (let c = 0; c < brickInfo.cols; c++) {
+      const hpChance = Math.min(0.1 + lv * 0.03, 0.8);
+      const hp = Math.random() < hpChance ? 1 + Math.floor(Math.random() * maxHp) : 1;
+      bricks.push({
+        x: brickInfo.left + c * (brickInfo.w + brickInfo.pad),
+        y: pixelTop + r * (pixelH + pixelPad),
+        w: brickInfo.w, h: pixelH,
+        alive: true, hp: hp, maxHp: hp,
+        type: 'pixel', color: rowColors[r % rowColors.length]
+      });
+    }
+  }
+}
+
+function resetBallAndPaddle() {
+  paddle.x = W/2 - paddle.w/2;
+  ball.x = paddle.x + paddle.w/2;
+  ball.y = paddle.y - ball.r - 1;
+  ball.speed = Math.min(5 + (level - 1) * 0.4, 14);
+  const angle = (Math.random() * 0.6 - 0.3);
+  ball.dx = ball.speed * Math.sin(angle);
+  ball.dy = -ball.speed * Math.cos(angle);
+  launched = false;
+}
+
+function drawPaddle() {
+  const grad = ctx.createLinearGradient(paddle.x, 0, paddle.x + paddle.w, 0);
+  grad.addColorStop(0, '#00f2fe');
+  grad.addColorStop(1, '#4facfe');
+  ctx.fillStyle = grad;
+  roundRect(ctx, paddle.x, paddle.y, paddle.w, paddle.h, 7);
+  ctx.fill();
+}
+
+function drawBall() {
+  const grad = ctx.createRadialGradient(ball.x-2, ball.y-2, 1, ball.x, ball.y, ball.r);
+  grad.addColorStop(0, '#fff');
+  grad.addColorStop(1, '#f5576c');
+  ctx.fillStyle = grad;
+  ctx.beginPath();
+  ctx.arc(ball.x, ball.y, ball.r, 0, Math.PI*2);
+  ctx.fill();
+}
+
+function drawBricks() {
+  bricks.forEach(b => {
+    if (!b.alive) return;
+    if (b.type === 'wall') {
+      ctx.fillStyle = '#3a3a4e';
+      roundRect(ctx, b.x, b.y, b.w, b.h, 2);
+      ctx.fill();
+      ctx.strokeStyle = '#6a6a8e';
+      ctx.lineWidth = 1;
+      roundRect(ctx, b.x + 1, b.y + 1, b.w - 2, b.h - 2, 2);
+      ctx.stroke();
+      return;
+    }
+    ctx.globalAlpha = b.hp === b.maxHp ? 1 : 0.6;
+    ctx.fillStyle = b.color;
+    roundRect(ctx, b.x, b.y, b.w, b.h, 2);
+    ctx.fill();
+    ctx.globalAlpha = 1;
+  });
+}
+
+function roundRect(ctx, x, y, w, h, r) {
+  ctx.beginPath();
+  ctx.moveTo(x + r, y);
+  ctx.arcTo(x + w, y, x + w, y + h, r);
+  ctx.arcTo(x + w, y + h, x, y + h, r);
+  ctx.arcTo(x, y + h, x, y, r);
+  ctx.arcTo(x, y, x + w, y, r);
+  ctx.closePath();
+}
+
+function collideBrick(b) {
+  return ball.x + ball.r > b.x && ball.x - ball.r < b.x + b.w &&
+         ball.y + ball.r > b.y && ball.y - ball.r < b.y + b.h;
+}
+
+function update() {
+  // Paddle movement
+  paddle.x += paddle.dx;
+  if (paddle.x < 0) paddle.x = 0;
+  if (paddle.x + paddle.w > W) paddle.x = W - paddle.w;
+
+  if (!launched) {
+    ball.x = paddle.x + paddle.w/2;
+    ball.y = paddle.y - ball.r - 1;
+    return;
+  }
+
+  ball.x += ball.dx;
+  ball.y += ball.dy;
+
+  // Wall collisions
+  if (ball.x - ball.r < 0) { ball.x = ball.r; ball.dx *= -1; }
+  if (ball.x + ball.r > W) { ball.x = W - ball.r; ball.dx *= -1; }
+  if (ball.y - ball.r < 0) { ball.y = ball.r; ball.dy *= -1; }
+
+  // Paddle collision
+  if (ball.y + ball.r > paddle.y && ball.y + ball.r < paddle.y + paddle.h + 8 &&
+      ball.x > paddle.x && ball.x < paddle.x + paddle.w && ball.dy > 0) {
+    const hit = (ball.x - (paddle.x + paddle.w/2)) / (paddle.w/2);
+    const angle = hit * (Math.PI/3);
+    ball.dx = ball.speed * Math.sin(angle);
+    ball.dy = -ball.speed * Math.cos(angle);
+    ball.y = paddle.y - ball.r - 1;
+  }
+
+  // Brick collisions
+  for (const b of bricks) {
+    if (!b.alive) continue;
+    if (collideBrick(b)) {
+      const overlapLeft = (ball.x + ball.r) - b.x;
+      const overlapRight = (b.x + b.w) - (ball.x - ball.r);
+      const overlapTop = (ball.y + ball.r) - b.y;
+      const overlapBottom = (b.y + b.h) - (ball.y - ball.r);
+      const minOverlap = Math.min(overlapLeft, overlapRight, overlapTop, overlapBottom);
+
+      if (b.type === 'wall') {
+        // Muro indestructible: solo rebota, nunca se rompe
+        if (minOverlap === overlapTop || minOverlap === overlapBottom) {
+          ball.dy *= -1;
+        } else {
+          ball.dx *= -1;
+        }
+        break;
+      }
+
+      b.hp--;
+      if (b.hp <= 0) {
+        b.alive = false;
+        score += 10 * level;
+      } else {
+        score += 5;
+      }
+      scoreEl.textContent = score;
+
+      if (minOverlap === overlapTop || minOverlap === overlapBottom) {
+        ball.dy *= -1;
+      } else {
+        ball.dx *= -1;
+      }
+      break;
+    }
+  }
+
+  // Ball falls
+  if (ball.y - ball.r > H) {
+    lives--;
+    livesEl.textContent = lives;
+    if (lives <= 0) {
+      gameOver(false);
+    } else {
+      resetBallAndPaddle();
+    }
+  }
+
+  // Level clear (solo cuenta destruir los píxeles, los muros son permanentes)
+  if (bricks.filter(b => b.type === 'pixel').every(b => !b.alive)) {
+    level++;
+    levelEl.textContent = level;
+    buildLevel(level);
+    resetBallAndPaddle();
+  }
+}
+
+function draw() {
+  ctx.clearRect(0, 0, W, H);
+  drawBricks();
+  drawPaddle();
+  drawBall();
+}
+
+function loop() {
+  if (!running) return;
+  update();
+  draw();
+  requestAnimationFrame(loop);
+}
+
+function gameOver(won) {
+  running = false;
+  overlay.style.display = 'flex';
+  overlayTitle.textContent = won ? '¡Nivel superado!' : 'Game Over';
+  overlayText.textContent = won
+    ? `Puntuación final: ${score}`
+    : `Llegaste al nivel ${level} con ${score} puntos. ¿Otra vez?`;
+  startBtn.textContent = 'Reintentar';
+}
+
+function startGame() {
+  score = 0; lives = 3; level = 1;
+  scoreEl.textContent = score;
+  livesEl.textContent = lives;
+  levelEl.textContent = level;
+  buildLevel(level);
+  resetBallAndPaddle();
+  overlay.style.display = 'none';
+  running = true;
+  requestAnimationFrame(loop);
+}
+
+// Controls
+document.addEventListener('keydown', e => {
+  if (e.key === 'ArrowLeft' || e.key === 'a' || e.key === 'A') paddle.dx = -paddle.speed;
+  if (e.key === 'ArrowRight' || e.key === 'd' || e.key === 'D') paddle.dx = paddle.speed;
+  if (e.key === ' ') { e.preventDefault(); if (running && !launched) launched = true; }
+});
+document.addEventListener('keyup', e => {
+  if (['ArrowLeft','ArrowRight','a','A','d','D'].includes(e.key)) paddle.dx = 0;
+});
+canvas.addEventListener('mousemove', e => {
+  const rect = canvas.getBoundingClientRect();
+  const mx = (e.clientX - rect.left) * (W / rect.width);
+  paddle.x = Math.min(Math.max(mx - paddle.w/2, 0), W - paddle.w);
+});
+canvas.addEventListener('click', () => { if (running && !launched) launched = true; });
+
+startBtn.addEventListener('click', startGame);
+
+// Initial draw
+buildLevel(1);
+resetBallAndPaddle();
+draw();
+</script>
+</body>
+</html>
 
