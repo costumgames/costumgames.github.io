@@ -4591,42 +4591,47 @@ function drawParticles(){
   }
 }
 
-function render(){
-  ctx.save();
-  if(shakeT>0){
-    ctx.translate(rand(-shakeMag,shakeMag), rand(-shakeMag,shakeMag));
-    shakeT--;
-  }
-  drawRoom();
-  drawFirstRoomHints();
-  drawDoors();
-  drawHazards();
-  drawParticles();
-  drawBullets();
-  drawEnemies();
-  drawBoss();
-  drawPlayer();
-  ctx.restore();
-}
+// Reemplaza la función render y el bucle final por esto:
+    function render(){
+        ctx.save();
+        // Limpia el lienzo en cada fotograma para evitar que se quede negro o congelado
+        ctx.clearRect(0, 0, canvas.width, canvas.height); 
 
-// ---------- loop principal ----------
-function loop(){
-  frameT++;
-  if(gameState==='playing'){
-    updatePlayer();
-    updateBoss();
-    updateEnemies();
-    updateHazards();
-    updateBullets();
-    updateParticles();
-    updateHearts();
-    updateRoomFlow();
-  }
-  render();
-  requestAnimationFrame(loop);
-}
-updateHearts();
-loop();
+        // Si tienes una función para dibujar el fondo/piso de la sala, asegúrate de llamarla aquí
+        drawDoors();
+        drawHazards();
+        drawParticles();
+        drawBullets();
+        drawEnemies();
+        drawBoss();
+        drawPlayer();
+        ctx.restore();
+    }
+
+    // --------- loop principal ---------
+    function loop(){
+        frameT++;
+        if(gameState === 'playing'){
+            updatePlayer();
+            updateBoss();
+            updateEnemies();
+            updateHazards();
+            updateBullets();
+            updateParticles();
+            updateHearts();
+            updateRoomFlow();
+        }
+        render();
+        requestAnimationFrame(loop);
+    }
+
+    // Aseguramos que el estado del juego sea 'playing' si no estaba definido
+    if (typeof gameState === 'undefined' || !gameState) {
+        gameState = 'playing';
+    }
+
+    // INICIAR EL JUEGO (Se eliminó la llamada prematura a updateHearts())
+    loop();
 })();
 </script>
 </body>
