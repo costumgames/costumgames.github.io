@@ -1,1 +1,507 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Stickman Hook</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/tabler-icons/2.44.0/iconfont/tabler-icons.min.css">
+<style>
+  * { box-sizing: border-box; }
+  html, body {
+    margin: 0;
+    padding: 0;
+    background: #f2f2ee;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 100vh;
+  }
+  #game-container {
+    width: 100%;
+    max-width: 420px;
+    padding: 16px;
+  }
+  button {
+    font-family: inherit;
+    font-size: 14px;
+    background: #ffffff;
+    border: 1px solid #d8d8d2;
+    border-radius: 8px;
+    padding: 8px 14px;
+    cursor: pointer;
+    color: #111111;
+  }
+  button:hover { background: #f5f5f1; }
+  button:active { transform: scale(0.98); }
+  button:disabled { cursor: default; }
+</style>
+</head>
+<body>
+<div id="game-container">
+<div id="wrap" style="position:relative; width:100%; height:520px; background:#87CEEB; border-radius:12px; overflow:hidden; touch-action:none;">
+  <canvas id="cv" style="display:block; width:100%; height:100%;"></canvas>
+  <button id="pauseBtn" aria-label="pausa" style="position:absolute; top:6px; right:6px; width:30px; height:30px; padding:0; border-radius:50%; background:#FFFFFF; border:1px solid #111111; z-index:1; display:flex; align-items:center; justify-content:center;"><i class="ti ti-player-pause" style="font-size:15px; color:#111111;" aria-hidden="true"></i></button>
+  <div id="hint" style="position:absolute; top:44%; left:50%; transform:translate(-50%,-50%); font-size:13px; color:#0c2f44; text-align:center; pointer-events:none;">toca para lanzar el gancho</div>
+  <div id="over" style="display:none; position:absolute; inset:0; align-items:center; justify-content:center; flex-direction:column; gap:10px; background:rgba(0,0,0,0.35); z-index:3;">
+    <div style="background:#ffffff; border-radius:12px; padding:1.25rem 1.5rem; text-align:center; border:1px solid #e5e5e0;">
+      <p style="font-size:16px; font-weight:600; margin:0 0 12px;">te caíste</p>
+      <button id="retryBtn">reintentar</button>
+    </div>
+  </div>
+  <div id="win" style="display:none; position:absolute; inset:0; align-items:center; justify-content:center; flex-direction:column; gap:10px; background:rgba(0,0,0,0.35); z-index:3;">
+    <div style="background:#ffffff; border-radius:12px; padding:1.25rem 1.5rem; text-align:center; border:1px solid #e5e5e0;">
+      <p style="font-size:16px; font-weight:600; margin:0 0 12px;" id="winTitle">¡lo lograste!</p>
+      <button id="nextBtn">siguiente nivel</button>
+    </div>
+  </div>
+  <div id="pauseOverlay" style="display:none; position:absolute; inset:0; align-items:center; justify-content:center; flex-direction:column; gap:10px; background:rgba(0,0,0,0.35); z-index:2;">
+    <div style="background:#ffffff; border-radius:12px; padding:1.25rem 1.5rem; text-align:center; border:1px solid #e5e5e0; display:flex; flex-direction:column; gap:8px; min-width:180px;">
+      <p style="font-size:16px; font-weight:600; margin:0 0 4px;">pausa</p>
+      <button id="resumeBtn">continuar</button>
+      <button id="restartLevelBtn">reiniciar nivel</button>
+      <button id="openLevelsBtn">elegir nivel</button>
+    </div>
+  </div>
+  <div id="levelSelectOverlay" style="display:none; position:absolute; inset:0; align-items:center; justify-content:center; flex-direction:column; gap:10px; background:rgba(0,0,0,0.35); z-index:2;">
+    <div style="background:#ffffff; border-radius:12px; padding:1.25rem 1.25rem; text-align:center; border:1px solid #e5e5e0; min-width:260px; max-height:440px; overflow-y:auto;">
+      <p style="font-size:16px; font-weight:600; margin:0 0 10px;">elegir nivel</p>
+      <div id="levelGrid" style="display:grid; grid-template-columns:repeat(6,1fr); gap:5px;"></div>
+      <button id="backToPauseBtn" style="margin-top:12px; width:100%;">atrás</button>
+    </div>
+  </div>
+</div>
+</div>
+<script>
+(function(){
+  var wrap = document.getElementById('wrap');
+  var cv = document.getElementById('cv');
+  var ctx = cv.getContext('2d');
+  var hint = document.getElementById('hint');
+  var overEl = document.getElementById('over');
+  var retryBtn = document.getElementById('retryBtn');
+  var winEl = document.getElementById('win');
+  var winTitle = document.getElementById('winTitle');
+  var nextBtn = document.getElementById('nextBtn');
+  var pauseBtn = document.getElementById('pauseBtn');
+  var pauseOverlay = document.getElementById('pauseOverlay');
+  var resumeBtn = document.getElementById('resumeBtn');
+  var restartLevelBtn = document.getElementById('restartLevelBtn');
+  var openLevelsBtn = document.getElementById('openLevelsBtn');
+  var levelSelectOverlay = document.getElementById('levelSelectOverlay');
+  var levelGrid = document.getElementById('levelGrid');
+  var backToPauseBtn = document.getElementById('backToPauseBtn');
+
+  var W = 380, H = 520;
+  function resize(){
+    var r = wrap.getBoundingClientRect();
+    W = Math.max(280, r.width);
+    H = 520;
+    cv.width = W; cv.height = H;
+  }
+  resize();
+  window.addEventListener('resize', resize);
+
+  var G = 1900;
+  var groundOffset = 460;
+  var unlockedLevels = 1;
+  var TOTAL_LEVELS = 100;
+  var WALLS_START_LEVEL = 4;
+  var state;
+
+  function rand(a,b){ return a + Math.random()*(b-a); }
+  function clamp01(v){ return Math.max(0, Math.min(1, v)); }
+  function difficultyT(idx){ return clamp01(idx/(TOTAL_LEVELS-1)); }
+  function nominalLength(idx){ return 1300 + Math.round(idx*100); }
+  function baseDistanceForLevel(idx){
+    var sum = 0;
+    for (var k=0;k<idx;k++){ sum += nominalLength(k) + 150; }
+    return sum;
+  }
+
+  function makeWall(levelIdx, x){
+    var w = 20;
+    var t = difficultyT(levelIdx);
+    var r = Math.random();
+    if (r < 0.4){
+      var gapH = Math.max(80, 170 - Math.round(90*t));
+      var gapY = rand(60, groundOffset-gapH-40);
+      return { x:x, w:w, rects:[ {top:0,bottom:gapY}, {top:gapY+gapH,bottom:groundOffset} ] };
+    } else if (r < 0.75){
+      var height = rand(140,230);
+      var top = groundOffset - height;
+      return { x:x, w:w, rects:[ {top:top,bottom:groundOffset} ] };
+    } else {
+      var h = rand(70,110);
+      var top2 = rand(80, groundOffset-h-60);
+      return { x:x, w:w, rects:[ {top:top2,bottom:top2+h} ] };
+    }
+  }
+
+  function generateLevel(levelIdx){
+    var t = difficultyT(levelIdx);
+    var gapMin = 150 + Math.round(60*t);
+    var gapMax = 220 + Math.round(100*t);
+    var levelLength = nominalLength(levelIdx);
+
+    var anchors = [ {x:140, y:150} ];
+    var lastX = 140;
+    while (lastX < levelLength){
+      lastX += rand(gapMin, gapMax);
+      anchors.push({ x:lastX, y:rand(90,240) });
+    }
+    var metaX = lastX + 150;
+    anchors.push({ x: metaX - 90, y: 170 });
+
+    var walls = [];
+    if (levelIdx >= WALLS_START_LEVEL){
+      var numWalls = Math.min(1 + Math.floor((levelIdx-WALLS_START_LEVEL)*0.21), 20);
+      var wallStart = 420;
+      var spacing = Math.max(190, (levelLength - wallStart - 150) / numWalls);
+      for (var i=0;i<numWalls;i++){
+        var wx = wallStart + i*spacing + rand(-40,40);
+        walls.push(makeWall(levelIdx, wx));
+      }
+    }
+
+    var pushPlatforms = [];
+    var numPush = 1 + Math.floor(levelIdx/6);
+    for (var j=0;j<numPush;j++){
+      pushPlatforms.push({ x: rand(400, Math.max(500,levelLength-150)), y: rand(300,390), w:120, h:24 });
+    }
+
+    return { anchors:anchors, walls:walls, pushPlatforms:pushPlatforms, metaX:metaX, length:levelLength };
+  }
+
+  function startLevel(levelIdx, baseDistance){
+    var L = generateLevel(levelIdx);
+    state = {
+      levelIdx: levelIdx,
+      baseDistance: baseDistance,
+      anchors: L.anchors,
+      walls: L.walls,
+      pushPlatforms: L.pushPlatforms,
+      metaX: L.metaX,
+      levelLength: L.length,
+      player: { x:140, y:150, vx:0, vy:0 },
+      attached: true,
+      anchorIdx: 0,
+      angle: -0.55,
+      angularVel: 0,
+      length: 90,
+      cameraX: 0,
+      dead: false,
+      won: false,
+      paused: false,
+      started: false
+    };
+    overEl.style.display = 'none';
+    winEl.style.display = 'none';
+    pauseOverlay.style.display = 'none';
+    levelSelectOverlay.style.display = 'none';
+    pauseBtn.style.display = 'flex';
+    hint.style.display = 'block';
+  }
+
+  function reset(){
+    startLevel(0, 0);
+  }
+
+  function dist(ax,ay,bx,by){ var dx=ax-bx, dy=ay-by; return Math.sqrt(dx*dx+dy*dy); }
+
+  function tryAttach(){
+    var p = state.player;
+    var best_ = null, bestD = 1e9, bestIdx = -1;
+    for (var i=0;i<state.anchors.length;i++){
+      var a = state.anchors[i];
+      if (a.x < p.x - 10) continue;
+      var d = dist(p.x,p.y,a.x,a.y);
+      if (d < 280 && d < bestD){ bestD = d; best_ = a; bestIdx = i; }
+    }
+    if (best_){
+      state.attached = true;
+      state.anchorIdx = bestIdx;
+      var dx = p.x - best_.x, dy = p.y - best_.y;
+      state.length = Math.sqrt(dx*dx+dy*dy);
+      state.angle = Math.atan2(dx, dy);
+      var tangentDir = Math.cos(state.angle)*p.vx - Math.sin(state.angle)*p.vy;
+      state.angularVel = tangentDir / state.length;
+    }
+  }
+
+  function release(){
+    var p = state.player;
+    var vx = state.length * state.angularVel * Math.cos(state.angle);
+    var vy = -state.length * state.angularVel * Math.sin(state.angle);
+    state.attached = false;
+    p.vx = vx; p.vy = vy;
+  }
+
+  function onTap(){
+    if (!state.started){ state.started = true; hint.style.display = 'none'; return; }
+    if (state.dead || state.won) return;
+    if (state.attached) release(); else tryAttach();
+  }
+
+  wrap.addEventListener('pointerdown', function(e){
+    if (state.dead || state.won || state.paused){ return; }
+    e.preventDefault();
+    onTap();
+  });
+
+  retryBtn.addEventListener('click', function(e){
+    e.stopPropagation();
+    startLevel(state.levelIdx, state.baseDistance);
+  });
+
+  nextBtn.addEventListener('click', function(e){
+    e.stopPropagation();
+    if (nextBtn.getAttribute('data-mode') === 'levels'){
+      winEl.style.display = 'none';
+      renderLevelGrid();
+      levelSelectOverlay.style.display = 'flex';
+      return;
+    }
+    var nextIdx = state.levelIdx+1;
+    startLevel(nextIdx, baseDistanceForLevel(nextIdx));
+  });
+
+  function openPause(){
+    state.paused = true;
+    pauseOverlay.style.display = 'flex';
+  }
+  function closePause(){
+    state.paused = false;
+    pauseOverlay.style.display = 'none';
+  }
+
+  pauseBtn.addEventListener('pointerdown', function(e){
+    e.stopPropagation();
+    e.preventDefault();
+    if (state.dead || state.won) return;
+    openPause();
+  });
+
+  resumeBtn.addEventListener('click', function(e){
+    e.stopPropagation();
+    closePause();
+  });
+
+  restartLevelBtn.addEventListener('click', function(e){
+    e.stopPropagation();
+    startLevel(state.levelIdx, state.baseDistance);
+  });
+
+  function renderLevelGrid(){
+    var html = '';
+    for (var i=0;i<TOTAL_LEVELS;i++){
+      var unlocked = (i+1) <= unlockedLevels;
+      if (unlocked){
+        html += '<button data-idx="'+i+'" style="height:36px; padding:2px; font-size:12px;">'+(i+1)+'</button>';
+      } else {
+        html += '<button disabled style="height:36px; padding:2px; opacity:0.4;"><i class="ti ti-lock" style="font-size:13px;" aria-hidden="true"></i></button>';
+      }
+    }
+    levelGrid.innerHTML = html;
+  }
+
+  openLevelsBtn.addEventListener('click', function(e){
+    e.stopPropagation();
+    pauseOverlay.style.display = 'none';
+    renderLevelGrid();
+    levelSelectOverlay.style.display = 'flex';
+  });
+
+  backToPauseBtn.addEventListener('click', function(e){
+    e.stopPropagation();
+    levelSelectOverlay.style.display = 'none';
+    pauseOverlay.style.display = 'flex';
+  });
+
+  levelGrid.addEventListener('click', function(e){
+    e.stopPropagation();
+    var btn = e.target.closest('button');
+    if (!btn || btn.disabled) return;
+    var idx = parseInt(btn.getAttribute('data-idx'), 10);
+    if (isNaN(idx)) return;
+    startLevel(idx, baseDistanceForLevel(idx));
+  });
+
+  function die(){
+    state.dead = true;
+    overEl.style.display = 'flex';
+  }
+
+  function winLevel(){
+    state.won = true;
+    unlockedLevels = Math.max(unlockedLevels, state.levelIdx+2);
+    if (state.levelIdx+1 >= TOTAL_LEVELS){
+      winTitle.textContent = '¡completaste el juego!';
+      nextBtn.textContent = 'elegir nivel';
+      nextBtn.setAttribute('data-mode', 'levels');
+    } else {
+      winTitle.textContent = '¡lo lograste!';
+      nextBtn.textContent = 'siguiente nivel';
+      nextBtn.setAttribute('data-mode', 'next');
+    }
+    winEl.style.display = 'flex';
+  }
+
+  var last = null;
+  function loop(ts){
+    if (last === null) last = ts;
+    var dt = Math.min(0.032, (ts - last)/1000);
+    last = ts;
+
+    if (state.started && !state.dead && !state.won && !state.paused){
+      var p = state.player;
+      if (state.attached){
+        var a = state.anchors[state.anchorIdx];
+        var angAcc = -(G/state.length) * Math.sin(state.angle);
+        state.angularVel += angAcc*dt;
+        state.angle += state.angularVel*dt;
+        p.x = a.x + state.length*Math.sin(state.angle);
+        p.y = a.y + state.length*Math.cos(state.angle);
+      } else {
+        p.vy += G*dt;
+        p.x += p.vx*dt;
+        p.y += p.vy*dt;
+
+        for (var k=0;k<state.pushPlatforms.length;k++){
+          var pf = state.pushPlatforms[k];
+          if (p.vy > 0 && p.x > pf.x - pf.w/2 - 10 && p.x < pf.x + pf.w/2 + 10 && p.y > pf.y - 10 && p.y < pf.y + 20){
+            p.vy = -1000;
+            p.vx = Math.max(p.vx, 200) + 260;
+          }
+        }
+
+        for (var m=0;m<state.walls.length;m++){
+          var wl = state.walls[m];
+          if (p.x > wl.x - wl.w/2 - 9 && p.x < wl.x + wl.w/2 + 9){
+            for (var rIdx=0;rIdx<wl.rects.length;rIdx++){
+              var rc = wl.rects[rIdx];
+              if (p.y > rc.top - 9 && p.y < rc.bottom + 9){
+                p.vx = 0;
+                p.x = wl.x - wl.w/2 - 9;
+                break;
+              }
+            }
+          }
+        }
+      }
+
+      state.cameraX = p.x - 130;
+
+      if (!state.dead && p.x >= state.metaX){ winLevel(); }
+      if (!state.dead && !state.won && p.y > groundOffset){ die(); }
+    }
+
+    draw();
+    requestAnimationFrame(loop);
+  }
+
+  function draw(){
+    ctx.clearRect(0,0,W,H);
+    var cam = state.cameraX;
+
+    for (var i=0;i<state.anchors.length;i++){
+      var a = state.anchors[i];
+      var sx = a.x - cam, sy = a.y;
+      if (sx < -40 || sx > W+40) continue;
+      ctx.beginPath();
+      ctx.arc(sx, sy, 7, 0, Math.PI*2);
+      ctx.fillStyle = (state.attached && i===state.anchorIdx) ? '#D85A30' : '#0c2f44';
+      ctx.fill();
+    }
+
+    for (var m=0;m<state.walls.length;m++){
+      var wl = state.walls[m];
+      var wx = wl.x - cam;
+      if (wx < -40 || wx > W+40) continue;
+      var left = wx - wl.w/2;
+      ctx.fillStyle = '#5F5E5A';
+      ctx.strokeStyle = '#2C2C2A';
+      ctx.lineWidth = 1;
+      for (var rIdx=0;rIdx<wl.rects.length;rIdx++){
+        var rc = wl.rects[rIdx];
+        ctx.fillRect(left, rc.top, wl.w, rc.bottom-rc.top);
+        ctx.strokeRect(left, rc.top, wl.w, rc.bottom-rc.top);
+      }
+    }
+
+    for (var q=0;q<state.pushPlatforms.length;q++){
+      var pf = state.pushPlatforms[q];
+      var fx = pf.x - cam, fy = pf.y;
+      if (fx < -80 || fx > W+80) continue;
+      var px0 = fx - pf.w/2, py0 = fy;
+      ctx.fillStyle = '#FFFFFF';
+      ctx.strokeStyle = '#111111';
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      if (ctx.roundRect){ ctx.roundRect(px0, py0, pf.w, pf.h, 6); } else { ctx.rect(px0, py0, pf.w, pf.h); }
+      ctx.fill();
+      ctx.stroke();
+      ctx.fillStyle = '#111111';
+      var midx = fx, midy = py0 + pf.h/2;
+      ctx.beginPath();
+      ctx.moveTo(midx-9, midy+5);
+      ctx.lineTo(midx+9, midy+5);
+      ctx.lineTo(midx, midy-7);
+      ctx.closePath();
+      ctx.fill();
+    }
+
+    var mx = state.metaX - cam;
+    if (mx > -60 && mx < W+60){
+      var sq = 14;
+      var bannerW = sq*2;
+      var rows = Math.ceil(H/sq);
+      for (var r=0;r<rows;r++){
+        for (var c=0;c<2;c++){
+          var black = (r+c) % 2 === 0;
+          ctx.fillStyle = black ? '#111111' : '#FFFFFF';
+          ctx.fillRect(mx - bannerW/2 + c*sq, r*sq, sq, sq);
+        }
+      }
+      ctx.strokeStyle = '#111111';
+      ctx.lineWidth = 1;
+      ctx.strokeRect(mx - bannerW/2, 0, bannerW, rows*sq);
+    }
+
+    var p = state.player;
+    var px = p.x - cam, py = p.y;
+
+    if (state.attached){
+      var a2 = state.anchors[state.anchorIdx];
+      ctx.beginPath();
+      ctx.moveTo(a2.x-cam, a2.y);
+      ctx.lineTo(px, py);
+      ctx.strokeStyle = '#111111';
+      ctx.lineWidth = 2;
+      ctx.stroke();
+    }
+
+    ctx.strokeStyle = '#111111';
+    ctx.fillStyle = '#111111';
+    ctx.lineWidth = 3;
+    ctx.lineCap = 'round';
+    var ang = state.attached ? state.angle : Math.atan2(p.vx, 400)*0.4;
+    var headR = 8;
+    var hx = px + Math.sin(ang)*headR*1.6;
+    var hy = py - Math.cos(ang)*headR*1.6 - 6;
+    ctx.beginPath();
+    ctx.arc(hx, hy, headR, 0, Math.PI*2);
+    ctx.stroke();
+    var bx = px, by = py + 14;
+    ctx.beginPath(); ctx.moveTo(hx,hy+headR); ctx.lineTo(bx,by); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(bx-10,by+18); ctx.lineTo(bx,by); ctx.lineTo(bx+10,by+18); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(bx-10,by-6); ctx.lineTo(bx,by+4); ctx.lineTo(bx+10,by-6); ctx.stroke();
+  }
+
+  reset();
+  requestAnimationFrame(loop);
+})();
+</script>
+</body>
+</html>
 
