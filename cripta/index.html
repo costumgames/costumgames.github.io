@@ -2040,7 +2040,6 @@ if(dist(boss,player) < boss.r+player.r && player.invuln<=0){
   // Salimos inmediatamente para no intentar usar boss.r después.
   if(gameState !== 'playing' || !boss) return;
   }
-  }
 }
 
 // ---------- enemigos (sala + esbirros) ----------
@@ -4591,47 +4590,44 @@ function drawParticles(){
   }
 }
 
-// Reemplaza la función render y el bucle final por esto:
-    function render(){
-        ctx.save();
-        // Limpia el lienzo en cada fotograma para evitar que se quede negro o congelado
-        ctx.clearRect(0, 0, canvas.width, canvas.height); 
-drawRoom();
-        // Si tienes una función para dibujar el fondo/piso de la sala, asegúrate de llamarla aquí
-        drawDoors();
-        drawHazards();
-        drawParticles();
-        drawBullets();
-        drawEnemies();
-        drawBoss();
-        drawPlayer();
-        ctx.restore();
-    }
+// ---------- renderizado y bucle principal ----------
+function render(){
+  ctx.save();
 
-    // --------- loop principal ---------
-    function loop(){
-        frameT++;
-        if(gameState === 'playing'){
-            updatePlayer();
-            updateBoss();
-            updateEnemies();
-            updateHazards();
-            updateBullets();
-            updateParticles();
-            updateHearts();
-            updateRoomFlow();
-        }
-        render();
-        requestAnimationFrame(loop);
-    }
+  // Fondo y sala primero.
+  drawRoom();
 
-    // Aseguramos que el estado del juego sea 'playing' si no estaba definido
-    if (typeof gameState === 'undefined' || !gameState) {
-        gameState = 'playing';
-    }
+  // Contenido de la sala.
+  drawFirstRoomHints();
+  drawDoors();
+  drawHazards();
+  drawParticles();
+  drawBullets();
+  drawEnemies();
+  drawBoss();
+  drawPlayer();
 
-    // INICIAR EL JUEGO (Se eliminó la llamada prematura a updateHearts())
-    loop();
+  ctx.restore();
+}
+
+// ---------- loop principal ----------
+function loop(){
+  frameT++;
+  if(gameState === 'playing'){
+    updatePlayer();
+    updateBoss();
+    updateEnemies();
+    updateHazards();
+    updateBullets();
+    updateParticles();
+    updateHearts();
+    updateRoomFlow();
+  }
+  render();
+  requestAnimationFrame(loop);
+}
+
+loop();
 })();
 </script>
 </body>
