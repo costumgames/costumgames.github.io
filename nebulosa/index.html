@@ -1,1 +1,1354 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<title>Nebulosa — Devora el vacío</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg-deep:#080B1F;
+    --bg-mid:#0F1435;
+    --wall:#3D2C6D;
+    --wall-glow:#7B5FD9;
+    --stardust:#FFD166;
+    --power:#FF6B9D;
+    --player:#4ECDC4;
+    --ink:#E9E6FF;
+    --muted:#8B87B5;
+    --danger:#FF5C7A;
+  }
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+  html,body{height:100%;margin:0;overscroll-behavior:none;}
+  body{
+    background:
+      radial-gradient(1px 1px at 10% 20%, #fff 100%, transparent),
+      radial-gradient(1px 1px at 80% 10%, #fff 100%, transparent),
+      radial-gradient(1px 1px at 60% 70%, #fff 100%, transparent),
+      radial-gradient(1px 1px at 30% 85%, #fff 100%, transparent),
+      radial-gradient(1px 1px at 90% 60%, #fff 100%, transparent),
+      radial-gradient(1px 1px at 45% 40%, #fff 100%, transparent),
+      radial-gradient(1px 1px at 15% 55%, #fff 100%, transparent),
+      linear-gradient(180deg, var(--bg-deep), var(--bg-mid) 60%, var(--bg-deep));
+    background-attachment:fixed;
+    font-family:'Space Grotesk',sans-serif;
+    color:var(--ink);
+    display:flex;
+    justify-content:center;
+    align-items:center;
+    min-height:100%;
+    padding:10px;
+  }
+  #app{
+    width:100%;
+    max-width:520px;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    gap:8px;
+  }
+  @media (min-width:900px){
+    body{padding:28px;}
+    #app{max-width:min(88vh, 880px);gap:12px;}
+    #hud .label{font-size:11px;}
+    #hud .value{font-size:20px;}
+    #timeLabel{font-size:11px;min-width:38px;}
+    #hint{font-size:12px;}
+    #stage{border-radius:18px;}
+    button.cta{font-size:14px;padding:16px 26px;}
+  }
+  .pixel{font-family:'Press Start 2P',monospace;}
+  #hud{
+    width:100%;
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    padding:6px 4px;
+  }
+  #hud .stat{display:flex;flex-direction:column;gap:2px;}
+  #hud .label{font-size:9px;letter-spacing:1px;color:var(--muted);}
+  #hud .value{font-size:16px;font-weight:700;color:var(--ink);}
+  #hud .value.score{color:var(--stardust);}
+  #hud .value.level{color:var(--player);}
+  #timeRow{
+    width:100%;
+    display:flex;
+    align-items:center;
+    gap:8px;
+    padding:0 4px;
+  }
+  #timeBar{
+    flex:1;height:6px;border-radius:3px;
+    background:rgba(123,95,217,0.18);
+    overflow:hidden;
+  }
+  #timeFill{
+    height:100%;width:100%;
+    background:var(--player);
+    transition:width .2s linear, background-color .3s ease;
+  }
+  #timeFill.warn{background:var(--danger);}
+  #timeLabel{font-size:9px;color:var(--muted);min-width:30px;text-align:right;}
+  #timeLabel.warn{color:var(--danger);}
+  #lives{display:flex;gap:5px;}
+  .life-dot{width:11px;height:11px;border-radius:50%;background:var(--player);box-shadow:0 0 6px var(--player);}
+  #stage{
+    position:relative;
+    width:100%;
+    aspect-ratio:1/1;
+    border-radius:14px;
+    overflow:hidden;
+    background:radial-gradient(circle at 50% 40%, #131a45 0%, #0a0e28 75%);
+    box-shadow:0 0 0 1px rgba(123,95,217,0.25), 0 20px 60px rgba(0,0,0,0.5), inset 0 0 40px rgba(78,205,196,0.05);
+  }
+  canvas{display:block;width:100%;height:100%;}
+  #overlay{
+    position:absolute;inset:0;
+    display:flex;flex-direction:column;align-items:center;justify-content:center;
+    text-align:center;
+    background:rgba(6,8,24,0.86);
+    backdrop-filter:blur(3px);
+    gap:16px;
+    padding:24px;
+    transition:opacity .25s ease;
+  }
+  #overlay.hidden{display:none;}
+  #overlay h1{
+    font-size:20px;line-height:1.6;margin:0;color:var(--player);
+    text-shadow:0 0 14px rgba(78,205,196,0.6);
+  }
+  #overlay p{margin:0;font-size:13px;color:var(--muted);max-width:280px;line-height:1.7;}
+  #overlay .final-score{font-size:13px;color:var(--stardust);}
+  button.cta{
+    font-family:'Press Start 2P',monospace;
+    font-size:12px;
+    padding:14px 22px;
+    background:var(--player);
+    color:#062024;
+    border:none;
+    border-radius:8px;
+    cursor:pointer;
+    box-shadow:0 0 20px rgba(78,205,196,0.5);
+    letter-spacing:1px;
+  }
+  button.cta:active{transform:scale(0.97);}
+  #toast{
+    position:absolute;
+    top:14px;left:50%;transform:translateX(-50%);
+    font-size:11px;padding:8px 14px;border-radius:20px;
+    background:rgba(255,209,102,0.15);
+    border:1px solid rgba(255,209,102,0.4);
+    color:var(--stardust);
+    opacity:0;
+    pointer-events:none;
+    transition:opacity .3s ease, transform .3s ease;
+  }
+  #toast.show{opacity:1;transform:translateX(-50%) translateY(4px);}
+  #touch{
+    display:none;
+    width:100%;
+    justify-content:center;
+    padding:6px 0 2px;
+  }
+  #touch.active{display:flex;}
+  .dpad{
+    display:grid;
+    grid-template-columns:52px 52px 52px;
+    grid-template-rows:52px 52px 52px;
+    gap:4px;
+  }
+  .dpad button{
+    background:rgba(123,95,217,0.14);
+    border:1px solid rgba(123,95,217,0.4);
+    border-radius:10px;
+    color:var(--ink);
+    font-size:16px;
+    display:flex;align-items:center;justify-content:center;
+    touch-action:manipulation;
+  }
+  .dpad button:active{background:rgba(78,205,196,0.3);}
+  #up{grid-column:2;grid-row:1;}
+  #left{grid-column:1;grid-row:2;}
+  #right{grid-column:3;grid-row:2;}
+  #down{grid-column:2;grid-row:3;}
+  #hint{font-size:10px;color:var(--muted);text-align:center;padding-bottom:2px;}
+  #pauseBtn{
+    position:absolute;top:10px;right:10px;
+    width:34px;height:34px;border-radius:50%;
+    background:rgba(15,20,53,0.75);
+    border:1px solid rgba(123,95,217,0.5);
+    color:var(--ink);
+    font-size:13px;
+    display:none;
+    align-items:center;justify-content:center;
+    z-index:5;
+    cursor:pointer;
+  }
+  #pauseBtn.active{display:flex;}
+  #pauseOverlay{
+    position:absolute;inset:0;
+    display:flex;flex-direction:column;align-items:center;justify-content:center;
+    text-align:center;
+    background:rgba(6,8,24,0.9);
+    backdrop-filter:blur(3px);
+    gap:14px;
+    padding:24px;
+    z-index:6;
+  }
+  #pauseOverlay.hidden{display:none;}
+  #pauseOverlay h1{font-size:20px;margin:0;color:var(--player);text-shadow:0 0 14px rgba(78,205,196,0.6);}
+  #pauseOverlay p{margin:0;font-size:13px;color:var(--muted);max-width:260px;line-height:1.7;}
+  button.cta.secondary{
+    background:transparent;
+    color:var(--ink);
+    border:1px solid rgba(233,230,255,0.35);
+    box-shadow:none;
+  }
+</style>
+</head>
+<body>
+<div id="app">
+  <div id="hud">
+    <div class="stat">
+      <span class="label pixel">PUNTOS</span>
+      <span class="value score" id="scoreVal">0</span>
+    </div>
+    <div class="stat" style="align-items:center;">
+      <span class="label pixel">NIVEL</span>
+      <span class="value level" id="levelVal">1</span>
+    </div>
+    <div class="stat" style="align-items:flex-end;">
+      <span class="label pixel">VIDAS</span>
+      <div id="lives"></div>
+    </div>
+  </div>
+  <div id="timeRow">
+    <div id="timeBar"><div id="timeFill"></div></div>
+    <span id="timeLabel" class="pixel">--</span>
+  </div>
+
+  <div id="stage">
+    <canvas id="game"></canvas>
+    <button id="pauseBtn" aria-label="Pausa">❚❚</button>
+    <div id="toast" class="pixel"></div>
+    <div id="pauseOverlay" class="hidden">
+      <h1 class="pixel">PAUSA</h1>
+      <p>El vacío puede esperar. Retoma cuando quieras.</p>
+      <button class="cta" id="resumeBtn">REANUDAR</button>
+      <button class="cta secondary" id="restartBtn">REINICIAR</button>
+    </div>
+    <div id="overlay">
+      <h1 id="ovTitle" class="pixel">NEBULOSA</h1>
+      <p id="ovText">Guía a tu cometa por el laberinto estelar, devora el polvo cósmico y esquiva a los centinelas del vacío. La ruta se regenera en cada nivel y todo se acelera. No tiene final: solo tu récord.</p>
+      <div id="ovScore" class="final-score pixel" style="display:none;"></div>
+      <button class="cta" id="startBtn">JUGAR</button>
+    </div>
+  </div>
+
+  <div id="hint">Flechas / WASD para moverte · desliza en pantalla</div>
+  <div id="touch">
+    <div class="dpad">
+      <button id="up">▲</button>
+      <button id="left">◀</button>
+      <button id="right">▶</button>
+      <button id="down">▼</button>
+    </div>
+  </div>
+</div>
+
+<script>
+(function(){
+  "use strict";
+
+  // ---------- Utilidades ----------
+  function shuffle(arr){
+    for(let i=arr.length-1;i>0;i--){
+      const j=Math.floor(Math.random()*(i+1));
+      [arr[i],arr[j]]=[arr[j],arr[i]];
+    }
+    return arr;
+  }
+
+  // ---------- Generación de laberinto ----------
+  function generateMaze(cx, cy){
+    const w = cx*2+1, h = cy*2+1;
+    const grid = Array.from({length:h},()=>Array(w).fill(1));
+    const visited = Array.from({length:cy},()=>Array(cx).fill(false));
+    const stack = [[0,0]];
+    visited[0][0]=true;
+    grid[1][1]=0;
+    while(stack.length){
+      const [x,y] = stack[stack.length-1];
+      const dirs = shuffle([[0,-1],[0,1],[-1,0],[1,0]]);
+      let moved=false;
+      for(const [dx,dy] of dirs){
+        const nx=x+dx, ny=y+dy;
+        if(nx>=0&&nx<cx&&ny>=0&&ny<cy&&!visited[ny][nx]){
+          visited[ny][nx]=true;
+          grid[y*2+1+dy][x*2+1+dx]=0;
+          grid[ny*2+1][nx*2+1]=0;
+          stack.push([nx,ny]);
+          moved=true;
+          break;
+        }
+      }
+      if(!moved) stack.pop();
+    }
+    return {grid,w,h};
+  }
+
+  function addLoops(grid,w,h,chance){
+    for(let y=1;y<h-1;y++){
+      for(let x=1;x<w-1;x++){
+        const isWallSeam = (x%2===0&&y%2===1)||(x%2===1&&y%2===0);
+        if(isWallSeam && grid[y][x]===1 && Math.random()<chance){
+          grid[y][x]=0;
+        }
+      }
+    }
+  }
+
+  // Cuenta cuántas celdas abiertas son alcanzables desde (sx,sy). Se usa para
+  // comprobar, al tallar la celda de encierro, que nunca dejamos ninguna parte
+  // del laberinto inalcanzable.
+  function countOpenReachable(grid,w,h,sx,sy){
+    if(grid[sy][sx]===1) return 0;
+    const seen = Array.from({length:h},()=>Array(w).fill(false));
+    seen[sy][sx]=true;
+    const q=[[sx,sy]];
+    let head=0, count=1;
+    while(head<q.length){
+      const [x,y]=q[head++];
+      const cands=[[x+1,y],[x-1,y],[x,y+1],[x,y-1]];
+      for(let [nx,ny] of cands){
+        if(nx<0) nx=w-1; else if(nx>w-1) nx=0;
+        if(ny<0||ny>h-1) continue;
+        if(grid[ny][nx]===1) continue;
+        if(!seen[ny][nx]){ seen[ny][nx]=true; count++; q.push([nx,ny]); }
+      }
+    }
+    return count;
+  }
+
+  // Talla una "celda" (sala de encierro) en el centro del laberinto donde
+  // viven los enemigos. Sólo cierra los bordes de la celda cuando comprueba
+  // que hacerlo no deja ninguna parte del laberinto inalcanzable; lo que
+  // queda abierto por necesidad actúa como portón hacia el resto del mapa.
+  function carvePen(grid,w,h,count){
+    const penCols = (count>4 ? 5 : 3);
+    const penRows = 3;
+    let cx = (Math.floor(w/2))|1;
+    let cy = (Math.floor(h/2))|1;
+    let x0 = cx - Math.floor(penCols/2);
+    let y0 = cy - Math.floor(penRows/2);
+    x0 = Math.max(1, Math.min(w-penCols-1, x0));
+    y0 = Math.max(1, Math.min(h-penRows-1, y0));
+
+    const cells=[];
+    for(let y=y0;y<y0+penRows;y++){
+      for(let x=x0;x<x0+penCols;x++){
+        grid[y][x]=0; // abrir el interior nunca desconecta nada
+        cells.push({x,y});
+      }
+    }
+
+    function inZone(x,y){
+      return x>=x0-1 && x<=x0+penCols && y>=y0-1 && y<=y0+penRows;
+    }
+    // punto de referencia fuera de la celda para medir conectividad
+    let refX=1, refY=1;
+    if(inZone(refX,refY)){
+      outerRef:
+      for(let y=0;y<h;y++){
+        for(let x=0;x<w;x++){
+          if(grid[y][x]===0 && !inZone(x,y)){ refX=x; refY=y; break outerRef; }
+        }
+      }
+    }
+
+    let baseline = countOpenReachable(grid,w,h,refX,refY);
+    const borderCells=[];
+    for(let y=y0-1;y<=y0+penRows;y++){
+      for(let x=x0-1;x<=x0+penCols;x++){
+        if(x<0||x>w-1||y<0||y>h-1) continue;
+        const onBorder = (y===y0-1||y===y0+penRows||x===x0-1||x===x0+penCols);
+        if(onBorder) borderCells.push({x,y});
+      }
+    }
+    shuffle(borderCells);
+    let gate=null;
+    for(const bc of borderCells){
+      if(grid[bc.y][bc.x]!==0) continue; // ya era pared
+      grid[bc.y][bc.x]=1;
+      const reach = countOpenReachable(grid,w,h,refX,refY);
+      if(baseline-reach>1){
+        grid[bc.y][bc.x]=0; // era necesaria: se queda como portón
+        if(!gate) gate={x:bc.x,y:bc.y};
+      } else {
+        baseline = reach;
+      }
+    }
+    if(!gate){
+      const gx=x0+Math.floor(penCols/2), gy=Math.min(h-1,y0+penRows);
+      grid[gy][gx]=0;
+      gate={x:gx,y:gy};
+    }
+    return {cells, gate, x0,y0,cols:penCols,rows:penRows};
+  }
+
+  // Talla un pasillo en forma de anillo alrededor de la celda de los enemigos,
+  // dos celdas por fuera de su borde. Esto garantiza que SIEMPRE exista una
+  // ruta de circunvalación completa (en ambos sentidos) que no pasa por el
+  // interior de la celda, así nunca es obligatorio cruzarla para llegar a
+  // otra parte del laberinto: la puerta (gate) queda como atajo opcional,
+  // no como único paso.
+  function carveBypassRing(grid,w,h,pen){
+    const bx0 = pen.x0-2, by0 = pen.y0-2;
+    const bx1 = pen.x0+pen.cols+1, by1 = pen.y0+pen.rows+1;
+    for(let x=bx0;x<=bx1;x++){
+      if(x<0||x>w-1) continue;
+      if(by0>=0) grid[by0][x]=0;
+      if(by1<=h-1) grid[by1][x]=0;
+    }
+    for(let y=by0;y<=by1;y++){
+      if(y<0||y>h-1) continue;
+      if(bx0>=0) grid[y][bx0]=0;
+      if(bx1<=w-1) grid[y][bx1]=0;
+    }
+  }
+
+  function openTunnel(grid,w,h){
+    let row = 2*Math.floor((Math.floor(h/2)) / 2) + 1;
+    if(row<1) row=1;
+    if(row>h-2) row=h-2;
+    if(row%2===0) row+=1;
+    grid[row][0]=0;
+    grid[row][w-1]=0;
+    return row;
+  }
+
+  function cellBlocked(grid,x,y,voidMap){
+    if(grid[y][x]===1) return true;
+    if(voidMap){
+      const v = voidMap.get(x+','+y);
+      if(v && v.closed) return true;
+    }
+    return false;
+  }
+
+  function neighborsOf(grid,w,h,x,y,voidMap){
+    const res=[];
+    const cands=[
+      {x:x+1,y:y,d:'R'},{x:x-1,y:y,d:'L'},
+      {x:x,y:y+1,d:'D'},{x:x,y:y-1,d:'U'}
+    ];
+    for(const c of cands){
+      let cx=c.x;
+      if(cx<0) cx=w-1;
+      if(cx>w-1) cx=0;
+      if(c.y<0||c.y>h-1) continue;
+      if(!cellBlocked(grid,cx,c.y,voidMap)) res.push({x:cx,y:c.y,d:c.d});
+    }
+    return res;
+  }
+
+  function bfsDistances(grid,w,h,startX,startY,voidMap){
+    const dist = Array.from({length:h},()=>Array(w).fill(Infinity));
+    dist[startY][startX]=0;
+    const q=[{x:startX,y:startY}];
+    let head=0;
+    while(head<q.length){
+      const cur=q[head++];
+      const nbrs=neighborsOf(grid,w,h,cur.x,cur.y,voidMap);
+      for(const n of nbrs){
+        if(dist[n.y][n.x]===Infinity){
+          dist[n.y][n.x]=dist[cur.y][cur.x]+1;
+          q.push({x:n.x,y:n.y});
+        }
+      }
+    }
+    return dist;
+  }
+
+  // ---------- Estado del juego ----------
+  const canvas = document.getElementById('game');
+  const ctx = canvas.getContext('2d');
+  const overlay = document.getElementById('overlay');
+  const ovTitle = document.getElementById('ovTitle');
+  const ovText = document.getElementById('ovText');
+  const ovScore = document.getElementById('ovScore');
+  const startBtn = document.getElementById('startBtn');
+  const scoreVal = document.getElementById('scoreVal');
+  const levelVal = document.getElementById('levelVal');
+  const livesEl = document.getElementById('lives');
+  const timeFill = document.getElementById('timeFill');
+  const timeLabel = document.getElementById('timeLabel');
+  const toast = document.getElementById('toast');
+  const touchWrap = document.getElementById('touch');
+  const pauseBtn = document.getElementById('pauseBtn');
+  const pauseOverlay = document.getElementById('pauseOverlay');
+  const resumeBtn = document.getElementById('resumeBtn');
+  const restartBtn = document.getElementById('restartBtn');
+
+  const ENEMY_COLORS = ['#FF6B9D','#C77DFF','#FF9F1C','#06D6A0','#FF5C7A','#5CC8FF'];
+
+  let state = null; // se crea en newGame
+
+  // Umbrales de aparición de mecánicas nuevas
+  const INTERCEPTOR_LEVEL = 4;   // desde aquí, un enemigo predice tu ruta
+  const IMMUNE_LEVEL = 6;        // desde aquí, un enemigo ignora la píldora de poder
+  const VOID_LEVEL = 5;          // desde aquí, aparecen zonas del vacío que se cierran
+  const CAP_LEVEL = 25;          // a partir de aquí, la dificultad casi deja de subir
+  const GRACE_BASE = 90;         // segundos de gracia para el primer nivel (1.5 min)
+  const GRACE_PER_LEVEL = 4;     // segundos extra por cada nivel, para que suba gradualmente
+  const GRACE_PER_PELLET = 0.05; // pequeño extra según el tamaño del laberinto
+  const ENEMY_RELEASE_WAIT = 5;  // segundos que un enemigo comido espera en la celda
+
+  // Techos técnicos (rendimiento/legibilidad), no de dificultad
+  function cellsForLevel(level){
+    const grown = 6 + Math.floor(Math.sqrt(Math.max(level-1,0))*1.8);
+    return Math.min(grown, 16);
+  }
+  function loopChanceForLevel(level){
+    return Math.min(0.09 + level*0.005, 0.25);
+  }
+  function enemyCountForLevel(level){
+    return Math.min(2 + Math.floor((level-1)/3), 8);
+  }
+
+  // Crece con logaritmo hasta CAP_LEVEL (así se nota la progresión), y a partir de
+  // ahí casi no sube más. El jugador SIEMPRE es más rápido que los enemigos: la
+  // dificultad viene de que persiguen mejor (ver chaseProbForLevel/interceptor),
+  // no de ganarte en una carrera que sería injugable.
+  function playerSpeedForLevel(level){
+    const eff = Math.min(level, CAP_LEVEL);
+    const soft = 4.0 + Math.log2(eff)*0.5;
+    const residual = Math.max(level-CAP_LEVEL,0)*0.01;
+    return soft + residual;
+  }
+  function enemySpeedFactorForLevel(level){
+    // fracción de la velocidad del jugador: se acerca a 0.84 pero nunca la alcanza,
+    // y sube más despacio por nivel que antes
+    return 0.68 + 0.16*(1 - Math.pow(0.95, level-1));
+  }
+  function enemySpeedForLevel(level){
+    return playerSpeedForLevel(level) * enemySpeedFactorForLevel(level);
+  }
+  function frightDurationForLevel(level){
+    return 1.2 + 5*Math.pow(0.93, level-1); // se acerca a 1.2s pero nunca llega a 0
+  }
+  function chaseProbForLevel(level){
+    const eff = Math.min(level, CAP_LEVEL);
+    const soft = 1 - 0.65*Math.pow(0.88, eff-1);
+    const residual = Math.max(level-CAP_LEVEL,0)*0.0004;
+    return Math.min(soft+residual, 0.995);
+  }
+  function graceTimeForLevel(lv, level){
+    return GRACE_BASE + (level-1)*GRACE_PER_LEVEL + lv.totalPellets*GRACE_PER_PELLET;
+  }
+
+  function buildLevel(level){
+    const cells = cellsForLevel(level);
+    const {grid,w,h} = generateMaze(cells,cells);
+    addLoops(grid,w,h, loopChanceForLevel(level));
+    const tunnelRow = openTunnel(grid,w,h);
+
+    // celda de encierro central para los enemigos
+    const enemyTotal = enemyCountForLevel(level);
+    const pen = carvePen(grid,w,h,enemyTotal);
+    carveBypassRing(grid,w,h,pen);
+    const penKeys = new Set(pen.cells.map(c=>c.x+','+c.y));
+    function inPenZone(x,y){
+      return x>=pen.x0-1 && x<=pen.x0+pen.cols && y>=pen.y0-1 && y<=pen.y0+pen.rows;
+    }
+
+    // punto de partida del jugador: cerca del centro, pero fuera de la celda
+    const cx = Math.floor(w/2)|1, cy = Math.floor(h/2)|1;
+    let startX=null, startY=null;
+    outer:
+    for(let r=0;r<Math.max(w,h);r++){
+      for(let dy=-r;dy<=r;dy++){
+        for(let dx=-r;dx<=r;dx++){
+          const x=cx+dx,y=cy+dy;
+          if(x>=0&&x<w&&y>=0&&y<h&&grid[y][x]===0&&!inPenZone(x,y)){ startX=x; startY=y; break outer; }
+        }
+      }
+    }
+    if(startX===null){ startX=pen.gate.x; startY=Math.min(h-1, pen.gate.y+2); }
+
+    const dist = bfsDistances(grid,w,h,startX,startY);
+
+    // pellets: celdas abiertas y REALMENTE alcanzables desde el inicio, excepto
+    // la propia celda de inicio y la celda de encierro (evita pellets imposibles
+    // de recoger si la sala de encierro llegara a cortar alguna rama del laberinto)
+    const pellets = new Set();
+    const openCells = [];
+    for(let y=0;y<h;y++){
+      for(let x=0;x<w;x++){
+        if(grid[y][x]===0 && !penKeys.has(x+','+y) && dist[y][x]!==Infinity){
+          openCells.push({x,y});
+          if(!(x===startX&&y===startY)) pellets.add(x+','+y);
+        }
+      }
+    }
+
+    // power pellets: celda abierta más cercana a cada esquina
+    const corners = [{x:0,y:0},{x:w-1,y:0},{x:0,y:h-1},{x:w-1,y:h-1}];
+    const powerPellets = new Set();
+    for(const c of corners){
+      let best=null, bestD=Infinity;
+      for(const o of openCells){
+        const d = Math.abs(o.x-c.x)+Math.abs(o.y-c.y);
+        if(d<bestD){ bestD=d; best=o; }
+      }
+      if(best && !(best.x===startX&&best.y===startY)){
+        powerPellets.add(best.x+','+best.y);
+        pellets.delete(best.x+','+best.y);
+      }
+    }
+
+    // spawns de enemigos: dentro de la celda de encierro central
+    const count = enemyTotal;
+    const spawns = pen.cells.slice(0, count);
+
+    // zonas del vacío: celdas de cruce (3+ salidas) que se cierran y abren con el tiempo
+    const voidMap = new Map();
+    const voidCells = [];
+    if(level >= VOID_LEVEL){
+      const voidCount = Math.min(Math.floor((level-VOID_LEVEL)/2)+1, 6);
+      const candidates = openCells.filter(c=>{
+        if(c.x===startX&&c.y===startY) return false;
+        if(dist[c.y][c.x] < 3) return false;
+        if(spawns.some(s=>Math.abs(s.x-c.x)+Math.abs(s.y-c.y)<2)) return false;
+        return neighborsOf(grid,w,h,c.x,c.y).length >= 3;
+      });
+      shuffle(candidates);
+      for(const c of candidates){
+        if(voidCells.length>=voidCount) break;
+        if(voidCells.some(v=>Math.abs(v.x-c.x)+Math.abs(v.y-c.y)<3)) continue;
+        const cell = { x:c.x, y:c.y, closed:false, t:2+Math.random()*3, period:3.5+Math.random()*2.5 };
+        voidCells.push(cell);
+        voidMap.set(c.x+','+c.y, cell);
+      }
+    }
+
+    return {
+      grid,w,h,tunnelRow,
+      startX,startY,
+      pellets,powerPellets,
+      totalPellets: pellets.size+powerPellets.size,
+      spawns,
+      pen,
+      voidCells,voidMap
+    };
+  }
+
+  function makePlayer(lv){
+    return {
+      x:lv.startX, y:lv.startY,
+      px:lv.startX, py:lv.startY,
+      dir:{x:0,y:0}, queued:{x:0,y:0},
+      moving:false,
+      speed: playerSpeedForLevel(state.level),
+      mouth:0
+    };
+  }
+
+  function makeEnemies(lv){
+    const level = state.level;
+    const count = lv.spawns.length;
+    const interceptorIdx = level>=INTERCEPTOR_LEVEL && count>1 ? 1 : -1;
+    const immuneIdx = level>=IMMUNE_LEVEL && count>0 ? Math.min(2,count-1) : -1;
+    return lv.spawns.map((s,i)=>({
+      x:s.x,y:s.y,px:s.x,py:s.y,
+      spawnX:s.x,spawnY:s.y,
+      dir:{x:0,y:0},
+      target:{x:s.x,y:s.y},
+      speed: enemySpeedForLevel(level),
+      color: ENEMY_COLORS[i%ENEMY_COLORS.length],
+      frightened:false,
+      respawning:false,
+      respawnT:0,
+      waiting:false,
+      waitT:0,
+      lastDir:null,
+      isInterceptor: i===interceptorIdx,
+      isImmune: i===immuneIdx
+    }));
+  }
+
+  function newGame(){
+    state = {
+      level:1, score:0, lives:3,
+      running:false, over:false, paused:false,
+      frightTimer:0, comboCount:0,
+      lv:null, player:null, enemies:[],
+      lastTime:0, toastT:0
+    };
+    startLevel(1);
+    updateHUD();
+  }
+
+  function startLevel(level){
+    state.level = level;
+    state.lv = buildLevel(level);
+    state.player = makePlayer(state.lv);
+    state.enemies = makeEnemies(state.lv);
+    state.frightTimer = 0;
+    state.comboCount = 0;
+    state.levelTime = 0;
+    state.graceLimit = graceTimeForLevel(state.lv, level);
+    state.graceWarned = false;
+    resizeCanvas();
+    updateGraceBar();
+  }
+
+  function loseLife(message){
+    state.lives--;
+    updateHUD();
+    if(state.lives<=0){
+      gameOver();
+      return;
+    }
+    // reposiciona sin regenerar el laberinto
+    state.player = makePlayer(state.lv);
+    state.enemies = makeEnemies(state.lv);
+    state.frightTimer = 0;
+    state.levelTime = 0;
+    state.graceWarned = false;
+    showToast(message || '¡CUIDADO!');
+  }
+
+  function gameOver(){
+    state.running=false;
+    state.over=true;
+    state.paused=false;
+    pauseOverlay.classList.add('hidden');
+    pauseBtn.classList.remove('active');
+    ovTitle.textContent='FIN DEL VIAJE';
+    ovText.textContent='Un centinela alcanzó tu cometa. El vacío es infinito, pero tú puedes volver a intentarlo.';
+    ovScore.style.display='block';
+    ovScore.textContent='PUNTOS: '+state.score;
+    startBtn.textContent='REINTENTAR';
+    overlay.classList.remove('hidden');
+  }
+
+  function updateHUD(){
+    scoreVal.textContent = state.score;
+    levelVal.textContent = state.level;
+    livesEl.innerHTML='';
+    for(let i=0;i<state.lives;i++){
+      const d=document.createElement('div');
+      d.className='life-dot';
+      livesEl.appendChild(d);
+    }
+  }
+
+  function showToast(msg){
+    toast.textContent = msg;
+    toast.classList.add('show');
+    state.toastT = 1.4;
+  }
+
+  // ---------- Canvas / render ----------
+  let cellSize = 20;
+  function resizeCanvas(){
+    const rect = canvas.parentElement.getBoundingClientRect();
+    const dpr = Math.min(window.devicePixelRatio||1, 2);
+    const size = Math.floor(rect.width);
+    canvas.width = size*dpr;
+    canvas.height = size*dpr;
+    canvas.style.width = size+'px';
+    canvas.style.height = size+'px';
+    ctx.setTransform(dpr,0,0,dpr,0,0);
+    const w = state.lv.w, h = state.lv.h;
+    cellSize = size / Math.max(w,h);
+  }
+  window.addEventListener('resize', ()=>{ if(state && state.lv) resizeCanvas(); });
+
+  function cellCenter(cx,cy){
+    return { x:(cx+0.5)*cellSize, y:(cy+0.5)*cellSize };
+  }
+
+  function draw(){
+    const lv = state.lv;
+    const size = Math.max(lv.w,lv.h)*cellSize;
+    ctx.clearRect(0,0,size,size);
+
+    // paredes
+    ctx.strokeStyle = 'rgba(123,95,217,0.9)';
+    ctx.lineWidth = Math.max(2, cellSize*0.16);
+    ctx.lineCap='round';
+    ctx.shadowColor='rgba(123,95,217,0.65)';
+    ctx.shadowBlur = cellSize*0.5;
+    for(let y=0;y<lv.h;y++){
+      for(let x=0;x<lv.w;x++){
+        if(lv.grid[y][x]===1) continue;
+        // dibuja segmento solo si vecino es pared, para trazar contorno de camino
+      }
+    }
+    // dibujar paredes como celdas rellenas suaves
+    ctx.shadowBlur=0;
+    for(let y=0;y<lv.h;y++){
+      for(let x=0;x<lv.w;x++){
+        if(lv.grid[y][x]===1){
+          ctx.fillStyle='rgba(61,44,109,0.35)';
+          ctx.fillRect(x*cellSize, y*cellSize, cellSize, cellSize);
+        }
+      }
+    }
+    // brillo de bordes entre pared y camino
+    ctx.strokeStyle='rgba(123,95,217,0.55)';
+    ctx.lineWidth=Math.max(1,cellSize*0.06);
+    for(let y=0;y<lv.h;y++){
+      for(let x=0;x<lv.w;x++){
+        if(lv.grid[y][x]!==1) continue;
+        const isEdge = (
+          (y>0&&lv.grid[y-1][x]===0)||(y<lv.h-1&&lv.grid[y+1][x]===0)||
+          (x>0&&lv.grid[y][x-1]===0)||(x<lv.w-1&&lv.grid[y][x+1]===0)
+        );
+        if(isEdge){
+          ctx.strokeRect(x*cellSize+1,y*cellSize+1,cellSize-2,cellSize-2);
+        }
+      }
+    }
+
+    // celda de encierro de los enemigos
+    if(lv.pen){
+      const pen = lv.pen;
+      const px = pen.x0*cellSize, py = pen.y0*cellSize;
+      const pw = pen.cols*cellSize, ph = pen.rows*cellSize;
+      ctx.fillStyle = 'rgba(255,107,157,0.10)';
+      ctx.fillRect(px, py, pw, ph);
+      ctx.strokeStyle = 'rgba(255,107,157,0.55)';
+      ctx.lineWidth = Math.max(1, cellSize*0.08);
+      ctx.setLineDash([cellSize*0.25, cellSize*0.18]);
+      ctx.strokeRect(px+1, py+1, pw-2, ph-2);
+      ctx.setLineDash([]);
+    }
+
+    // pellets
+    ctx.fillStyle = getComputedStyleVar('--stardust');
+    lv.pellets.forEach(key=>{
+      const [x,y] = key.split(',').map(Number);
+      const c = cellCenter(x,y);
+      ctx.beginPath();
+      ctx.arc(c.x,c.y,Math.max(1.5,cellSize*0.09),0,Math.PI*2);
+      ctx.fill();
+    });
+
+    // power pellets (pulsantes)
+    const pulse = 0.75+Math.sin(performance.now()/180)*0.25;
+    ctx.fillStyle = getComputedStyleVar('--power');
+    ctx.shadowColor = getComputedStyleVar('--power');
+    ctx.shadowBlur = cellSize*0.8;
+    lv.powerPellets.forEach(key=>{
+      const [x,y] = key.split(',').map(Number);
+      const c = cellCenter(x,y);
+      ctx.beginPath();
+      ctx.arc(c.x,c.y,cellSize*0.22*pulse,0,Math.PI*2);
+      ctx.fill();
+    });
+    ctx.shadowBlur=0;
+
+    // zonas del vacío
+    if(lv.voidCells && lv.voidCells.length){
+      lv.voidCells.forEach(v=>{
+        const c = cellCenter(v.x,v.y);
+        const warn = v.t < 1.2;
+        if(v.closed){
+          const pulse2 = 0.6+Math.sin(performance.now()/140)*0.4;
+          ctx.fillStyle = 'rgba(255,92,122,'+(0.35+0.25*pulse2)+')';
+          ctx.strokeStyle = 'rgba(255,92,122,0.9)';
+          ctx.lineWidth = Math.max(1,cellSize*0.06);
+          ctx.fillRect(v.x*cellSize+1, v.y*cellSize+1, cellSize-2, cellSize-2);
+          ctx.strokeRect(v.x*cellSize+1, v.y*cellSize+1, cellSize-2, cellSize-2);
+        } else if(warn){
+          const pulse3 = 0.4+Math.sin(performance.now()/90)*0.3;
+          ctx.strokeStyle = 'rgba(255,92,122,'+pulse3+')';
+          ctx.lineWidth = Math.max(1,cellSize*0.08);
+          ctx.strokeRect(v.x*cellSize+2, v.y*cellSize+2, cellSize-4, cellSize-4);
+        } else {
+          ctx.strokeStyle = 'rgba(255,92,122,0.25)';
+          ctx.lineWidth = 1;
+          ctx.setLineDash([3,3]);
+          ctx.strokeRect(v.x*cellSize+2, v.y*cellSize+2, cellSize-4, cellSize-4);
+          ctx.setLineDash([]);
+        }
+        void c;
+      });
+    }
+
+    // jugador
+    drawPlayer();
+
+    // enemigos
+    state.enemies.forEach(drawEnemy);
+  }
+
+  function getComputedStyleVar(name){
+    return getComputedStyle(document.documentElement).getPropertyValue(name).trim();
+  }
+
+  function drawPlayer(){
+    const p = state.player;
+    const pos = { x:(p.px+0.5)*cellSize, y:(p.py+0.5)*cellSize };
+    const r = cellSize*0.4;
+    p.mouth = (p.mouth + 0.15) % (Math.PI*0.5);
+    const mouthAngle = 0.15+Math.abs(Math.sin(performance.now()/120))*0.35;
+    let baseAngle = 0;
+    if(p.dir.x===1) baseAngle=0;
+    else if(p.dir.x===-1) baseAngle=Math.PI;
+    else if(p.dir.y===1) baseAngle=Math.PI/2;
+    else if(p.dir.y===-1) baseAngle=-Math.PI/2;
+
+    ctx.save();
+    ctx.translate(pos.x,pos.y);
+    ctx.fillStyle = getComputedStyleVar('--player');
+    ctx.shadowColor = getComputedStyleVar('--player');
+    ctx.shadowBlur = cellSize*0.7;
+    ctx.beginPath();
+    if(p.moving){
+      ctx.arc(0,0,r, baseAngle+mouthAngle, baseAngle-mouthAngle+Math.PI*2);
+      ctx.lineTo(0,0);
+    } else {
+      ctx.arc(0,0,r,0,Math.PI*2);
+    }
+    ctx.closePath();
+    ctx.fill();
+    ctx.restore();
+  }
+
+  function drawEnemy(e){
+    const pos = { x:(e.px+0.5)*cellSize, y:(e.py+0.5)*cellSize };
+    const r = cellSize*0.38;
+    let color = e.color;
+    if(e.respawning) color='rgba(255,255,255,0.25)';
+    else if(e.waiting) color='rgba(255,255,255,0.4)';
+    else if(e.frightened){
+      const flashing = state.frightTimer < 1.5 && Math.floor(performance.now()/150)%2===0;
+      color = flashing ? '#ffffff' : '#A0C4FF';
+    }
+    ctx.save();
+    ctx.translate(pos.x,pos.y);
+    ctx.fillStyle = color;
+    ctx.shadowColor = color;
+    ctx.shadowBlur = cellSize*0.55;
+    ctx.beginPath();
+    ctx.arc(0,-r*0.1,r,Math.PI,0,false);
+    ctx.lineTo(r, r*0.6);
+    for(let i=0;i<3;i++){
+      const bx = r - (i+1)*(2*r/3);
+      ctx.lineTo(bx + r/3, i%2===0? r*0.9 : r*0.55);
+    }
+    ctx.lineTo(-r, r*0.6);
+    ctx.closePath();
+    ctx.fill();
+    ctx.shadowBlur=0;
+    if(e.isImmune && !e.respawning){
+      ctx.strokeStyle = 'rgba(255,255,255,0.85)';
+      ctx.lineWidth = Math.max(1, r*0.12);
+      ctx.stroke();
+    }
+    if(!e.respawning){
+      ctx.fillStyle = e.frightened ? '#0B1026' : '#ffffff';
+      const eyeOffX = r*0.35, eyeOffY = -r*0.15;
+      ctx.beginPath(); ctx.arc(-eyeOffX,eyeOffY,r*0.16,0,Math.PI*2); ctx.fill();
+      ctx.beginPath(); ctx.arc(eyeOffX,eyeOffY,r*0.16,0,Math.PI*2); ctx.fill();
+    }
+    ctx.restore();
+  }
+
+  // ---------- Movimiento ----------
+  // En vez de comprobar "¿estoy cerca del centro?" con un margen que un frame
+  // rápido puede saltarse (y entonces seguir de largo sin comprobar el muro),
+  // calculamos la distancia EXACTA hasta el borde de la celda y avanzamos como
+  // mucho esa distancia por frame. Así nunca es posible cruzar un muro sin que
+  // el juego decida primero si esa celda está abierta.
+
+  function tryDir(entity, dx, dy, grid, w, h, voidMap){
+    let nx = entity.x+dx, ny = entity.y+dy;
+    if(nx<0) nx=w-1;
+    if(nx>w-1) nx=0;
+    if(ny<0||ny>h-1) return null;
+    if(!cellBlocked(grid,nx,ny,voidMap)) return {x:nx,y:ny};
+    return null;
+  }
+
+  function nextGridTarget(pos, dir){
+    if(dir>0) return Math.floor(pos)+1;
+    if(dir<0) return Math.ceil(pos)-1;
+    return pos;
+  }
+
+  function stepEntity(entity, lv, dt, speed, onArrive){
+    let remaining = dt;
+    let guard = 0;
+    while(remaining > 1e-7 && guard < 8){
+      guard++;
+      const atCenter = Number.isInteger(entity.x) && Number.isInteger(entity.y);
+      if(atCenter){
+        onArrive();
+      }
+      if(!(entity.dir.x || entity.dir.y)) break;
+
+      const targetX = nextGridTarget(entity.x, entity.dir.x);
+      const targetY = nextGridTarget(entity.y, entity.dir.y);
+      const dist = Math.abs(targetX-entity.x) + Math.abs(targetY-entity.y);
+      if(dist <= 1e-9){
+        entity.x = targetX; entity.y = targetY;
+        continue;
+      }
+      const maxMove = speed*remaining;
+      if(maxMove < dist - 1e-9){
+        const frac = maxMove/dist;
+        entity.x += (targetX-entity.x)*frac;
+        entity.y += (targetY-entity.y)*frac;
+        remaining = 0;
+      } else {
+        entity.x = targetX;
+        entity.y = targetY;
+        if(entity.x < 0) entity.x = lv.w-1;
+        else if(entity.x > lv.w-1) entity.x = 0;
+        remaining -= dist/speed;
+      }
+    }
+  }
+
+  function updatePlayer(dt){
+    const p = state.player;
+    const lv = state.lv;
+
+    stepEntity(p, lv, dt, p.speed, ()=>{
+      let moved=false;
+      if(p.queued.x||p.queued.y){
+        const t = tryDir(p, p.queued.x, p.queued.y, lv.grid, lv.w, lv.h, lv.voidMap);
+        if(t){ p.dir = {x:p.queued.x,y:p.queued.y}; moved=true; }
+      }
+      if(!moved && (p.dir.x||p.dir.y)){
+        const t = tryDir(p, p.dir.x, p.dir.y, lv.grid, lv.w, lv.h, lv.voidMap);
+        if(!t){ p.dir={x:0,y:0}; }
+      }
+      p.moving = !!(p.dir.x||p.dir.y);
+    });
+
+    p.px = p.x; p.py = p.y;
+    if(p.px<0) p.px=0;
+    if(p.px>lv.w-1) p.px=lv.w-1;
+
+    // recoger pellets
+    const cx = Math.round(p.x), cy = Math.round(p.y);
+    if(Math.abs(p.x-cx)<0.15 && Math.abs(p.y-cy)<0.15){
+      const key = cx+','+cy;
+      if(lv.pellets.has(key)){
+        lv.pellets.delete(key);
+        state.score += 10;
+        updateHUD();
+      } else if(lv.powerPellets.has(key)){
+        lv.powerPellets.delete(key);
+        state.score += 50;
+        state.frightTimer = frightDurationForLevel(state.level);
+        state.comboCount = 0;
+        state.enemies.forEach(e=>{ if(!e.respawning && !e.isImmune) e.frightened=true; });
+        updateHUD();
+      }
+      if(lv.pellets.size===0 && lv.powerPellets.size===0){
+        levelComplete();
+      }
+    }
+  }
+
+  function levelComplete(){
+    state.score += 100 * state.level;
+    const speedBonus = Math.max(0, Math.floor(400 - state.levelTime*4));
+    if(speedBonus>0) state.score += speedBonus;
+    if(state.level % 3 === 0 && state.lives < 5) state.lives++;
+    const nextLevel = state.level+1;
+    showToast(speedBonus>0 ? '¡NIVEL '+nextLevel+'! +'+speedBonus+' vel.' : '¡NIVEL '+nextLevel+'!');
+    startLevel(nextLevel);
+    updateHUD();
+  }
+
+  function updateEnemy(e, dt){
+    const lv = state.lv;
+
+    if(e.waiting){
+      e.waitT -= dt;
+      e.px=e.x; e.py=e.y;
+      if(e.waitT<=0){
+        e.waiting=false;
+        e.dir={x:0,y:0};
+        e.lastDir=null;
+      }
+      return;
+    }
+
+    if(e.respawning){
+      stepEntity(e, lv, dt, e.speed*1.7, ()=>{
+        if(e.x===e.spawnX && e.y===e.spawnY){
+          e.respawning=false;
+          e.waiting=true;
+          e.waitT=ENEMY_RELEASE_WAIT;
+          e.dir={x:0,y:0};
+          e.lastDir=null;
+          return;
+        }
+        const distToSpawn = bfsDistances(lv.grid, lv.w, lv.h, e.spawnX, e.spawnY, lv.voidMap);
+        const options = neighborsOf(lv.grid, lv.w, lv.h, e.x, e.y, lv.voidMap);
+        if(options.length){
+          const choice = options.reduce((best,o)=> (distToSpawn[o.y][o.x] < distToSpawn[best.y][best.x] ? o : best), options[0]);
+          e.dir = { x: choice.x - e.x, y: choice.y - e.y };
+          e.lastDir = choice.d;
+        }
+      });
+      e.px=e.x; e.py=e.y;
+      if(e.px<0) e.px=0;
+      if(e.px>lv.w-1) e.px=lv.w-1;
+      return;
+    }
+
+    const speed = e.frightened ? e.speed*0.55 : e.speed;
+    stepEntity(e, lv, dt, speed, ()=>decideEnemyDir(e, lv));
+    e.px=e.x; e.py=e.y;
+    if(e.px<0) e.px=0;
+    if(e.px>lv.w-1) e.px=lv.w-1;
+  }
+
+  function predictedPlayerCell(lv){
+    const p = state.player;
+    const lookahead = 3;
+    let px = Math.round(p.x), py = Math.round(p.y);
+    if(p.dir.x||p.dir.y){
+      for(let i=0;i<lookahead;i++){
+        const nx = px+p.dir.x, ny = py+p.dir.y;
+        if(ny<0||ny>lv.h-1) break;
+        let wx = nx; if(wx<0) wx=lv.w-1; if(wx>lv.w-1) wx=0;
+        if(cellBlocked(lv.grid,wx,ny,lv.voidMap)) break;
+        px=wx; py=ny;
+      }
+    }
+    return {x:px,y:py};
+  }
+
+  function decideEnemyDir(e, lv){
+    const nbrs = neighborsOf(lv.grid, lv.w, lv.h, e.x, e.y, lv.voidMap).filter(n=>{
+      if(e.lastDir==='L'&&n.d==='R') return false;
+      if(e.lastDir==='R'&&n.d==='L') return false;
+      if(e.lastDir==='U'&&n.d==='D') return false;
+      if(e.lastDir==='D'&&n.d==='U') return false;
+      return true;
+    });
+    const options = nbrs.length ? nbrs : neighborsOf(lv.grid, lv.w, lv.h, e.x, e.y, lv.voidMap);
+    if(!options.length) return;
+
+    let choice;
+    if(e.frightened){
+      const distFromPlayer = bfsDistances(lv.grid, lv.w, lv.h, Math.round(state.player.x), Math.round(state.player.y), lv.voidMap);
+      choice = options.reduce((best,o)=> (distFromPlayer[o.y][o.x] > distFromPlayer[best.y][best.x] ? o : best), options[0]);
+    } else {
+      const doChase = Math.random() < chaseProbForLevel(state.level);
+      if(doChase){
+        const targetCell = e.isInterceptor ? predictedPlayerCell(lv) : {x:Math.round(state.player.x), y:Math.round(state.player.y)};
+        const distToTarget = bfsDistances(lv.grid, lv.w, lv.h, targetCell.x, targetCell.y, lv.voidMap);
+        choice = options.reduce((best,o)=> (distToTarget[o.y][o.x] < distToTarget[best.y][best.x] ? o : best), options[0]);
+      } else {
+        choice = options[Math.floor(Math.random()*options.length)];
+      }
+    }
+    e.dir = { x: choice.x - e.x, y: choice.y - e.y };
+    e.lastDir = choice.d;
+  }
+
+  function checkCollisions(){
+    const p = state.player;
+    for(const e of state.enemies){
+      if(e.respawning || e.waiting) continue;
+      const d = Math.hypot(p.px-e.px, p.py-e.py);
+      if(d < 0.55){
+        if(e.frightened && !e.isImmune){
+          e.frightened=false;
+          e.respawning=true;
+          state.comboCount++;
+          const pts = 200*Math.pow(2, Math.min(state.comboCount-1,3));
+          state.score += pts;
+          showToast('+'+pts);
+          updateHUD();
+        } else {
+          loseLife();
+          return;
+        }
+      }
+    }
+  }
+
+  function updateVoidCells(dt){
+    const lv = state.lv;
+    if(!lv.voidCells || !lv.voidCells.length) return;
+    const occupied = new Set();
+    occupied.add(Math.round(state.player.x)+','+Math.round(state.player.y));
+    state.enemies.forEach(e=>occupied.add(Math.round(e.x)+','+Math.round(e.y)));
+    lv.voidCells.forEach(v=>{
+      v.t -= dt;
+      if(v.t<=0){
+        const key = v.x+','+v.y;
+        if(!occupied.has(key)){
+          v.closed = !v.closed;
+          v.t = v.period;
+        } else {
+          v.t = 0.4;
+        }
+      }
+    });
+  }
+
+  function updateGraceBar(){
+    if(!state || !state.graceLimit) return;
+    const remaining = Math.max(0, state.graceLimit - state.levelTime);
+    const frac = Math.max(0, Math.min(1, remaining/state.graceLimit));
+    const warn = remaining <= 5;
+    timeFill.style.width = (frac*100)+'%';
+    timeFill.classList.toggle('warn', warn);
+    timeLabel.classList.toggle('warn', warn);
+    timeLabel.textContent = Math.ceil(remaining)+'s';
+  }
+
+  function updateGraceTimer(dt){
+    if(!state.graceLimit) return;
+    state.levelTime += dt;
+    if(!state.graceWarned && state.levelTime >= state.graceLimit-3){
+      state.graceWarned = true;
+      showToast('¡el tiempo se agota!');
+    }
+    if(state.levelTime >= state.graceLimit){
+      loseLife('¡SE ACABÓ EL TIEMPO!');
+    }
+    updateGraceBar();
+  }
+
+  // ---------- Loop principal ----------
+  function loop(ts){
+    if(!state.running) return;
+    if(!state.lastTime) state.lastTime = ts;
+    let dt = (ts - state.lastTime)/1000;
+    dt = Math.min(dt, 0.05);
+    state.lastTime = ts;
+
+    if(state.frightTimer>0){
+      state.frightTimer -= dt;
+      if(state.frightTimer<=0){
+        state.frightTimer=0;
+        state.enemies.forEach(e=>{ if(!e.respawning) e.frightened=false; });
+      }
+    }
+    if(state.toastT>0){
+      state.toastT -= dt;
+      if(state.toastT<=0) toast.classList.remove('show');
+    }
+
+    updateGraceTimer(dt);
+    updateVoidCells(dt);
+    updatePlayer(dt);
+    state.enemies.forEach(e=>updateEnemy(e,dt));
+    checkCollisions();
+    draw();
+
+    requestAnimationFrame(loop);
+  }
+
+  function startRunning(){
+    state.running = true;
+    state.lastTime = 0;
+    requestAnimationFrame(loop);
+  }
+
+  function pauseGame(){
+    if(!state || !state.running || state.over) return;
+    state.paused = true;
+    state.running = false;
+    pauseOverlay.classList.remove('hidden');
+  }
+
+  function resumeGame(){
+    if(!state || !state.paused) return;
+    state.paused = false;
+    pauseOverlay.classList.add('hidden');
+    startRunning();
+  }
+
+  function togglePause(){
+    if(!state || state.over || !pauseBtn.classList.contains('active')) return;
+    if(state.paused) resumeGame(); else pauseGame();
+  }
+
+  pauseBtn.addEventListener('click', togglePause);
+  resumeBtn.addEventListener('click', resumeGame);
+  restartBtn.addEventListener('click', ()=>{
+    pauseOverlay.classList.add('hidden');
+    newGame();
+    startRunning();
+  });
+
+  window.addEventListener('keydown', (e)=>{
+    if(e.key==='Escape' || e.key==='p' || e.key==='P'){
+      e.preventDefault();
+      togglePause();
+    }
+  }, {passive:false});
+
+  // ---------- Input ----------
+  function setQueued(dx,dy){
+    if(!state || !state.player) return;
+    state.player.queued = {x:dx,y:dy};
+  }
+
+  window.addEventListener('keydown', (e)=>{
+    const map = {
+      ArrowUp:[0,-1], ArrowDown:[0,1], ArrowLeft:[-1,0], ArrowRight:[1,0],
+      w:[0,-1], s:[0,1], a:[-1,0], d:[1,0],
+      W:[0,-1], S:[0,1], A:[-1,0], D:[1,0]
+    };
+    if(map[e.key]){
+      e.preventDefault();
+      setQueued(map[e.key][0], map[e.key][1]);
+    }
+  }, {passive:false});
+
+  document.getElementById('up').addEventListener('click', ()=>setQueued(0,-1));
+  document.getElementById('down').addEventListener('click', ()=>setQueued(0,1));
+  document.getElementById('left').addEventListener('click', ()=>setQueued(-1,0));
+  document.getElementById('right').addEventListener('click', ()=>setQueued(1,0));
+
+  let touchStart=null;
+  canvas.addEventListener('touchstart', (e)=>{
+    const t=e.touches[0];
+    touchStart={x:t.clientX,y:t.clientY};
+  }, {passive:true});
+  canvas.addEventListener('touchend', (e)=>{
+    if(!touchStart) return;
+    const t=e.changedTouches[0];
+    const dx=t.clientX-touchStart.x, dy=t.clientY-touchStart.y;
+    if(Math.abs(dx)<20 && Math.abs(dy)<20) return;
+    if(Math.abs(dx)>Math.abs(dy)) setQueued(dx>0?1:-1, 0);
+    else setQueued(0, dy>0?1:-1);
+    touchStart=null;
+  }, {passive:true});
+
+  if('ontouchstart' in window){
+    touchWrap.classList.add('active');
+  }
+
+  // ---------- Arranque ----------
+  startBtn.addEventListener('click', ()=>{
+    overlay.classList.add('hidden');
+    ovScore.style.display='none';
+    newGame();
+    startRunning();
+    pauseBtn.classList.add('active');
+  });
+
+})();
+</script>
+</body>
+</html>
 
