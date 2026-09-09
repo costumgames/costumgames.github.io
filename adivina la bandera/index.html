@@ -163,16 +163,10 @@
   }
   .seleccionada{ width:100%; }
   .bandera-media{
+    font-size: 4.4rem;
     line-height:1;
     margin-bottom: 16px;
-  }
-  .bandera-media img{
-    width: 130px;
-    height: auto;
-    border: 1px solid var(--linea);
-    box-shadow: 0 3px 6px rgba(0,0,0,0.15);
-    display: block;
-    margin: 0 auto;
+    filter: drop-shadow(0 3px 3px rgba(0,0,0,0.12));
   }
 
   /* cuadrícula de todas las banderas */
@@ -197,17 +191,12 @@
     font-family: inherit;
     background: var(--papel);
     border: 1px solid var(--linea);
+    font-size: 1.6rem;
     line-height:1;
-    padding: 4px;
+    padding: 8px 0;
     text-align:center;
     position:relative;
     transition: transform 0.1s ease, border-color 0.15s ease;
-  }
-  .celda-bandera img{
-    width: 100%;
-    height: 30px;
-    object-fit: cover;
-    display: block;
   }
   .celda-bandera:hover{ border-color: var(--acento); transform: translateY(-1px); }
   .celda-bandera.seleccionada-celda{
@@ -238,16 +227,10 @@
     text-align:center;
   }
   .bandera-grande{
+    font-size: 6rem;
     line-height:1;
     margin-bottom: 18px;
-  }
-  .bandera-grande img{
-    width: 200px;
-    height: auto;
-    border: 1px solid var(--linea);
-    box-shadow: 0 3px 6px rgba(0,0,0,0.15);
-    display: block;
-    margin: 0 auto;
+    filter: drop-shadow(0 3px 3px rgba(0,0,0,0.12));
   }
   .contador-progreso{
     font-size: 0.78rem;
@@ -387,13 +370,7 @@
     padding: 4px 0;
     border-bottom: 1px dotted var(--linea);
   }
-  .lista-pendientes .fila .bandera-mini{ display:inline-flex; }
-  .lista-pendientes .fila .bandera-mini img{
-    width: 26px;
-    height: 18px;
-    object-fit: cover;
-    border: 1px solid var(--linea);
-  }
+  .lista-pendientes .fila .bandera-mini{ font-size:1.15rem; }
   .sin-pendientes{
     text-align:center;
     color: var(--acento-osc);
@@ -410,11 +387,19 @@
   }
 
   @media (max-width:480px){
-    .bandera-grande img{ width:160px; }
+    .bandera-grande{ font-size:5.2rem; }
     form.respuesta{ flex-direction:column; }
     .portada .datos{ gap:16px; }
   }
 </style>
+<!-- Google Analytics -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-CF5MVG5PV5"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+  gtag('config', 'G-CF5MVG5PV5');
+</script>
 </head>
 <body>
 <div class="atlas">
@@ -572,14 +557,9 @@ function normaliza(s){
     .trim();
 }
 
-function urlBandera(codigo, ancho){
-  return `https://flagcdn.com/w${ancho}/${codigo.toLowerCase()}.png`;
-}
-
-function imgBandera(codigo, ancho, claseExtra){
-  const nombre = PAISES[codigo] || codigo;
-  const clase = claseExtra ? ` class="${claseExtra}"` : "";
-  return `<img${clase} src="${urlBandera(codigo, ancho)}" alt="Bandera de ${nombre}" loading="lazy">`;
+function codigoAEmoji(codigo){
+  const base = 127397;
+  return codigo.toUpperCase().split("").map(c => String.fromCodePoint(base + c.charCodeAt(0))).join("");
 }
 
 // ---------- Estado del juego ----------
@@ -656,7 +636,7 @@ function construirCuadricula(){
     celda.type = "button";
     celda.className = "celda-bandera";
     celda.dataset.codigo = codigo;
-    celda.innerHTML = imgBandera(codigo, 80);
+    celda.textContent = codigoAEmoji(codigo);
     celda.addEventListener("click", ()=> seleccionarBandera(codigo));
     cont.appendChild(celda);
   });
@@ -693,7 +673,7 @@ function seleccionarBandera(codigo){
 
   $("sin-seleccion").style.display = "none";
   $("bloque-seleccionada").style.display = "block";
-  $("bandera-actual").innerHTML = imgBandera(codigo, 320);
+  $("bandera-actual").textContent = codigoAEmoji(codigo);
   $("input-respuesta").value = "";
   $("aviso").textContent = "";
   $("aviso").className = "aviso";
@@ -756,7 +736,7 @@ function mostrarBanderaEleccion(){
     return;
   }
   const codigo = mazoEleccion[indiceEleccion];
-  $("bandera-eleccion").innerHTML = imgBandera(codigo, 320);
+  $("bandera-eleccion").textContent = codigoAEmoji(codigo);
   $("progreso-eleccion").textContent = `Bandera ${indiceEleccion+1} de ${mazoEleccion.length}`;
   $("aviso-eleccion").textContent = "";
   $("aviso-eleccion").className = "aviso";
@@ -834,7 +814,7 @@ function terminarPartida(){
     codigosOrdenados.forEach(codigo=>{
       const fila = document.createElement("div");
       fila.className = "fila";
-      fila.innerHTML = `<span class="bandera-mini">${imgBandera(codigo, 80)}</span><span>${PAISES[codigo]}</span>`;
+      fila.innerHTML = `<span class="bandera-mini">${codigoAEmoji(codigo)}</span><span>${PAISES[codigo]}</span>`;
       lista.appendChild(fila);
     });
   }
@@ -861,4 +841,3 @@ $("input-respuesta").addEventListener("keydown", (e)=>{
 </script>
 </body>
 </html>
-
