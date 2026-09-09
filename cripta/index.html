@@ -191,6 +191,14 @@
 
   #floaters{position:absolute;inset:0;pointer-events:none;overflow:hidden;}
 </style>
+<!-- Google Analytics -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-CF5MVG5PV5"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+  gtag('config', 'G-CF5MVG5PV5');
+</script>
 </head>
 <body>
 <div id="wrap">
@@ -2033,12 +2041,8 @@ function updateBoss(){
     if(boss.t%210===105) bossShootAimed(boss,4,3.8);
   }
 
-if(dist(boss,player) < boss.r+player.r && player.invuln<=0){
-  hitPlayer(threatDamage(1));
-
-  // Si el golpe nos ha matado, gameOver() pone boss=null.
-  // Salimos inmediatamente para no intentar usar boss.r después.
-  if(gameState !== 'playing' || !boss) return;
+  if(dist(boss,player) < boss.r+player.r && player.invuln<=0){
+    hitPlayer(threatDamage(1));
   }
 }
 
@@ -4590,14 +4594,13 @@ function drawParticles(){
   }
 }
 
-// ---------- renderizado y bucle principal ----------
 function render(){
   ctx.save();
-
-  // Fondo y sala primero.
+  if(shakeT>0){
+    ctx.translate(rand(-shakeMag,shakeMag), rand(-shakeMag,shakeMag));
+    shakeT--;
+  }
   drawRoom();
-
-  // Contenido de la sala.
   drawFirstRoomHints();
   drawDoors();
   drawHazards();
@@ -4606,14 +4609,13 @@ function render(){
   drawEnemies();
   drawBoss();
   drawPlayer();
-
   ctx.restore();
 }
 
 // ---------- loop principal ----------
 function loop(){
   frameT++;
-  if(gameState === 'playing'){
+  if(gameState==='playing'){
     updatePlayer();
     updateBoss();
     updateEnemies();
@@ -4626,7 +4628,7 @@ function loop(){
   render();
   requestAnimationFrame(loop);
 }
-
+updateHearts();
 loop();
 })();
 </script>
