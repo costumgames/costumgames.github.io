@@ -3,24 +3,27 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>Hook Master</title>
+<title>Stickman Hook</title>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/tabler-icons/2.44.0/iconfont/tabler-icons.min.css">
 <style>
   * { box-sizing: border-box; }
   html, body {
     margin: 0;
     padding: 0;
+    width: 100%;
+    height: 100%;
+    min-height: 100vh;
+    min-height: 100dvh;
     background: #f2f2ee;
     font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    min-height: 100vh;
+    overflow: hidden;
   }
   #game-container {
-    width: 100%;
-    max-width: 420px;
-    padding: 16px;
+    width: 100vw;
+    height: 100vh;
+    height: 100dvh;
+    max-width: none;
+    padding: 0;
   }
   button {
     font-family: inherit;
@@ -39,7 +42,7 @@
 </head>
 <body>
 <div id="game-container">
-<div id="wrap" style="position:relative; width:100%; height:520px; background:#87CEEB; border-radius:12px; overflow:hidden; touch-action:none;">
+<div id="wrap" style="position:relative; width:100%; height:100%; min-height:100vh; min-height:100dvh; background:#87CEEB; border-radius:0; overflow:hidden; touch-action:none;">
   <canvas id="cv" style="display:block; width:100%; height:100%;"></canvas>
   <button id="pauseBtn" aria-label="pausa" style="position:absolute; top:6px; right:6px; width:30px; height:30px; padding:0; border-radius:50%; background:#FFFFFF; border:1px solid #111111; z-index:1; display:flex; align-items:center; justify-content:center;"><i class="ti ti-player-pause" style="font-size:15px; color:#111111;" aria-hidden="true"></i></button>
   <div id="hint" style="position:absolute; top:44%; left:50%; transform:translate(-50%,-50%); font-size:13px; color:#0c2f44; text-align:center; pointer-events:none;">toca para lanzar el gancho</div>
@@ -93,11 +96,20 @@
   var backToPauseBtn = document.getElementById('backToPauseBtn');
 
   var W = 380, H = 520;
+  var viewScale = 1;
   function resize(){
     var r = wrap.getBoundingClientRect();
-    W = Math.max(280, r.width);
-    H = 520;
-    cv.width = W; cv.height = H;
+    var screenW = Math.max(1, r.width);
+    var screenH = Math.max(1, r.height);
+    viewScale = Math.min(screenW / 380, screenH / 520);
+    W = screenW / viewScale;
+    H = screenH / viewScale;
+    var dpr = window.devicePixelRatio || 1;
+    cv.width = Math.round(screenW * dpr);
+    cv.height = Math.round(screenH * dpr);
+    cv.style.width = screenW + 'px';
+    cv.style.height = screenH + 'px';
+    ctx.setTransform(dpr * viewScale, 0, 0, dpr * viewScale, 0, 0);
   }
   resize();
   window.addEventListener('resize', resize);
@@ -238,17 +250,9 @@
   }
 
   function onTap(){
-    if (state.dead || state.won || state.paused) return;
-
-    // El primer toque también debe lanzar el gancho.
-    // Antes solo iniciaba el juego y no hacía ninguna acción.
-    if (!state.started){
-      state.started = true;
-      hint.style.display = 'none';
-    }
-
-    if (state.attached) release();
-    else tryAttach();
+    if (!state.started){ state.started = true; hint.style.display = 'none'; return; }
+    if (state.dead || state.won) return;
+    if (state.attached) release(); else tryAttach();
   }
 
   wrap.addEventListener('pointerdown', function(e){
@@ -385,12 +389,24 @@
 
         for (var m=0;m<state.walls.length;m++){
           var wl = state.walls[m];
-          if (p.x > wl.x - wl.w/2 - 9 && p.x < wl.x + wl.w/2 + 9){
+          var wallLeft = wl.x - wl.w/2;
+          var wallRight = wl.x + wl.w/2;
+          var playerRadius = 10;
+
+          if (p.x + playerRadius > wallLeft && p.x - playerRadius < wallRight){
             for (var rIdx=0;rIdx<wl.rects.length;rIdx++){
               var rc = wl.rects[rIdx];
-              if (p.y > rc.top - 9 && p.y < rc.bottom + 9){
+
+              if (p.y + playerRadius > rc.top && p.y - playerRadius < rc.bottom){
+                // El muro bloquea al jugador y detiene su movimiento.
+                if (p.vx > 0){
+                  p.x = wallLeft - playerRadius;
+                } else if (p.vx < 0){
+                  p.x = wallRight + playerRadius;
+                }
+
                 p.vx = 0;
-                p.x = wl.x - wl.w/2 - 9;
+                p.vy = 0;
                 break;
               }
             }
@@ -401,7 +417,7 @@
       state.cameraX = p.x - 130;
 
       if (!state.dead && p.x >= state.metaX){ winLevel(); }
-      if (!state.dead && !state.won && p.y > groundOffset){ die(); }
+      if (!state.dead && !state.won && p.y - 10 > H){ die(); }
     }
 
     draw();
@@ -512,4 +528,3 @@
 </script>
 </body>
 </html>
-
