@@ -2,18 +2,8 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <!-- Google tag (gtag.js) -->
-    <script async src="https://www.googletagmanager.com/gtag/js?id=G-CF5MVG5PV5"></script>
-    <script>
-      window.dataLayer = window.dataLayer || [];
-      function gtag(){dataLayer.push(arguments);}
-      gtag('js', new Date());
-      gtag('config', 'G-CF5MVG5PV5');
-    </script>
-
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-5527892069516288"
-        crossorigin="anonymous"></script>
+
     <link rel="icon" type="image/png" href="./costum-favicon.png">
 
     <title>CostumGames — Juegos online gratis</title>
@@ -35,6 +25,25 @@
     <meta name="twitter:description" content="Juega gratis a todos los juegos de CostumGames.">
     <meta name="twitter:image" content="https://costumgames.github.io/costum-logo.png">
 
+    <!-- Google Analytics -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-CF5MVG5PV5"></script>
+    <script>
+        window.dataLayer = window.dataLayer || [];
+
+        function gtag() {
+            dataLayer.push(arguments);
+        }
+
+        gtag('js', new Date());
+        gtag('config', 'G-CF5MVG5PV5');
+    </script>
+
+    <!-- Google AdSense -->
+    <script async
+        src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-5527892069516288"
+        crossorigin="anonymous">
+    </script>
+
     <style>
         * {
             box-sizing: border-box;
@@ -49,10 +58,23 @@
             min-height: 100vh;
             font-family: Arial, Helvetica, sans-serif;
             color: #ffffff;
+
             background:
-                radial-gradient(circle at 15% 0%, rgba(101, 230, 165, 0.12), transparent 35%),
-                radial-gradient(circle at 85% 0%, rgba(110, 90, 255, 0.12), transparent 35%),
-                linear-gradient(180deg, #07110d 0%, #020605 100%);
+                radial-gradient(
+                    circle at 15% 0%,
+                    rgba(101, 230, 165, 0.12),
+                    transparent 35%
+                ),
+                radial-gradient(
+                    circle at 85% 0%,
+                    rgba(110, 90, 255, 0.12),
+                    transparent 35%
+                ),
+                linear-gradient(
+                    180deg,
+                    #07110d 0%,
+                    #020605 100%
+                );
         }
 
         .container {
@@ -91,6 +113,74 @@
             font-size: 16px;
         }
 
+        /* BUSCADOR */
+
+        .search-area {
+            display: flex;
+            justify-content: flex-end;
+            margin: 0 0 18px;
+        }
+
+        .search-box {
+            width: min(300px, 100%);
+            position: relative;
+        }
+
+        .search-box input {
+            width: 100%;
+            padding: 13px 16px 13px 42px;
+
+            border-radius: 12px;
+            border: 1px solid rgba(255, 255, 255, 0.14);
+
+            background: rgba(15, 27, 23, 0.96);
+
+            color: #ffffff;
+
+            font-size: 15px;
+            outline: none;
+        }
+
+        .search-box input::placeholder {
+            color: #8f9a95;
+        }
+
+        .search-box input:focus {
+            border-color: #65e6a5;
+
+            box-shadow:
+                0 0 0 3px rgba(101, 230, 165, 0.10);
+        }
+
+        .search-icon {
+            position: absolute;
+            left: 15px;
+            top: 50%;
+
+            transform: translateY(-50%);
+
+            color: #aeb8b4;
+            font-size: 17px;
+
+            pointer-events: none;
+        }
+
+        .game-card.hidden {
+            display: none;
+        }
+
+        .no-results {
+            display: none;
+
+            text-align: center;
+
+            color: #aeb8b4;
+
+            margin: 35px 0;
+
+            font-size: 17px;
+        }
+
         .section-title {
             text-align: center;
             font-size: 28px;
@@ -99,18 +189,28 @@
 
         .games {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(290px, 1fr));
+            grid-template-columns: repeat(
+                auto-fit,
+                minmax(290px, 1fr)
+            );
+
             gap: 25px;
         }
 
         .game-card {
             display: block;
+
             text-decoration: none;
             color: white;
+
             background: rgba(15, 27, 23, 0.96);
+
             border: 1px solid rgba(255, 255, 255, 0.10);
+
             border-radius: 22px;
+
             padding: 22px;
+
             transition:
                 transform 0.2s ease,
                 border-color 0.2s ease,
@@ -119,26 +219,40 @@
 
         .game-card:hover {
             transform: translateY(-7px);
+
             border-color: #65e6a5;
-            box-shadow: 0 15px 40px rgba(0, 0, 0, 0.35);
+
+            box-shadow:
+                0 15px 40px rgba(0, 0, 0, 0.35);
         }
 
         .game-image {
             width: 100%;
             height: 220px;
+
             border-radius: 17px;
+
             background:
-                linear-gradient(135deg, #0b3d2e, #145b45);
+                linear-gradient(
+                    135deg,
+                    #0b3d2e,
+                    #145b45
+                );
+
             display: flex;
+
             align-items: center;
             justify-content: center;
+
             overflow: hidden;
+
             margin-bottom: 20px;
         }
 
         .game-image img {
             width: 85%;
             height: 85%;
+
             object-fit: contain;
         }
 
@@ -148,40 +262,73 @@
 
         .game-name {
             font-size: 28px;
+
             font-weight: 900;
+
             margin-bottom: 8px;
         }
 
         .game-description {
             color: #aeb8b4;
+
             line-height: 1.55;
+
             min-height: 50px;
         }
 
         .play-button {
             display: inline-block;
+
             margin-top: 18px;
+
             background: #65e6a5;
+
             color: #06100c;
+
             font-weight: 900;
+
             padding: 11px 19px;
+
             border-radius: 10px;
         }
 
         footer {
             text-align: center;
+
             margin-top: 65px;
+
             color: #68736e;
+
             font-size: 14px;
         }
 
+        footer a {
+            color: #68736e;
+            text-decoration: none;
+        }
+
+        footer a:hover {
+            color: #65e6a5;
+        }
+
+        /* MÓVIL */
+
         @media (max-width: 600px) {
+
             .container {
                 padding-top: 30px;
             }
 
             .subtitle {
                 font-size: 15px;
+            }
+
+            .search-area {
+                justify-content: stretch;
+            }
+
+            .search-box {
+                width: 100%;
             }
 
             .section-title {
@@ -200,14 +347,40 @@
 <div class="container">
 
     <header>
-        <img src="costum-logo.png" alt="CostumGames" class="costum-logo">
+
+        <img
+            src="costum-logo.png"
+            alt="CostumGames"
+            class="costum-logo"
+        >
 
         <p class="subtitle">
             CostumGames — tu plataforma de juegos
         </p>
+
     </header>
 
     <main>
+
+        <!-- BUSCADOR -->
+
+        <div class="search-area">
+
+            <div class="search-box">
+
+                <span class="search-icon">🔎</span>
+
+                <input
+                    type="search"
+                    id="gameSearch"
+                    placeholder="Buscar juego..."
+                    aria-label="Buscar juego"
+                    autocomplete="off"
+                >
+
+            </div>
+
+        </div>
 
         <h2 class="section-title">
             Juegos
@@ -216,137 +389,355 @@
         <div class="games">
 
             <!-- VALORCRACKS -->
-            <a class="game-card" href="valorcracks/">
+
+            <a
+                class="game-card"
+                href="valorcracks/"
+            >
+
                 <div class="game-image">
-                    <img src="valorcracks/valorcracks-logo.png" alt="ValorCracks">
+
+                    <img
+                        src="valorcracks/valorcracks-logo.png"
+                        alt="ValorCracks"
+                    >
+
                 </div>
-                <div class="game-name">ValorCracks</div>
+
+                <div class="game-name">
+                    ValorCracks
+                </div>
+
                 <div class="game-description">
                     Compara los valores de mercado de jugadores de fútbol y demuestra cuánto sabes.
                 </div>
-                <span class="play-button">Jugar</span>
+
+                <span class="play-button">
+                    Jugar
+                </span>
+
             </a>
+
 
             <!-- CRIPTA: DESCENSO -->
-            <a class="game-card" href="cripta/">
+
+            <a
+                class="game-card"
+                href="cripta/"
+            >
+
                 <div class="game-image">
-                    <img src="cripta/logo.png" alt="Cripta: Descenso">
+
+                    <img
+                        src="cripta/logo.png"
+                        alt="Cripta: Descenso"
+                    >
+
                 </div>
-                <div class="game-name">Cripta: Descenso</div>
+
+                <div class="game-name">
+                    Cripta: Descenso
+                </div>
+
                 <div class="game-description">
-                    <p>Has cruzado el umbral de la cripta invertida. Aquí, las leyes del mundo exterior se disuelven: cuanto más escalas hacia las torres olvidadas, más profundo te arrastra la maldición del abismo. Tu viaje no busca la superficie, sino el corazón insondable de la ruina.</p>
+
+                    <p>
+                        Has cruzado el umbral de la cripta invertida.
+                        Aquí, las leyes del mundo exterior se disuelven:
+                        cuanto más escalas hacia las torres olvidadas,
+                        más profundo te arrastra la maldición del abismo.
+                        Tu viaje no busca la superficie, sino el corazón
+                        insondable de la ruina.
+                    </p>
+
                 </div>
-                <span class="play-button">Jugar</span>
+
+                <span class="play-button">
+                    Jugar
+                </span>
+
             </a>
 
+
             <!-- 4 EN RAYA -->
-            <a class="game-card" href="4%20en%20raya/">
+
+            <a
+                class="game-card"
+                href="4%20en%20raya/"
+            >
+
                 <div class="game-image">
-                    <img src="4%20en%20raya/logo.png" alt="4 en raya">
+
+                    <img
+                        src="4%20en%20raya/logo.png"
+                        alt="4 en raya"
+                    >
+
                 </div>
-                <div class="game-name">4 en raya</div>
+
+                <div class="game-name">
+                    4 en raya
+                </div>
+
                 <div class="game-description">
                     Juega al clásico 4 en raya y consigue conectar tus fichas antes que tu rival.
                 </div>
-                <span class="play-button">Jugar</span>
+
+                <span class="play-button">
+                    Jugar
+                </span>
+
             </a>
 
+
             <!-- ADIVINA LA BANDERA -->
-            <a class="game-card" href="adivina%20la%20bandera/">
+
+            <a
+                class="game-card"
+                href="adivina%20la%20bandera/"
+            >
+
                 <div class="game-image">
-                    <img src="adivina%20la%20bandera/logo.png" alt="Adivina la bandera">
+
+                    <img
+                        src="adivina%20la%20bandera/logo.png"
+                        alt="Adivina la bandera"
+                    >
+
                 </div>
-                <div class="game-name">Adivina la bandera</div>
+
+                <div class="game-name">
+                    Adivina la bandera
+                </div>
+
                 <div class="game-description">
                     Pon a prueba cuánto sabes de las banderas del mundo.
                 </div>
-                <span class="play-button">Jugar</span>
+
+                <span class="play-button">
+                    Jugar
+                </span>
+
             </a>
 
+
             <!-- AZULEJO -->
-            <a class="game-card" href="azulejo/">
+
+            <a
+                class="game-card"
+                href="azulejo/"
+            >
+
                 <div class="game-image">
-                    <img src="azulejo/logo.png" alt="Azulejo">
+
+                    <img
+                        src="azulejo/logo.png"
+                        alt="Azulejo"
+                    >
+
                 </div>
-                <div class="game-name">Azulejo</div>
+
+                <div class="game-name">
+                    Azulejo
+                </div>
+
                 <div class="game-description">
                     Supera los desafíos de Azulejo y consigue la mejor puntuación.
                 </div>
-                <span class="play-button">Jugar</span>
+
+                <span class="play-button">
+                    Jugar
+                </span>
+
             </a>
 
+
             <!-- EL FAROLERO DE LAS RUINAS -->
-            <a class="game-card" href="el%20farolero%20de%20las%20ruinas/">
+
+            <a
+                class="game-card"
+                href="el%20farolero%20de%20las%20ruinas/"
+            >
+
                 <div class="game-image">
-                    <img src="el%20farolero%20de%20las%20ruinas/logo.png" alt="El farolero de las ruinas">
+
+                    <img
+                        src="el%20farolero%20de%20las%20ruinas/logo.png"
+                        alt="El farolero de las ruinas"
+                    >
+
                 </div>
-                <div class="game-name">El farolero de las ruinas</div>
+
+                <div class="game-name">
+                    El farolero de las ruinas
+                </div>
+
                 <div class="game-description">
                     Adéntrate en las ruinas y supera los peligros que encontrarás en el camino.
                 </div>
-                <span class="play-button">Jugar</span>
+
+                <span class="play-button">
+                    Jugar
+                </span>
+
             </a>
 
+
             <!-- TRAYECTORIAS -->
-            <a class="game-card" href="trayectorias/">
+
+            <a
+                class="game-card"
+                href="trayectorias/"
+            >
+
                 <div class="game-image">
-                    <img src="trayectorias/logo.png" alt="Trayectorias">
+
+                    <img
+                        src="trayectorias/logo.png"
+                        alt="Trayectorias"
+                    >
+
                 </div>
-                <div class="game-name">Trayectorias</div>
+
+                <div class="game-name">
+                    Trayectorias
+                </div>
+
                 <div class="game-description">
                     Pon a prueba tu habilidad y supera los retos de Trayectorias.
                 </div>
-                <span class="play-button">Jugar</span>
+
+                <span class="play-button">
+                    Jugar
+                </span>
+
             </a>
 
+
             <!-- CIMA INFINITA -->
-            <a class="game-card" href="cima%20infinita/">
+
+            <a
+                class="game-card"
+                href="cima%20infinita/"
+            >
+
                 <div class="game-image">
-                    <img src="cima%20infinita/logo.png" alt="Cima Infinita">
+
+                    <img
+                        src="cima%20infinita/logo.png"
+                        alt="Cima Infinita"
+                    >
+
                 </div>
-                <div class="game-name">Cima Infinita</div>
+
+                <div class="game-name">
+                    Cima Infinita
+                </div>
+
                 <div class="game-description">
                     Llega a lo más alto y supera todos los obstáculos en Cima Infinita.
                 </div>
-                <span class="play-button">Jugar</span>
+
+                <span class="play-button">
+                    Jugar
+                </span>
+
             </a>
 
+
             <!-- PIXEL BREAKER -->
-            <a class="game-card" href="pixel%20breaker/">
+
+            <a
+                class="game-card"
+                href="pixel%20breaker/"
+            >
+
                 <div class="game-image">
-                    <img src="pixel%20breaker/logo.png" alt="Pixel Breaker">
+
+                    <img
+                        src="pixel%20breaker/logo.png"
+                        alt="Pixel Breaker"
+                    >
+
                 </div>
-                <div class="game-name">Pixel Breaker</div>
+
+                <div class="game-name">
+                    Pixel Breaker
+                </div>
+
                 <div class="game-description">
                     Cuela la bola por los huecos para llegar a los píxeles y romperlos. Infinito y cada vez más difícil.
                 </div>
-                <span class="play-button">Jugar</span>
+
+                <span class="play-button">
+                    Jugar
+                </span>
+
             </a>
 
+
             <!-- NEBULOSA -->
-            <a class="game-card" href="nebulosa/">
+
+            <a
+                class="game-card"
+                href="nebulosa/"
+            >
+
                 <div class="game-image">
-                    <img src="nebulosa/logo.png" alt="Nebulosa">
+
+                    <img
+                        src="nebulosa/logo.png"
+                        alt="Nebulosa"
+                    >
+
                 </div>
-                <div class="game-name">Nebulosa</div>
+
+                <div class="game-name">
+                    Nebulosa
+                </div>
+
                 <div class="game-description">
                     Recorre el laberinto espacial, consigue los puntos y evita a los enemigos en este arcade estilo Pac-Man.
                 </div>
-                <span class="play-button">Jugar</span>
+
+                <span class="play-button">
+                    Jugar
+                </span>
+
             </a>
 
-            <!-- STICKMAN HOOK -->
-            <a class="game-card" href="hook%20master/">
+
+            <!-- HOOK MASTER -->
+
+            <a
+                class="game-card"
+                href="hook%20master/"
+            >
+
                 <div class="game-image">
-                    <img src="hook%20master/logo.png" alt="Hook Master">
+
+                    <img
+                        src="hook%20master/logo.png"
+                        alt="Hook Master"
+                    >
+
                 </div>
-                <div class="game-name">Hook Master</div>
+
+                <div class="game-name">
+                    Hook Master
+                </div>
+
                 <div class="game-description">
                     Toca para lanzar el gancho y balancearte a través de los niveles. Evita caer al vacío y alcanza la meta.
                 </div>
-                <span class="play-button">Jugar</span>
+
+                <span class="play-button">
+                    Jugar
+                </span>
+
             </a>
-<!-- POLLITO -->
+
+                        <!-- POLLITO -->
             <a class="game-card" href="pollito/">
                 <div class="game-image">
                     <img src="pollito/logo.png" alt="Pollito">
@@ -357,25 +748,109 @@
                 </div>
                 <span class="play-button">Jugar</span>
             </a>
+            
+        </div>
 
+
+        <!-- MENSAJE SI NO HAY RESULTADOS -->
+
+        <div
+            class="no-results"
+            id="noResults"
+        >
+            No se ha encontrado ningún juego
         </div>
 
     </main>
 
 
     <footer>
+
         © CostumGames
+
         <br>
-        <a href="https://www.instagram.com/costumgames_/" target="_blank" rel="noopener noreferrer">
+
+        <a
+            href="https://www.instagram.com/costumgames_/"
+            target="_blank"
+            rel="noopener noreferrer"
+        >
             Instagram: @costumgames_
         </a>
+
     </footer>
 
 </div>
 
+
+<!-- BUSCADOR -->
+
+<script>
+
+    const searchInput =
+        document.getElementById("gameSearch");
+
+    const gameCards =
+        document.querySelectorAll(".game-card");
+
+    const noResults =
+        document.getElementById("noResults");
+
+
+    searchInput.addEventListener(
+        "input",
+        function () {
+
+            const search =
+                this.value
+                    .trim()
+                    .toLowerCase()
+                    .normalize("NFD")
+                    .replace(/[\u0300-\u036f]/g, "");
+
+
+            let visibleGames = 0;
+
+
+            gameCards.forEach(
+                card => {
+
+                    const gameName =
+                        card
+                            .querySelector(".game-name")
+                            .textContent
+                            .toLowerCase()
+                            .normalize("NFD")
+                            .replace(/[\u0300-\u036f]/g, "");
+
+
+                    const matches =
+                        gameName.includes(search);
+
+
+                    card.classList.toggle(
+                        "hidden",
+                        !matches
+                    );
+
+
+                    if (matches) {
+                        visibleGames++;
+                    }
+
+                }
+            );
+
+
+            noResults.style.display =
+                visibleGames === 0
+                    ? "block"
+                    : "none";
+
+        }
+    );
+
+</script>
+
 </body>
 </html>
-
-
-
-
