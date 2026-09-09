@@ -206,6 +206,14 @@
     box-shadow:none;
   }
 </style>
+<!-- Google tag (gtag.js) -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-CF5MVG5PV5"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+  gtag('config', 'G-CF5MVG5PV5');
+</script>
 </head>
 <body>
 <div id="app">
@@ -1349,6 +1357,57 @@
 
 })();
 </script>
+
+<!-- CostumGames: tiempo jugado en Analytics -->
+<script>
+(function() {
+  const GAME_NAME = 'Nebulosa';
+  const MEASUREMENT_ID = 'G-CF5MVG5PV5';
+  let lastTimestamp = performance.now();
+  let pendingSeconds = 0;
+  let totalSeconds = 0;
+  let active = document.visibilityState === 'visible';
+
+  function flushTime() {
+    if (pendingSeconds < 1) return;
+    const seconds = Math.floor(pendingSeconds);
+    if (seconds < 1) return;
+    pendingSeconds -= seconds;
+    totalSeconds += seconds;
+    if (typeof gtag === 'function') {
+      gtag('event', 'game_time', {
+        game_name: GAME_NAME,
+        seconds_played: seconds,
+        total_seconds: totalSeconds,
+        engagement_time_msec: seconds * 1000
+      });
+    }
+  }
+
+  function tick() {
+    const now = performance.now();
+    if (active) pendingSeconds += Math.max(0, (now - lastTimestamp) / 1000);
+    lastTimestamp = now;
+    flushTime();
+  }
+
+  document.addEventListener('visibilitychange', function() {
+    const now = performance.now();
+    if (active) pendingSeconds += Math.max(0, (now - lastTimestamp) / 1000);
+    active = document.visibilityState === 'visible';
+    lastTimestamp = now;
+    if (!active) flushTime();
+  });
+
+  window.addEventListener('pagehide', function() {
+    const now = performance.now();
+    if (active) pendingSeconds += Math.max(0, (now - lastTimestamp) / 1000);
+    lastTimestamp = now;
+    flushTime();
+  });
+
+  setInterval(tick, 10000);
+})();
+</script>
 </body>
 </html>
-
