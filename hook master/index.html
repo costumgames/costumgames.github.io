@@ -238,9 +238,17 @@
   }
 
   function onTap(){
-    if (!state.started){ state.started = true; hint.style.display = 'none'; return; }
-    if (state.dead || state.won) return;
-    if (state.attached) release(); else tryAttach();
+    if (state.dead || state.won || state.paused) return;
+
+    // El primer toque también debe lanzar el gancho.
+    // Antes solo iniciaba el juego y no hacía ninguna acción.
+    if (!state.started){
+      state.started = true;
+      hint.style.display = 'none';
+    }
+
+    if (state.attached) release();
+    else tryAttach();
   }
 
   wrap.addEventListener('pointerdown', function(e){
