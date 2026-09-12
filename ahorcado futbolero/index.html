@@ -98,17 +98,41 @@
   }
   .balon-estado{
     display:flex;
+    flex-direction:column;
     align-items:center;
     justify-content:center;
-    gap:10px;
+    gap:4px;
     margin-bottom:14px;
   }
-  .vidas{
-    display:flex;
-    gap:6px;
-    font-size:1.3rem;
+  .ahorcado-dibujo{
+    width:150px;
+    height:150px;
   }
-  .vidas span.usada{opacity:0.15; filter:grayscale(1);}
+  .ahorcado-dibujo .estructura{
+    stroke:var(--tiza);
+    opacity:0.55;
+  }
+  .ahorcado-dibujo .cuerpo{
+    stroke:var(--amarillo);
+  }
+  .ahorcado-dibujo line,
+  .ahorcado-dibujo circle{
+    fill:none;
+    stroke-width:4;
+    stroke-linecap:round;
+  }
+  .ahorcado-dibujo .parte{
+    opacity:0;
+    transition:opacity .25s ease;
+  }
+  .ahorcado-dibujo .parte.visible{
+    opacity:1;
+  }
+  .fallos-texto{
+    font-size:0.85rem;
+    opacity:0.8;
+    text-align:center;
+  }
   .teclado{
     display:grid;
     grid-template-columns:repeat(auto-fill, minmax(34px,1fr));
@@ -173,7 +197,21 @@
   <div class="pista" id="pista"></div>
 
   <div class="balon-estado">
-    <div class="vidas" id="vidas"></div>
+    <svg class="ahorcado-dibujo" viewBox="0 0 150 150" xmlns="http://www.w3.org/2000/svg">
+      <!-- Estructura fija (horca) -->
+      <line class="estructura" x1="15" y1="140" x2="95" y2="140"></line>
+      <line class="estructura" x1="35" y1="140" x2="35" y2="15"></line>
+      <line class="estructura" x1="35" y1="15" x2="90" y2="15"></line>
+      <line class="estructura" x1="90" y1="15" x2="90" y2="30"></line>
+      <!-- Partes del cuerpo, una por cada fallo -->
+      <circle class="parte cuerpo" id="parteCabeza" cx="90" cy="42" r="12"></circle>
+      <line class="parte cuerpo" id="parteTorso" x1="90" y1="54" x2="90" y2="90"></line>
+      <line class="parte cuerpo" id="parteBrazoIzq" x1="90" y1="62" x2="72" y2="78"></line>
+      <line class="parte cuerpo" id="parteBrazoDer" x1="90" y1="62" x2="108" y2="78"></line>
+      <line class="parte cuerpo" id="partePiernaIzq" x1="90" y1="90" x2="74" y2="115"></line>
+      <line class="parte cuerpo" id="partePiernaDer" x1="90" y1="90" x2="106" y2="115"></line>
+    </svg>
+    <div class="fallos-texto" id="fallosTexto"></div>
   </div>
 
   <div class="campo-palabra" id="campoPalabra"></div>
@@ -194,310 +232,284 @@
 
 <script>
 const JUGADORES = [
-  { nombre: "MESSI", pista: "Ganó su primer Mundial en 2022 tras perder la final de 2014, y acumula ocho Balones de Oro." },
-  { nombre: "CRISTIANO RONALDO", pista: "Máximo goleador histórico de la Champions League y también de las Eurocopas." },
-  { nombre: "PELE", pista: "Único futbolista campeón de tres Copas del Mundo: 1958, 1962 y 1970." },
-  { nombre: "MARADONA", pista: "En un mismo partido del Mundial 86 hizo 'la mano de Dios' y el 'gol del siglo'." },
-  { nombre: "ZIDANE", pista: "Marcó dos goles de cabeza en la final del Mundial 1998 y fue expulsado en la de 2006." },
-  { nombre: "RONALDO NAZARIO", pista: "Máximo goleador del Mundial 2002 con 8 tantos, apodado 'el Fenómeno'." },
-  { nombre: "RONALDINHO", pista: "Balón de Oro 2005, ídolo del Barcelona por sus jugadas de fantasía." },
-  { nombre: "KAKA", pista: "Balón de Oro 2007 con el Milan, entre las eras de Ronaldinho y Messi." },
-  { nombre: "XAVI", pista: "Cerebro del mediocampo español, campeón del Mundial 2010 y de dos Eurocopas." },
-  { nombre: "INIESTA", pista: "Anotó el gol que le dio a España su único título mundial, en 2010." },
-  { nombre: "IKER CASILLAS", pista: "Arquero y capitán de España en el Mundial 2010." },
-  { nombre: "MODRIC", pista: "Balón de Oro 2018, capitán de Croacia en la final de ese Mundial." },
-  { nombre: "HAALAND", pista: "Delantero noruego que rompió el récord de goles en una temporada de Premier League." },
-  { nombre: "MBAPPE", pista: "Máximo goleador del Mundial 2022 con 8 goles, incluido un hat-trick en la final." },
-  { nombre: "NEYMAR", pista: "Máximo goleador histórico de la selección brasileña." },
-  { nombre: "LUIS SUAREZ", pista: "Delantero uruguayo, uno de los máximos goleadores históricos del Barcelona." },
-  { nombre: "KUN AGUERO", pista: "Autor de un gol agónico que le dio a su equipo un título de liga inglesa en el último minuto." },
-  { nombre: "JAMES RODRIGUEZ", pista: "Máximo goleador del Mundial 2014 con 6 goles, jugando para Colombia." },
-  { nombre: "HARRY KANE", pista: "Goleador del Mundial 2018 y récord histórico de goles con la selección inglesa." },
-  { nombre: "THOMAS MULLER", pista: "Ganó la Bota de Oro del Mundial 2010 pese a empatar en goles, por más asistencias." },
-  { nombre: "MIROSLAV KLOSE", pista: "Máximo goleador histórico de los Mundiales, con 16 goles en cuatro ediciones." },
-  { nombre: "GERD MULLER", pista: "Delantero alemán, goleador del Mundial 1970 con 10 tantos." },
-  { nombre: "JUST FONTAINE", pista: "Anotó 13 goles en un solo Mundial, en 1958, un récord que sigue vigente." },
-  { nombre: "EUSEBIO", pista: "Delantero portugués, máximo artillero del Mundial de Inglaterra 1966." },
-  { nombre: "PAOLO ROSSI", pista: "Goleador clave de Italia en el título mundial de 1982." },
-  { nombre: "SALVATORE SCHILLACI", pista: "Sorpresa goleadora de Italia en el Mundial que se jugó en su propio país, 1990." },
-  { nombre: "GARY LINEKER", pista: "Máximo goleador del Mundial 1986, jugando para Inglaterra." },
-  { nombre: "DAVOR SUKER", pista: "Goleador del Mundial 1998, cuando Croacia terminó tercera." },
-  { nombre: "HRISTO STOICHKOV", pista: "Balón de Oro 1994, compartió la Bota de Oro de ese Mundial con Bulgaria." },
-  { nombre: "OLEG SALENKO", pista: "Anotó cinco goles en un solo partido de Mundial, ante Camerún en 1994." },
-  { nombre: "GEORGE WEAH", pista: "Único futbolista africano en ganar el Balón de Oro, en 1995." },
-  { nombre: "ROMARIO", pista: "Delantero brasileño clave en el título mundial de 1994." },
-  { nombre: "RIVALDO", pista: "Balón de Oro 1999, campeón del Mundial 2002 con Brasil." },
-  { nombre: "CAFU", pista: "Único jugador en disputar tres finales de Mundial seguidas: 1994, 1998 y 2002." },
-  { nombre: "ROBERTO CARLOS", pista: "Lateral brasileño famoso por un gol de tiro libre imposible en un amistoso de 1997." },
-  { nombre: "ZICO", pista: "Brasileño considerado uno de los mejores de la historia que nunca ganó un Mundial." },
-  { nombre: "GARRINCHA", pista: "Compartió la Bota de Oro del Mundial 1962, bicampeón con Brasil." },
-  { nombre: "FRANZ BECKENBAUER", pista: "Ganó el Mundial como jugador en 1974 y como director técnico en 1990." },
-  { nombre: "LOTHAR MATTHAUS", pista: "El futbolista que más partidos disputó en la historia de los Mundiales." },
-  { nombre: "JURGEN KLINSMANN", pista: "Delantero alemán campeón del Mundial 1990." },
-  { nombre: "MICHAEL BALLACK", pista: "Capitán de Alemania en la final del Mundial 2002." },
-  { nombre: "OLIVER KAHN", pista: "Único arquero en ganar el Balón de Oro del Mundial, en 2002, pese a perder la final." },
-  { nombre: "MANUEL NEUER", pista: "Arquero campeón del Mundial 2014 con Alemania." },
-  { nombre: "PHILIPP LAHM", pista: "Capitán de Alemania en el título mundial de 2014." },
-  { nombre: "MARIO GOTZE", pista: "Anotó el gol que definió la final del Mundial 2014." },
-  { nombre: "DAVID VILLA", pista: "Máximo goleador histórico de la selección española." },
-  { nombre: "FERNANDO TORRES", pista: "Mejor jugador de la Eurocopa 2008, ganada por España." },
-  { nombre: "RAUL GONZALEZ", pista: "Fue el máximo goleador histórico del Real Madrid antes de la llegada de Cristiano." },
-  { nombre: "ALFREDO DI STEFANO", pista: "Estrella del Real Madrid en sus primeras cinco Copas de Europa consecutivas." },
-  { nombre: "FERENC PUSKAS", pista: "Delantero húngaro ídolo del Real Madrid, parte de la 'Hungría mágica' de los años 50." },
-  { nombre: "JOHAN CRUYFF", pista: "Ganó tres Balones de Oro y le dio nombre a un famoso gambeta o 'giro' futbolístico." },
-  { nombre: "MARCO VAN BASTEN", pista: "Autor de un gol de volea histórico en la final de la Eurocopa 1988." },
-  { nombre: "DENNIS BERGKAMP", pista: "Delantero holandés apodado 'el cisne no volador' por su miedo a viajar en avión." },
-  { nombre: "RUUD GULLIT", pista: "Balón de Oro 1987, campeón de la Eurocopa con Holanda en 1988." },
-  { nombre: "FRANK RIJKAARD", pista: "Formó el histórico trío holandés del Milan junto a Gullit y Van Basten." },
-  { nombre: "GEORGE BEST", pista: "Estrella norirlandesa del Manchester United en los años 60." },
-  { nombre: "BOBBY CHARLTON", pista: "Campeón del Mundial 1966 con Inglaterra, ídolo histórico del Manchester United." },
-  { nombre: "BOBBY MOORE", pista: "Capitán de Inglaterra en el único Mundial que ganó ese país, 1966." },
-  { nombre: "GEOFF HURST", pista: "Único jugador en anotar un hat-trick en una final de Mundial, en 1966." },
-  { nombre: "DAVID BECKHAM", pista: "Famoso por sus tiros libres y centros de precisión, subcampeón de Champions en 1999." },
-  { nombre: "WAYNE ROONEY", pista: "Fue el máximo goleador histórico de Inglaterra hasta que Harry Kane rompió su récord." },
-  { nombre: "STEVEN GERRARD", pista: "Protagonista de una remontada histórica en la final de Champions de 2005." },
-  { nombre: "FRANK LAMPARD", pista: "Uno de los máximos goleadores históricos del Chelsea." },
-  { nombre: "THIERRY HENRY", pista: "Máximo goleador histórico del Arsenal." },
-  { nombre: "MICHEL PLATINI", pista: "Ganó tres Balones de Oro consecutivos en los años 80 con Francia." },
-  { nombre: "LILIAN THURAM", pista: "Marcó los dos únicos goles de su carrera con la selección, en una semifinal de Mundial 1998." },
-  { nombre: "KARIM BENZEMA", pista: "Balón de Oro 2022, delantero francés estrella del Real Madrid." },
-  { nombre: "ANTOINE GRIEZMANN", pista: "Subcampeón de la Bota de Oro del Mundial 2018 y campeón ese año con Francia." },
-  { nombre: "OLIVIER GIROUD", pista: "Superó el récord de goles histórico de Thierry Henry con la selección francesa." },
-  { nombre: "HUGO LLORIS", pista: "Arquero y capitán de Francia en el título mundial de 2018." },
-  { nombre: "NGOLO KANTE", pista: "Ganó una liga inglesa y un Mundial en años consecutivos con equipos distintos." },
-  { nombre: "PAUL POGBA", pista: "Anotó un gol en la final del Mundial 2018 con Francia." },
-  { nombre: "ANDREA PIRLO", pista: "Especialista en tiros libres y penales suaves, campeón del Mundial 2006." },
-  { nombre: "FABIO CANNAVARO", pista: "Único defensor de la era moderna en ganar el Balón de Oro, en 2006." },
-  { nombre: "GIANLUIGI BUFFON", pista: "Arquero campeón del Mundial 2006 con Italia." },
-  { nombre: "ALESSANDRO DEL PIERO", pista: "Ídolo histórico de la Juventus, campeón del Mundial 2006." },
-  { nombre: "FRANCESCO TOTTI", pista: "Jugó toda su carrera profesional en un solo club, la Roma." },
-  { nombre: "ROBERTO BAGGIO", pista: "Falló el penal decisivo en la final del Mundial 1994 ante Brasil." },
-  { nombre: "LUIS FIGO", pista: "Provocó un escándalo al pasar directamente del Barcelona al Real Madrid en el año 2000." },
-  { nombre: "DECO", pista: "Ganó la Champions League con dos clubes distintos: Porto y Barcelona." },
-  { nombre: "DIEGO FORLAN", pista: "Ganó la Bota de Oro del Mundial 2010 con Uruguay, pese a no ser campeón." },
-  { nombre: "EDINSON CAVANI", pista: "Uno de los máximos goleadores históricos de la selección uruguaya." },
-  { nombre: "FALCAO", pista: "Delantero colombiano apodado 'el Tigre', gran figura de la Europa League." },
-  { nombre: "CARLOS VALDERRAMA", pista: "Mediocampista colombiano de pelo rizado, símbolo del fútbol de los años 90." },
-  { nombre: "MARCELO SALAS", pista: "Delantero chileno, gran figura de su selección en los Mundiales de 1998." },
-  { nombre: "HUGO SANCHEZ", pista: "Delantero mexicano, durante años el máximo goleador histórico de la liga española." },
-  { nombre: "CHICHARITO", pista: "Máximo goleador histórico de la selección mexicana." },
-  { nombre: "RAFAEL MARQUEZ", pista: "Único mexicano en disputar cinco Copas del Mundo." },
-  { nombre: "TEOFILO CUBILLAS", pista: "Delantero peruano histórico, destacado en los Mundiales de 1970 y 1978." },
-  { nombre: "ARJEN ROBBEN", pista: "Famoso por sus recortes hacia la pierna izquierda antes de rematar al arco." },
-  { nombre: "ROBIN VAN PERSIE", pista: "Anotó un gol de cabeza espectacular en pleno vuelo ante España, Mundial 2014." },
-  { nombre: "WESLEY SNEIJDER", pista: "Fue clave con cinco goles en el camino de Holanda a la final del Mundial 2010." },
-  { nombre: "SAMUEL ETOO", pista: "Uno de los máximos goleadores históricos de la Copa Africana de Naciones." },
-  { nombre: "DIDIER DROGBA", pista: "Anotó el penal decisivo que le dio a su equipo la Champions League de 2012." },
-  { nombre: "YAYA TOURE", pista: "Ganó cuatro veces seguidas el premio al mejor futbolista africano del año." },
-  { nombre: "MICHAEL ESSIEN", pista: "Mediocampista ghanés apodado 'el Bisonte' por su fuerza física." },
-  { nombre: "SADIO MANE", pista: "Delantero senegalés, campeón de la Copa Africana de Naciones en 2022." },
-  { nombre: "MOHAMED SALAH", pista: "Máximo goleador histórico de la selección egipcia." },
-  { nombre: "RIYAD MAHREZ", pista: "Ganó la Copa Africana de Naciones 2019 con Argelia." },
-  { nombre: "ZLATAN IBRAHIMOVIC", pista: "Delantero sueco conocido por goles acrobáticos y una gran confianza en sí mismo." },
-  { nombre: "ROBERT LEWANDOWSKI", pista: "Anotó cinco goles en nueve minutos en un partido de la liga alemana." },
-  { nombre: "KEVIN DE BRUYNE", pista: "Mediocampista belga, referente del Manchester City en la era de Guardiola." },
-  { nombre: "VIRGIL VAN DIJK", pista: "Defensor holandés, pieza clave del Liverpool campeón de Champions en 2019." },
-  { nombre: "SERGIO RAMOS", pista: "Defensor español que marcó un gol agónico en la final de Champions de 2014." },
-  { nombre: "GERARD PIQUE", pista: "Defensor español, campeón del Mundial 2010 y luego empresario del deporte." },
-  { nombre: "VINICIUS JR", pista: "Extremo brasileño, figura del Real Madrid campeón de Champions en varias ediciones recientes." },
-  { nombre: "JUDE BELLINGHAM", pista: "Mediocampista inglés que brilló desde muy joven en el Borussia Dortmund y el Real Madrid." },
-  { nombre: "LAUTARO MARTINEZ", pista: "Delantero argentino, capitán del Inter de Milán y campeón del Mundial 2022." },
-  { nombre: "JULIAN ALVAREZ", pista: "Delantero argentino campeón del mundo en 2022 siendo muy joven." },
-  { nombre: "ANGEL DI MARIA", pista: "Marcó el gol del título en la final de la Copa América 2021 con Argentina." },
-  { nombre: "GONZALO HIGUAIN", pista: "Delantero argentino, finalista de un Mundial y tres Copas América sin poder ganar ninguno." },
-  { nombre: "JAVIER MASCHERANO", pista: "Defensor y mediocampista argentino, uno de los más citados de la selección en Mundiales." },
-  { nombre: "CARLOS TEVEZ", pista: "Delantero argentino apodado 'el Apache', ídolo de Boca Juniors." },
-  { nombre: "GABRIEL BATISTUTA", pista: "Delantero argentino que marcó en dos Mundiales distintos, apodado 'Batigol'." },
+  { nombre: "MESSI", camiseta: "MESSI", pista: "Ganó su primer Mundial en 2022 tras perder la final de 2014, y acumula ocho Balones de Oro." },
+  { nombre: "CRISTIANO RONALDO", camiseta: "CRISTIANO RONALDO", pista: "Máximo goleador histórico de la Champions League y también de las Eurocopas." },
+  { nombre: "PELE", camiseta: "PELE", pista: "Único futbolista campeón de tres Copas del Mundo: 1958, 1962 y 1970." },
+  { nombre: "MARADONA", camiseta: "MARADONA", pista: "En un mismo partido del Mundial 86 hizo 'la mano de Dios' y el 'gol del siglo'." },
+  { nombre: "ZIDANE", camiseta: "ZIDANE", pista: "Marcó dos goles de cabeza en la final del Mundial 1998 y fue expulsado en la de 2006." },
+  { nombre: "RONALDO NAZARIO", camiseta: "RONALDO", pista: "Máximo goleador del Mundial 2002 con 8 tantos, apodado 'el Fenómeno'." },
+  { nombre: "RONALDINHO", camiseta: "RONALDINHO", pista: "Balón de Oro 2005, ídolo del Barcelona por sus jugadas de fantasía." },
+  { nombre: "KAKA", camiseta: "KAKA", pista: "Balón de Oro 2007 con el Milan, entre las eras de Ronaldinho y Messi." },
+  { nombre: "XAVI", camiseta: "XAVI", pista: "Cerebro del mediocampo español, campeón del Mundial 2010 y de dos Eurocopas." },
+  { nombre: "INIESTA", camiseta: "INIESTA", pista: "Anotó el gol que le dio a España su único título mundial, en 2010." },
+  { nombre: "IKER CASILLAS", camiseta: "CASILLAS", pista: "Arquero y capitán de España en el Mundial 2010." },
+  { nombre: "MODRIC", camiseta: "MODRIC", pista: "Balón de Oro 2018, capitán de Croacia en la final de ese Mundial." },
+  { nombre: "HAALAND", camiseta: "HAALAND", pista: "Delantero noruego que rompió el récord de goles en una temporada de Premier League." },
+  { nombre: "MBAPPE", camiseta: "MBAPPE", pista: "Máximo goleador del Mundial 2022 con 8 goles, incluido un hat-trick en la final." },
+  { nombre: "NEYMAR", camiseta: "NEYMAR", pista: "Máximo goleador histórico de la selección brasileña." },
+  { nombre: "LUIS SUAREZ", camiseta: "SUAREZ", pista: "Delantero uruguayo, uno de los máximos goleadores históricos del Barcelona." },
+  { nombre: "KUN AGUERO", camiseta: "AGUERO", pista: "Autor de un gol agónico que le dio a su equipo un título de liga inglesa en el último minuto." },
+  { nombre: "JAMES RODRIGUEZ", camiseta: "JAMES", pista: "Máximo goleador del Mundial 2014 con 6 goles, jugando para Colombia." },
+  { nombre: "HARRY KANE", camiseta: "KANE", pista: "Goleador del Mundial 2018 y récord histórico de goles con la selección inglesa." },
+  { nombre: "THOMAS MULLER", camiseta: "MULLER", pista: "Ganó la Bota de Oro del Mundial 2010 pese a empatar en goles, por más asistencias." },
+  { nombre: "MIROSLAV KLOSE", camiseta: "KLOSE", pista: "Máximo goleador histórico de los Mundiales, con 16 goles en cuatro ediciones." },
+  { nombre: "GERD MULLER", camiseta: "MULLER", pista: "Delantero alemán, goleador del Mundial 1970 con 10 tantos." },
+  { nombre: "JUST FONTAINE", camiseta: "FONTAINE", pista: "Anotó 13 goles en un solo Mundial, en 1958, un récord que sigue vigente." },
+  { nombre: "EUSEBIO", camiseta: "EUSEBIO", pista: "Delantero portugués, máximo artillero del Mundial de Inglaterra 1966." },
+  { nombre: "PAOLO ROSSI", camiseta: "ROSSI", pista: "Goleador clave de Italia en el título mundial de 1982." },
+  { nombre: "SALVATORE SCHILLACI", camiseta: "SCHILLACI", pista: "Sorpresa goleadora de Italia en el Mundial que se jugó en su propio país, 1990." },
+  { nombre: "GARY LINEKER", camiseta: "LINEKER", pista: "Máximo goleador del Mundial 1986, jugando para Inglaterra." },
+  { nombre: "DAVOR SUKER", camiseta: "SUKER", pista: "Goleador del Mundial 1998, cuando Croacia terminó tercera." },
+  { nombre: "HRISTO STOICHKOV", camiseta: "STOICHKOV", pista: "Balón de Oro 1994, compartió la Bota de Oro de ese Mundial con Bulgaria." },
+  { nombre: "GEORGE WEAH", camiseta: "WEAH", pista: "Único futbolista africano en ganar el Balón de Oro, en 1995." },
+  { nombre: "ROMARIO", camiseta: "ROMARIO", pista: "Delantero brasileño clave en el título mundial de 1994." },
+  { nombre: "RIVALDO", camiseta: "RIVALDO", pista: "Balón de Oro 1999, campeón del Mundial 2002 con Brasil." },
+  { nombre: "CAFU", camiseta: "CAFU", pista: "Único jugador en disputar tres finales de Mundial seguidas: 1994, 1998 y 2002." },
+  { nombre: "ROBERTO CARLOS", camiseta: "ROBERTO CARLOS", pista: "Lateral brasileño famoso por un gol de tiro libre imposible en un amistoso de 1997." },
+  { nombre: "ZICO", camiseta: "ZICO", pista: "Brasileño considerado uno de los mejores de la historia que nunca ganó un Mundial." },
+  { nombre: "GARRINCHA", camiseta: "GARRINCHA", pista: "Compartió la Bota de Oro del Mundial 1962, bicampeón con Brasil." },
+  { nombre: "FRANZ BECKENBAUER", camiseta: "BECKENBAUER", pista: "Ganó el Mundial como jugador en 1974 y como director técnico en 1990." },
+  { nombre: "LOTHAR MATTHAUS", camiseta: "MATTHAUS", pista: "El futbolista que más partidos disputó en la historia de los Mundiales." },
+  { nombre: "JURGEN KLINSMANN", camiseta: "KLINSMANN", pista: "Delantero alemán campeón del Mundial 1990." },
+  { nombre: "MICHAEL BALLACK", camiseta: "BALLACK", pista: "Capitán de Alemania en la final del Mundial 2002." },
+  { nombre: "OLIVER KAHN", camiseta: "KAHN", pista: "Único arquero en ganar el Balón de Oro del Mundial, en 2002, pese a perder la final." },
+  { nombre: "MANUEL NEUER", camiseta: "NEUER", pista: "Arquero campeón del Mundial 2014 con Alemania." },
+  { nombre: "PHILIPP LAHM", camiseta: "LAHM", pista: "Capitán de Alemania en el título mundial de 2014." },
+  { nombre: "MARIO GOTZE", camiseta: "GOTZE", pista: "Anotó el gol que definió la final del Mundial 2014." },
+  { nombre: "DAVID VILLA", camiseta: "VILLA", pista: "Máximo goleador histórico de la selección española." },
+  { nombre: "FERNANDO TORRES", camiseta: "TORRES", pista: "Mejor jugador de la Eurocopa 2008, ganada por España." },
+  { nombre: "RAUL GONZALEZ", camiseta: "RAUL", pista: "Fue el máximo goleador histórico del Real Madrid antes de la llegada de Cristiano." },
+  { nombre: "ALFREDO DI STEFANO", camiseta: "DI STEFANO", pista: "Estrella del Real Madrid en sus primeras cinco Copas de Europa consecutivas." },
+  { nombre: "FERENC PUSKAS", camiseta: "PUSKAS", pista: "Delantero húngaro ídolo del Real Madrid, parte de la 'Hungría mágica' de los años 50." },
+  { nombre: "JOHAN CRUYFF", camiseta: "CRUYFF", pista: "Ganó tres Balones de Oro y le dio nombre a un famoso gambeta o 'giro' futbolístico." },
+  { nombre: "MARCO VAN BASTEN", camiseta: "VAN BASTEN", pista: "Autor de un gol de volea histórico en la final de la Eurocopa 1988." },
+  { nombre: "DENNIS BERGKAMP", camiseta: "BERGKAMP", pista: "Delantero holandés apodado 'el cisne no volador' por su miedo a viajar en avión." },
+  { nombre: "RUUD GULLIT", camiseta: "GULLIT", pista: "Balón de Oro 1987, campeón de la Eurocopa con Holanda en 1988." },
+  { nombre: "FRANK RIJKAARD", camiseta: "RIJKAARD", pista: "Formó el histórico trío holandés del Milan junto a Gullit y Van Basten." },
+  { nombre: "GEORGE BEST", camiseta: "BEST", pista: "Estrella norirlandesa del Manchester United en los años 60." },
+  { nombre: "BOBBY CHARLTON", camiseta: "CHARLTON", pista: "Campeón del Mundial 1966 con Inglaterra, ídolo histórico del Manchester United." },
+  { nombre: "BOBBY MOORE", camiseta: "MOORE", pista: "Capitán de Inglaterra en el único Mundial que ganó ese país, 1966." },
+  { nombre: "GEOFF HURST", camiseta: "HURST", pista: "Único jugador en anotar un hat-trick en una final de Mundial, en 1966." },
+  { nombre: "DAVID BECKHAM", camiseta: "BECKHAM", pista: "Famoso por sus tiros libres y centros de precisión, subcampeón de Champions en 1999." },
+  { nombre: "WAYNE ROONEY", camiseta: "ROONEY", pista: "Fue el máximo goleador histórico de Inglaterra hasta que Harry Kane rompió su récord." },
+  { nombre: "STEVEN GERRARD", camiseta: "GERRARD", pista: "Protagonista de una remontada histórica en la final de Champions de 2005." },
+  { nombre: "FRANK LAMPARD", camiseta: "LAMPARD", pista: "Uno de los máximos goleadores históricos del Chelsea." },
+  { nombre: "THIERRY HENRY", camiseta: "HENRY", pista: "Máximo goleador histórico del Arsenal." },
+  { nombre: "MICHEL PLATINI", camiseta: "PLATINI", pista: "Ganó tres Balones de Oro consecutivos en los años 80 con Francia." },
+  { nombre: "LILIAN THURAM", camiseta: "THURAM", pista: "Marcó los dos únicos goles de su carrera con la selección, en una semifinal de Mundial 1998." },
+  { nombre: "KARIM BENZEMA", camiseta: "BENZEMA", pista: "Balón de Oro 2022, delantero francés estrella del Real Madrid." },
+  { nombre: "ANTOINE GRIEZMANN", camiseta: "GRIEZMANN", pista: "Subcampeón de la Bota de Oro del Mundial 2018 y campeón ese año con Francia." },
+  { nombre: "OLIVIER GIROUD", camiseta: "GIROUD", pista: "Superó el récord de goles histórico de Thierry Henry con la selección francesa." },
+  { nombre: "HUGO LLORIS", camiseta: "LLORIS", pista: "Arquero y capitán de Francia en el título mundial de 2018." },
+  { nombre: "NGOLO KANTE", camiseta: "KANTE", pista: "Ganó una liga inglesa y un Mundial en años consecutivos con equipos distintos." },
+  { nombre: "PAUL POGBA", camiseta: "POGBA", pista: "Anotó un gol en la final del Mundial 2018 con Francia." },
+  { nombre: "ANDREA PIRLO", camiseta: "PIRLO", pista: "Especialista en tiros libres y penales suaves, campeón del Mundial 2006." },
+  { nombre: "FABIO CANNAVARO", camiseta: "CANNAVARO", pista: "Único defensor de la era moderna en ganar el Balón de Oro, en 2006." },
+  { nombre: "GIANLUIGI BUFFON", camiseta: "BUFFON", pista: "Arquero campeón del Mundial 2006 con Italia." },
+  { nombre: "ALESSANDRO DEL PIERO", camiseta: "DEL PIERO", pista: "Ídolo histórico de la Juventus, campeón del Mundial 2006." },
+  { nombre: "FRANCESCO TOTTI", camiseta: "TOTTI", pista: "Jugó toda su carrera profesional en un solo club, la Roma." },
+  { nombre: "ROBERTO BAGGIO", camiseta: "BAGGIO", pista: "Falló el penal decisivo en la final del Mundial 1994 ante Brasil." },
+  { nombre: "LUIS FIGO", camiseta: "FIGO", pista: "Provocó un escándalo al pasar directamente del Barcelona al Real Madrid en el año 2000." },
+  { nombre: "DECO", camiseta: "DECO", pista: "Ganó la Champions League con dos clubes distintos: Porto y Barcelona." },
+  { nombre: "DIEGO FORLAN", camiseta: "FORLAN", pista: "Ganó la Bota de Oro del Mundial 2010 con Uruguay, pese a no ser campeón." },
+  { nombre: "EDINSON CAVANI", camiseta: "CAVANI", pista: "Uno de los máximos goleadores históricos de la selección uruguaya." },
+  { nombre: "FALCAO", camiseta: "FALCAO", pista: "Delantero colombiano apodado 'el Tigre', gran figura de la Europa League." },
+  { nombre: "CARLOS VALDERRAMA", camiseta: "VALDERRAMA", pista: "Mediocampista colombiano de pelo rizado, símbolo del fútbol de los años 90." },
+  { nombre: "MARCELO SALAS", camiseta: "SALAS", pista: "Delantero chileno, gran figura de su selección en los Mundiales de 1998." },
+  { nombre: "HUGO SANCHEZ", camiseta: "HUGO SANCHEZ", pista: "Delantero mexicano, durante años el máximo goleador histórico de la liga española." },
+  { nombre: "CHICHARITO", camiseta: "CHICHARITO", pista: "Máximo goleador histórico de la selección mexicana." },
+  { nombre: "RAFAEL MARQUEZ", camiseta: "MARQUEZ", pista: "Único mexicano en disputar cinco Copas del Mundo." },
+  { nombre: "ARJEN ROBBEN", camiseta: "ROBBEN", pista: "Famoso por sus recortes hacia la pierna izquierda antes de rematar al arco." },
+  { nombre: "ROBIN VAN PERSIE", camiseta: "VAN PERSIE", pista: "Anotó un gol de cabeza espectacular en pleno vuelo ante España, Mundial 2014." },
+  { nombre: "WESLEY SNEIJDER", camiseta: "SNEIJDER", pista: "Fue clave con cinco goles en el camino de Holanda a la final del Mundial 2010." },
+  { nombre: "SAMUEL ETOO", camiseta: "ETOO", pista: "Uno de los máximos goleadores históricos de la Copa Africana de Naciones." },
+  { nombre: "DIDIER DROGBA", camiseta: "DROGBA", pista: "Anotó el penal decisivo que le dio a su equipo la Champions League de 2012." },
+  { nombre: "YAYA TOURE", camiseta: "TOURE", pista: "Ganó cuatro veces seguidas el premio al mejor futbolista africano del año." },
+  { nombre: "MICHAEL ESSIEN", camiseta: "ESSIEN", pista: "Mediocampista ghanés apodado 'el Bisonte' por su fuerza física." },
+  { nombre: "SADIO MANE", camiseta: "MANE", pista: "Delantero senegalés, campeón de la Copa Africana de Naciones en 2022." },
+  { nombre: "MOHAMED SALAH", camiseta: "SALAH", pista: "Máximo goleador histórico de la selección egipcia." },
+  { nombre: "RIYAD MAHREZ", camiseta: "MAHREZ", pista: "Ganó la Copa Africana de Naciones 2019 con Argelia." },
+  { nombre: "ZLATAN IBRAHIMOVIC", camiseta: "IBRAHIMOVIC", pista: "Delantero sueco conocido por goles acrobáticos y una gran confianza en sí mismo." },
+  { nombre: "ROBERT LEWANDOWSKI", camiseta: "LEWANDOWSKI", pista: "Anotó cinco goles en nueve minutos en un partido de la liga alemana." },
+  { nombre: "KEVIN DE BRUYNE", camiseta: "DE BRUYNE", pista: "Mediocampista belga, referente del Manchester City en la era de Guardiola." },
+  { nombre: "VIRGIL VAN DIJK", camiseta: "VAN DIJK", pista: "Defensor holandés, pieza clave del Liverpool campeón de Champions en 2019." },
+  { nombre: "SERGIO RAMOS", camiseta: "RAMOS", pista: "Defensor español que marcó un gol agónico en la final de Champions de 2014." },
+  { nombre: "GERARD PIQUE", camiseta: "PIQUE", pista: "Defensor español, campeón del Mundial 2010 y luego empresario del deporte." },
+  { nombre: "VINICIUS JR", camiseta: "VINICIUS JR", pista: "Extremo brasileño, figura del Real Madrid campeón de Champions en varias ediciones recientes." },
+  { nombre: "JUDE BELLINGHAM", camiseta: "BELLINGHAM", pista: "Mediocampista inglés que brilló desde muy joven en el Borussia Dortmund y el Real Madrid." },
+  { nombre: "LAUTARO MARTINEZ", camiseta: "LAUTARO MARTINEZ", pista: "Delantero argentino, capitán del Inter de Milán y campeón del Mundial 2022." },
+  { nombre: "JULIAN ALVAREZ", camiseta: "ALVAREZ", pista: "Delantero argentino campeón del mundo en 2022 siendo muy joven." },
+  { nombre: "ANGEL DI MARIA", camiseta: "DI MARIA", pista: "Marcó el gol del título en la final de la Copa América 2021 con Argentina." },
+  { nombre: "GONZALO HIGUAIN", camiseta: "HIGUAIN", pista: "Delantero argentino, finalista de un Mundial y tres Copas América sin poder ganar ninguno." },
+  { nombre: "JAVIER MASCHERANO", camiseta: "MASCHERANO", pista: "Defensor y mediocampista argentino, uno de los más citados de la selección en Mundiales." },
+  { nombre: "CARLOS TEVEZ", camiseta: "TEVEZ", pista: "Delantero argentino apodado 'el Apache', ídolo de Boca Juniors." },
+  { nombre: "GABRIEL BATISTUTA", camiseta: "BATISTUTA", pista: "Delantero argentino que marcó en dos Mundiales distintos, apodado 'Batigol'." },
 
   // --- Goles y jugadas míticas ---
-  { nombre: "CARLOS ALBERTO TORRES", pista: "Anotó el gol que cerró una jugada colectiva de Brasil considerada la más bella de la historia, final del Mundial 1970." },
-  { nombre: "JAIRZINHO", pista: "Único futbolista en anotar en absolutamente todos los partidos de un mismo Mundial, en 1970." },
-  { nombre: "TOSTAO", pista: "Delantero brasileño campeón del Mundial 1970 junto a Pelé." },
-  { nombre: "RIVELINO", pista: "Inventó una gambeta llamada 'elástica', campeón del Mundial 1970 con Brasil." },
-  { nombre: "DAVID TREZEGUET", pista: "Anotó el gol de oro que le dio a Francia el título de la Eurocopa 2000." },
-  { nombre: "SAEED AL-OWAIRAN", pista: "Autor de un gol recorriendo casi toda la cancha en solitario, Mundial 1994, para Arabia Saudita." },
-  { nombre: "ARCHIE GEMMILL", pista: "Anotó un gol recordado tras una gambeta a tres rivales, jugando para Escocia en el Mundial 1978." },
-  { nombre: "MICHAEL OWEN", pista: "Anotó un gol célebre corriendo desde mitad de cancha ante Argentina, en el Mundial 1998." },
-  { nombre: "XABI ALONSO", pista: "Convirtió un golazo desde su propio campo jugando para el Liverpool." },
-  { nombre: "GARETH BALE", pista: "Marcó una chilena espectacular en la final de la Champions League de 2018." },
-  { nombre: "RENE HIGUITA", pista: "Arquero colombiano célebre por una atajada acrobática apodada 'el escorpión'." },
-  { nombre: "JORGE CAMPOS", pista: "Arquero mexicano excéntrico, famoso por sus uniformes coloridos y por jugar también de delantero." },
-  { nombre: "GORDON BANKS", pista: "Autor de una atajada considerada la mejor de la historia, ante Pelé en el Mundial 1970." },
-  { nombre: "PETER SHILTON", pista: "Arquero inglés que no pudo evitar 'la mano de Dios' de Maradona en 1986." },
-  { nombre: "DINO ZOFF", pista: "El jugador de campo más veterano en ganar un Mundial, con Italia en 1982." },
-  { nombre: "WALTER ZENGA", pista: "Arquero italiano que estuvo invicto durante más de 500 minutos en el Mundial 1990." },
-  { nombre: "JOSE LUIS CHILAVERT", pista: "Arquero paraguayo famoso por anotar goles de tiro libre y de penal." },
-  { nombre: "EDWIN VAN DER SAR", pista: "Atajó el penal decisivo en la final de la Champions League de 2008." },
-  { nombre: "PETR CECH", pista: "Arquero checo que jugaba con un casco protector tras sufrir una fractura de cráneo." },
-  { nombre: "CLAUDIO TAFFAREL", pista: "Arquero brasileño que atajó el penal decisivo en la final del Mundial 1994." },
-  { nombre: "JULIO CESAR", pista: "Arquero titular de Brasil en la histórica goleada que sufrió su selección en el Mundial 2014." },
-  { nombre: "ALISSON BECKER", pista: "Arquero brasileño campeón de la Champions League 2019 con el Liverpool." },
-  { nombre: "THIBAUT COURTOIS", pista: "Figura clave en la final de la Champions League 2022 con el Real Madrid." },
-  { nombre: "EMILIANO MARTINEZ", pista: "Héroe de la tanda de penales en la final del Mundial 2022 con Argentina." },
-  { nombre: "ALAN SHEARER", pista: "Fue durante años el máximo goleador histórico de la Premier League." },
-  { nombre: "IAN RUSH", pista: "Delantero galés, máximo goleador histórico del Liverpool." },
-  { nombre: "KENNY DALGLISH", pista: "Ídolo escocés del Liverpool, luego exitoso entrenador del mismo club." },
-  { nombre: "PAUL GASCOIGNE", pista: "Recordado por sus lágrimas tras ser amonestado en la semifinal del Mundial 1990." },
-  { nombre: "PETER CROUCH", pista: "Delantero inglés muy alto, famoso por un baile robótico al festejar sus goles." },
-  { nombre: "JAMIE VARDY", pista: "Delantero clave en el título casi milagroso de la Premier League del Leicester City en 2016." },
-  { nombre: "VINCENT KOMPANY", pista: "Defensor belga, capitán del Manchester City en sus primeros títulos de Premier League." },
-  { nombre: "PAOLO MALDINI", pista: "Defensor italiano que jugó más de veinticinco años en un solo club, el Milan." },
-  { nombre: "ALESSANDRO NESTA", pista: "Considerado uno de los mejores marcadores centrales de su época en Italia." },
-  { nombre: "FRANCO BARESI", pista: "Defensor y capitán histórico del Milan durante los años 80 y 90." },
-  { nombre: "MARCEL DESAILLY", pista: "Defensor francés campeón del Mundial 1998 y de la Eurocopa 2000." },
-  { nombre: "CARLES PUYOL", pista: "Defensor de larga cabellera, capitán del Barcelona y campeón del Mundial 2010." },
-  { nombre: "THIAGO SILVA", pista: "Defensor brasileño, capitán durante años tanto de su selección como del PSG." },
-  { nombre: "MARCELO VIEIRA", pista: "Lateral brasileño, uno de los jugadores con más títulos en la historia del Real Madrid." },
-  { nombre: "DANI ALVES", pista: "El futbolista con más títulos ganados en la historia del fútbol profesional." },
-  { nombre: "PATRICK VIEIRA", pista: "Mediocampista francés, pieza clave del Arsenal invicto de la temporada 2003-04." },
-  { nombre: "EMMANUEL PETIT", pista: "Anotó el tercer gol de Francia en la final del Mundial 1998." },
-  { nombre: "EDGAR DAVIDS", pista: "Mediocampista holandés apodado 'el pitbull' por su carácter aguerrido." },
-  { nombre: "CLARENCE SEEDORF", pista: "Único jugador en ganar la Champions League con tres clubes distintos." },
-  { nombre: "RUUD VAN NISTELROOY", pista: "Delantero holandés, gran goleador del Manchester United a comienzos de los 2000." },
-  { nombre: "DIRK KUYT", pista: "Delantero holandés muy trabajador, ídolo del Liverpool y el Feyenoord." },
-  { nombre: "RONALD KOEMAN", pista: "Anotó de tiro libre el gol que le dio al Barcelona su primera Copa de Europa, en 1992." },
-  { nombre: "PEP GUARDIOLA", pista: "Fue el mediocampista organizador del 'Dream Team' del Barcelona antes de convertirse en entrenador histórico." },
-  { nombre: "MICHAEL LAUDRUP", pista: "Mediocampista danés, pieza clave del 'Dream Team' del Barcelona de Cruyff." },
-  { nombre: "BEBETO", pista: "Festejó un gol simulando mecer una cuna, en el Mundial 1994." },
-  { nombre: "DUNGA", pista: "Capitán de Brasil, campeón del Mundial 1994." },
-  { nombre: "JOHN TERRY", pista: "Defensor inglés, capitán histórico del Chelsea." },
-  { nombre: "DIDIER DESCHAMPS", pista: "Capitán de Francia campeona del Mundial 1998, luego entrenador campeón mundial en 2018." },
-  { nombre: "GIANFRANCO ZOLA", pista: "Mediocampista italiano de gran técnica, ídolo histórico del Chelsea." },
-  { nombre: "EDIN DZEKO", pista: "Delantero bosnio, gran goleador en las ligas de Italia e Inglaterra." },
-  { nombre: "IVAN RAKITIC", pista: "Mediocampista croata, campeón de la Champions League con el Barcelona." },
-  { nombre: "MARIO MANDZUKIC", pista: "Anotó un gol de chilena en la final de la Champions League de 2017." },
-  { nombre: "ZVONIMIR BOBAN", pista: "Mediocampista croata, protagonista de un célebre incidente con la policía en 1990." },
-  { nombre: "ALEKSANDAR MITROVIC", pista: "Delantero serbio, gran goleador en la liga inglesa con el Fulham." },
-  { nombre: "DRAGAN STOJKOVIC", pista: "Mediocampista apodado 'Piksi', ídolo histórico de la ex Yugoslavia." },
-  { nombre: "ZBIGNIEW BONIEK", pista: "Delantero polaco, gran figura del Mundial 1982." },
-  { nombre: "GRZEGORZ LATO", pista: "Máximo goleador del Mundial 1974, jugando para Polonia." },
-  { nombre: "ANDRIY SHEVCHENKO", pista: "Balón de Oro 2004, delantero ucraniano ídolo del Milan." },
-  { nombre: "PAVEL NEDVED", pista: "Balón de Oro 2003, mediocampista checo de la Juventus." },
-  { nombre: "ANTONIN PANENKA", pista: "Inventó una forma de patear penales, la 'picadita', en la final de la Eurocopa 1976." },
-  { nombre: "LADISLAO KUBALA", pista: "Delantero histórico del Barcelona durante los años 50." },
-  { nombre: "GHEORGHE HAGI", pista: "Apodado 'el Maradona de los Cárpatos', ídolo histórico de Rumania." },
-  { nombre: "NWANKWO KANU", pista: "Delantero nigeriano, campeón olímpico de fútbol en 1996." },
-  { nombre: "JAY-JAY OKOCHA", pista: "Mediocampista nigeriano famoso por sus gambetas y regates imposibles." },
-  { nombre: "RABAH MADJER", pista: "Anotó un gol de taco inolvidable en la final de la Copa de Europa de 1987." },
-  { nombre: "ROGER MILLA", pista: "Delantero camerunés que festejaba sus goles bailando junto a la bandera del córner, Mundial 1990." },
-  { nombre: "ABEDI PELE", pista: "Mediocampista ghanés, tres veces mejor jugador africano del año." },
-  { nombre: "EMMANUEL ADEBAYOR", pista: "Delantero togolés, gran goleador del Arsenal y el Manchester City." },
-  { nombre: "VICTOR MOSES", pista: "Extremo nigeriano, campeón de la Premier League con el Chelsea." },
-  { nombre: "ANDRE AYEW", pista: "Delantero ghanés, hijo de otro histórico futbolista africano, Abedi Pelé." },
-  { nombre: "HAKIM ZIYECH", pista: "Mediocampista marroquí, clave en el histórico camino de su selección en el Mundial 2022." },
-  { nombre: "ACHRAF HAKIMI", pista: "Lateral marroquí, semifinalista histórico en el Mundial 2022." },
-  { nombre: "SOFYAN AMRABAT", pista: "Mediocampista marroquí, gran figura del sorprendente Mundial 2022 de su selección." },
-  { nombre: "ALI DAEI", pista: "Delantero iraní, durante años el máximo goleador histórico de selecciones a nivel mundial." },
-  { nombre: "TIM CAHILL", pista: "Delantero australiano, máximo goleador histórico de su selección." },
-  { nombre: "HIDETOSHI NAKATA", pista: "Mediocampista japonés, uno de los primeros de su país en brillar en el fútbol europeo." },
-  { nombre: "KEISUKE HONDA", pista: "Mediocampista japonés especialista en tiros libres." },
-  { nombre: "PARK JI-SUNG", pista: "Mediocampista surcoreano, ídolo asiático del Manchester United." },
-  { nombre: "SON HEUNG-MIN", pista: "Delantero surcoreano que ganó la Bota de Oro de la Premier League." },
-  { nombre: "TIM HOWARD", pista: "Arquero estadounidense, récord de atajadas en un solo partido de Mundial, en 2014." },
-  { nombre: "LANDON DONOVAN", pista: "Anotó un gol agónico que clasificó a Estados Unidos en el Mundial 2010." },
-  { nombre: "CLINT DEMPSEY", pista: "Delantero estadounidense, capitán de su selección en varios Mundiales." },
-  { nombre: "CHRISTIAN PULISIC", pista: "Delantero estadounidense, figura destacada de la Champions League con el Chelsea." },
-  { nombre: "ALPHONSO DAVIES", pista: "Lateral canadiense, uno de los futbolistas más veloces del mundo actual." },
-  { nombre: "ROMELU LUKAKU", pista: "Delantero belga, máximo goleador histórico de su selección." },
-  { nombre: "EDEN HAZARD", pista: "Mediocampista belga, figura clave de la generación dorada de su selección." },
-  { nombre: "TONI KROOS", pista: "Mediocampista alemán de pase preciso, campeón del Mundial 2014." },
-  { nombre: "MESUT OZIL", pista: "Dio la asistencia del gol decisivo en la final del Mundial 2014 para Alemania." },
-  { nombre: "ILKAY GUNDOGAN", pista: "Mediocampista alemán, capitán del Manchester City en la era de Guardiola." },
-  { nombre: "MATS HUMMELS", pista: "Defensor alemán, campeón del Mundial 2014, formó una gran dupla central en el Dortmund y el Bayern." },
+  { nombre: "CARLOS ALBERTO TORRES", camiseta: "CARLOS ALBERTO", pista: "Anotó el gol que cerró una jugada colectiva de Brasil considerada la más bella de la historia, final del Mundial 1970." },
+  { nombre: "JAIRZINHO", camiseta: "JAIRZINHO", pista: "Único futbolista en anotar en absolutamente todos los partidos de un mismo Mundial, en 1970." },
+  { nombre: "TOSTAO", camiseta: "TOSTAO", pista: "Delantero brasileño campeón del Mundial 1970 junto a Pelé." },
+  { nombre: "RIVELINO", camiseta: "RIVELINO", pista: "Inventó una gambeta llamada 'elástica', campeón del Mundial 1970 con Brasil." },
+  { nombre: "DAVID TREZEGUET", camiseta: "TREZEGUET", pista: "Anotó el gol de oro que le dio a Francia el título de la Eurocopa 2000." },
+  { nombre: "MICHAEL OWEN", camiseta: "OWEN", pista: "Anotó un gol célebre corriendo desde mitad de cancha ante Argentina, en el Mundial 1998." },
+  { nombre: "XABI ALONSO", camiseta: "XABI ALONSO", pista: "Convirtió un golazo desde su propio campo jugando para el Liverpool." },
+  { nombre: "GARETH BALE", camiseta: "BALE", pista: "Marcó una chilena espectacular en la final de la Champions League de 2018." },
+  { nombre: "RENE HIGUITA", camiseta: "HIGUITA", pista: "Arquero colombiano célebre por una atajada acrobática apodada 'el escorpión'." },
+  { nombre: "JORGE CAMPOS", camiseta: "CAMPOS", pista: "Arquero mexicano excéntrico, famoso por sus uniformes coloridos y por jugar también de delantero." },
+  { nombre: "GORDON BANKS", camiseta: "BANKS", pista: "Autor de una atajada considerada la mejor de la historia, ante Pelé en el Mundial 1970." },
+  { nombre: "PETER SHILTON", camiseta: "SHILTON", pista: "Arquero inglés que no pudo evitar 'la mano de Dios' de Maradona en 1986." },
+  { nombre: "DINO ZOFF", camiseta: "ZOFF", pista: "El jugador de campo más veterano en ganar un Mundial, con Italia en 1982." },
+  { nombre: "WALTER ZENGA", camiseta: "ZENGA", pista: "Arquero italiano que estuvo invicto durante más de 500 minutos en el Mundial 1990." },
+  { nombre: "JOSE LUIS CHILAVERT", camiseta: "CHILAVERT", pista: "Arquero paraguayo famoso por anotar goles de tiro libre y de penal." },
+  { nombre: "EDWIN VAN DER SAR", camiseta: "VAN DER SAR", pista: "Atajó el penal decisivo en la final de la Champions League de 2008." },
+  { nombre: "PETR CECH", camiseta: "CECH", pista: "Arquero checo que jugaba con un casco protector tras sufrir una fractura de cráneo." },
+  { nombre: "CLAUDIO TAFFAREL", camiseta: "TAFFAREL", pista: "Arquero brasileño que atajó el penal decisivo en la final del Mundial 1994." },
+  { nombre: "JULIO CESAR", camiseta: "JULIO CESAR", pista: "Arquero titular de Brasil en la histórica goleada que sufrió su selección en el Mundial 2014." },
+  { nombre: "ALISSON BECKER", camiseta: "ALISSON", pista: "Arquero brasileño campeón de la Champions League 2019 con el Liverpool." },
+  { nombre: "THIBAUT COURTOIS", camiseta: "COURTOIS", pista: "Figura clave en la final de la Champions League 2022 con el Real Madrid." },
+  { nombre: "EMILIANO MARTINEZ", camiseta: "MARTINEZ", pista: "Héroe de la tanda de penales en la final del Mundial 2022 con Argentina." },
+  { nombre: "ALAN SHEARER", camiseta: "SHEARER", pista: "Fue durante años el máximo goleador histórico de la Premier League." },
+  { nombre: "IAN RUSH", camiseta: "RUSH", pista: "Delantero galés, máximo goleador histórico del Liverpool." },
+  { nombre: "KENNY DALGLISH", camiseta: "DALGLISH", pista: "Ídolo escocés del Liverpool, luego exitoso entrenador del mismo club." },
+  { nombre: "PAUL GASCOIGNE", camiseta: "GASCOIGNE", pista: "Recordado por sus lágrimas tras ser amonestado en la semifinal del Mundial 1990." },
+  { nombre: "PETER CROUCH", camiseta: "CROUCH", pista: "Delantero inglés muy alto, famoso por un baile robótico al festejar sus goles." },
+  { nombre: "JAMIE VARDY", camiseta: "VARDY", pista: "Delantero clave en el título casi milagroso de la Premier League del Leicester City en 2016." },
+  { nombre: "VINCENT KOMPANY", camiseta: "KOMPANY", pista: "Defensor belga, capitán del Manchester City en sus primeros títulos de Premier League." },
+  { nombre: "PAOLO MALDINI", camiseta: "MALDINI", pista: "Defensor italiano que jugó más de veinticinco años en un solo club, el Milan." },
+  { nombre: "ALESSANDRO NESTA", camiseta: "NESTA", pista: "Considerado uno de los mejores marcadores centrales de su época en Italia." },
+  { nombre: "FRANCO BARESI", camiseta: "BARESI", pista: "Defensor y capitán histórico del Milan durante los años 80 y 90." },
+  { nombre: "MARCEL DESAILLY", camiseta: "DESAILLY", pista: "Defensor francés campeón del Mundial 1998 y de la Eurocopa 2000." },
+  { nombre: "CARLES PUYOL", camiseta: "PUYOL", pista: "Defensor de larga cabellera, capitán del Barcelona y campeón del Mundial 2010." },
+  { nombre: "THIAGO SILVA", camiseta: "THIAGO SILVA", pista: "Defensor brasileño, capitán durante años tanto de su selección como del PSG." },
+  { nombre: "MARCELO VIEIRA", camiseta: "MARCELO", pista: "Lateral brasileño, uno de los jugadores con más títulos en la historia del Real Madrid." },
+  { nombre: "DANI ALVES", camiseta: "DANI ALVES", pista: "El futbolista con más títulos ganados en la historia del fútbol profesional." },
+  { nombre: "PATRICK VIEIRA", camiseta: "VIEIRA", pista: "Mediocampista francés, pieza clave del Arsenal invicto de la temporada 2003-04." },
+  { nombre: "EMMANUEL PETIT", camiseta: "PETIT", pista: "Anotó el tercer gol de Francia en la final del Mundial 1998." },
+  { nombre: "EDGAR DAVIDS", camiseta: "DAVIDS", pista: "Mediocampista holandés apodado 'el pitbull' por su carácter aguerrido." },
+  { nombre: "CLARENCE SEEDORF", camiseta: "SEEDORF", pista: "Único jugador en ganar la Champions League con tres clubes distintos." },
+  { nombre: "RUUD VAN NISTELROOY", camiseta: "VAN NISTELROOY", pista: "Delantero holandés, gran goleador del Manchester United a comienzos de los 2000." },
+  { nombre: "DIRK KUYT", camiseta: "KUYT", pista: "Delantero holandés muy trabajador, ídolo del Liverpool y el Feyenoord." },
+  { nombre: "RONALD KOEMAN", camiseta: "KOEMAN", pista: "Anotó de tiro libre el gol que le dio al Barcelona su primera Copa de Europa, en 1992." },
+  { nombre: "PEP GUARDIOLA", camiseta: "GUARDIOLA", pista: "Fue el mediocampista organizador del 'Dream Team' del Barcelona antes de convertirse en entrenador histórico." },
+  { nombre: "MICHAEL LAUDRUP", camiseta: "LAUDRUP", pista: "Mediocampista danés, pieza clave del 'Dream Team' del Barcelona de Cruyff." },
+  { nombre: "BEBETO", camiseta: "BEBETO", pista: "Festejó un gol simulando mecer una cuna, en el Mundial 1994." },
+  { nombre: "DUNGA", camiseta: "DUNGA", pista: "Capitán de Brasil, campeón del Mundial 1994." },
+  { nombre: "JOHN TERRY", camiseta: "TERRY", pista: "Defensor inglés, capitán histórico del Chelsea." },
+  { nombre: "DIDIER DESCHAMPS", camiseta: "DESCHAMPS", pista: "Capitán de Francia campeona del Mundial 1998, luego entrenador campeón mundial en 2018." },
+  { nombre: "GIANFRANCO ZOLA", camiseta: "ZOLA", pista: "Mediocampista italiano de gran técnica, ídolo histórico del Chelsea." },
+  { nombre: "EDIN DZEKO", camiseta: "DZEKO", pista: "Delantero bosnio, gran goleador en las ligas de Italia e Inglaterra." },
+  { nombre: "IVAN RAKITIC", camiseta: "RAKITIC", pista: "Mediocampista croata, campeón de la Champions League con el Barcelona." },
+  { nombre: "MARIO MANDZUKIC", camiseta: "MANDZUKIC", pista: "Anotó un gol de chilena en la final de la Champions League de 2017." },
+  { nombre: "ZVONIMIR BOBAN", camiseta: "BOBAN", pista: "Mediocampista croata, protagonista de un célebre incidente con la policía en 1990." },
+  { nombre: "ALEKSANDAR MITROVIC", camiseta: "MITROVIC", pista: "Delantero serbio, gran goleador en la liga inglesa con el Fulham." },
+  { nombre: "ZBIGNIEW BONIEK", camiseta: "BONIEK", pista: "Delantero polaco, gran figura del Mundial 1982." },
+  { nombre: "ANDRIY SHEVCHENKO", camiseta: "SHEVCHENKO", pista: "Balón de Oro 2004, delantero ucraniano ídolo del Milan." },
+  { nombre: "PAVEL NEDVED", camiseta: "NEDVED", pista: "Balón de Oro 2003, mediocampista checo de la Juventus." },
+  { nombre: "ANTONIN PANENKA", camiseta: "PANENKA", pista: "Inventó una forma de patear penales, la 'picadita', en la final de la Eurocopa 1976." },
+  { nombre: "LADISLAO KUBALA", camiseta: "KUBALA", pista: "Delantero histórico del Barcelona durante los años 50." },
+  { nombre: "GHEORGHE HAGI", camiseta: "HAGI", pista: "Apodado 'el Maradona de los Cárpatos', ídolo histórico de Rumania." },
+  { nombre: "NWANKWO KANU", camiseta: "KANU", pista: "Delantero nigeriano, campeón olímpico de fútbol en 1996." },
+  { nombre: "ROGER MILLA", camiseta: "MILLA", pista: "Delantero camerunés que festejaba sus goles bailando junto a la bandera del córner, Mundial 1990." },
+  { nombre: "ABEDI PELE", camiseta: "ABEDI PELE", pista: "Mediocampista ghanés, tres veces mejor jugador africano del año." },
+  { nombre: "EMMANUEL ADEBAYOR", camiseta: "ADEBAYOR", pista: "Delantero togolés, gran goleador del Arsenal y el Manchester City." },
+  { nombre: "ANDRE AYEW", camiseta: "AYEW", pista: "Delantero ghanés, hijo de otro histórico futbolista africano, Abedi Pelé." },
+  { nombre: "HAKIM ZIYECH", camiseta: "ZIYECH", pista: "Mediocampista marroquí, clave en el histórico camino de su selección en el Mundial 2022." },
+  { nombre: "ACHRAF HAKIMI", camiseta: "HAKIMI", pista: "Lateral marroquí, semifinalista histórico en el Mundial 2022." },
+  { nombre: "SOFYAN AMRABAT", camiseta: "AMRABAT", pista: "Mediocampista marroquí, gran figura del sorprendente Mundial 2022 de su selección." },
+  { nombre: "ALI DAEI", camiseta: "DAEI", pista: "Delantero iraní, durante años el máximo goleador histórico de selecciones a nivel mundial." },
+  { nombre: "TIM CAHILL", camiseta: "CAHILL", pista: "Delantero australiano, máximo goleador histórico de su selección." },
+  { nombre: "HIDETOSHI NAKATA", camiseta: "NAKATA", pista: "Mediocampista japonés, uno de los primeros de su país en brillar en el fútbol europeo." },
+  { nombre: "KEISUKE HONDA", camiseta: "HONDA", pista: "Mediocampista japonés especialista en tiros libres." },
+  { nombre: "TIM HOWARD", camiseta: "HOWARD", pista: "Arquero estadounidense, récord de atajadas en un solo partido de Mundial, en 2014." },
+  { nombre: "LANDON DONOVAN", camiseta: "DONOVAN", pista: "Anotó un gol agónico que clasificó a Estados Unidos en el Mundial 2010." },
+  { nombre: "CLINT DEMPSEY", camiseta: "DEMPSEY", pista: "Delantero estadounidense, capitán de su selección en varios Mundiales." },
+  { nombre: "CHRISTIAN PULISIC", camiseta: "PULISIC", pista: "Delantero estadounidense, figura destacada de la Champions League con el Chelsea." },
+  { nombre: "ALPHONSO DAVIES", camiseta: "DAVIES", pista: "Lateral canadiense, uno de los futbolistas más veloces del mundo actual." },
+  { nombre: "ROMELU LUKAKU", camiseta: "LUKAKU", pista: "Delantero belga, máximo goleador histórico de su selección." },
+  { nombre: "EDEN HAZARD", camiseta: "HAZARD", pista: "Mediocampista belga, figura clave de la generación dorada de su selección." },
+  { nombre: "TONI KROOS", camiseta: "KROOS", pista: "Mediocampista alemán de pase preciso, campeón del Mundial 2014." },
+  { nombre: "MESUT OZIL", camiseta: "OZIL", pista: "Dio la asistencia del gol decisivo en la final del Mundial 2014 para Alemania." },
+  { nombre: "ILKAY GUNDOGAN", camiseta: "GUNDOGAN", pista: "Mediocampista alemán, capitán del Manchester City en la era de Guardiola." },
+  { nombre: "MATS HUMMELS", camiseta: "HUMMELS", pista: "Defensor alemán, campeón del Mundial 2014, formó una gran dupla central en el Dortmund y el Bayern." },
 
   // --- Más leyendas y figuras actuales ---
-  { nombre: "PABLO AIMAR", pista: "Mediocampista argentino de gran técnica, ídolo del River Plate de fines de los 90." },
-  { nombre: "JUAN ROMAN RIQUELME", pista: "Mediocampista argentino de pausa y pase largo, ídolo histórico de Boca Juniors." },
-  { nombre: "HERNAN CRESPO", pista: "Delantero argentino, durante años el fichaje más caro de la historia del fútbol." },
-  { nombre: "ESTEBAN CAMBIASSO", pista: "Anotó un gol recordado tras 24 pases seguidos de Argentina ante Serbia y Montenegro, Mundial 2006." },
-  { nombre: "MARIO KEMPES", pista: "Máximo goleador del Mundial 1978, campeón con Argentina." },
-  { nombre: "DANIEL PASSARELLA", pista: "Capitán de Argentina, campeón del Mundial 1978." },
-  { nombre: "UBALDO FILLOL", pista: "Arquero argentino, campeón del Mundial 1978." },
-  { nombre: "SERGIO GOYCOCHEA", pista: "Héroe de las tandas de penales de Argentina en el Mundial 1990." },
-  { nombre: "CLAUDIO CANIGGIA", pista: "Anotó un gol célebre tras una gran carrera individual ante Brasil, Mundial 1990." },
-  { nombre: "JAVIER ZANETTI", pista: "El jugador con más partidos en la historia del Inter de Milán." },
-  { nombre: "OSVALDO ARDILES", pista: "Mediocampista argentino, campeón del Mundial 1978." },
-  { nombre: "JORGE VALDANO", pista: "Delantero argentino que anotó en la final del Mundial 1986." },
-  { nombre: "SOCRATES", pista: "Capitán del recordado Brasil de 1982, célebre por su elegancia y su activismo político." },
-  { nombre: "ROBERTO DINAMITE", pista: "Máximo goleador histórico del Vasco da Gama en Brasil." },
-  { nombre: "ZE ROBERTO", pista: "Lateral brasileño longevo, jugó fútbol profesional hasta pasados los 40 años." },
-  { nombre: "HULK", pista: "Delantero brasileño conocido por su gran potencia física y disparos muy fuertes." },
-  { nombre: "PHILIPPE COUTINHO", pista: "Mediocampista brasileño, figura del Liverpool antes de un fichaje récord por el Barcelona." },
-  { nombre: "ADRIANO", pista: "Delantero brasileño apodado 'el Emperador', gran figura a mediados de los 2000." },
-  { nombre: "JUNINHO PERNAMBUCANO", pista: "Considerado uno de los mejores especialistas del mundo en tiros libres con efecto." },
-  { nombre: "ROBERTO FIRMINO", pista: "Delantero brasileño, parte del histórico tridente ofensivo del Liverpool junto a Salah y Mané." },
-  { nombre: "CASEMIRO", pista: "Mediocampista brasileño, ganó cinco Champions League con el Real Madrid." },
-  { nombre: "FABINHO", pista: "Mediocampista brasileño, pieza del histórico mediocampo del Liverpool campeón de Champions en 2019." },
-  { nombre: "DAVID SILVA", pista: "Mediocampista español, campeón del Mundial 2010 y de dos Eurocopas." },
-  { nombre: "CESC FABREGAS", pista: "Dio la asistencia del gol decisivo de Iniesta en la final del Mundial 2010." },
-  { nombre: "JORDI ALBA", pista: "Lateral español, anotó un gol en la final de la Eurocopa 2012, ganada 4-0 ante Italia." },
-  { nombre: "ALVARO MORATA", pista: "Delantero español, capitán de la selección en la Eurocopa 2024." },
-  { nombre: "PEDRI", pista: "Mediocampista español, revelación mundial del Barcelona a muy corta edad." },
-  { nombre: "GAVI", pista: "Mediocampista español, debutó como titular en la selección absoluta siendo casi un adolescente." },
-  { nombre: "RODRI", pista: "Mediocampista español, ganador del Balón de Oro en 2024." },
-  { nombre: "LAMINE YAMAL", pista: "Delantero español, el más joven en debutar y anotar en una final de Eurocopa." },
-  { nombre: "DANI CARVAJAL", pista: "Lateral español, uno de los jugadores con más títulos de Champions League en la historia del Real Madrid." },
-  { nombre: "RAHEEM STERLING", pista: "Delantero inglés, figura del Manchester City en la era de Guardiola." },
-  { nombre: "MARCUS RASHFORD", pista: "Delantero inglés surgido de las divisiones juveniles del Manchester United." },
-  { nombre: "DECLAN RICE", pista: "Mediocampista inglés, fichaje récord del Arsenal en 2023." },
-  { nombre: "PHIL FODEN", pista: "Mediocampista inglés formado en la cantera del Manchester City." },
-  { nombre: "BUKAYO SAKA", pista: "Extremo inglés, una de las principales figuras del Arsenal actual." },
-  { nombre: "PEPE", pista: "Defensor portugués de gran longevidad, todavía en actividad pasados los 40 años." },
-  { nombre: "BERNARDO SILVA", pista: "Mediocampista portugués, pieza clave del Manchester City de Guardiola." },
-  { nombre: "JOAO FELIX", pista: "Delantero portugués, fichaje muy costoso del Atlético de Madrid en su juventud." },
-  { nombre: "GIANLUCA VIALLI", pista: "Delantero italiano de los 90, luego exitoso entrenador de la Sampdoria y el Chelsea." },
-  { nombre: "MARCO MATERAZZI", pista: "Provocó con un insulto la expulsión de Zidane en la final del Mundial 2006." },
-  { nombre: "FABIO GROSSO", pista: "Anotó el penal decisivo que le dio a Italia el título del Mundial 2006." },
-  { nombre: "LUCA TONI", pista: "Delantero italiano, máximo goleador del Mundial 2006 junto a otros jugadores." },
-  { nombre: "LEROY SANE", pista: "Extremo alemán veloz, campeón de Champions League con el Manchester City." },
-  { nombre: "JOSHUA KIMMICH", pista: "Mediocampista alemán, capitán del Bayern Múnich." },
-  { nombre: "SERGE GNABRY", pista: "Anotó dos goles en la histórica goleada 8-2 del Bayern Múnich al Barcelona, en 2020." },
-  { nombre: "OUSMANE DEMBELE", pista: "Extremo francés, ganador del Balón de Oro en 2025 tras una gran temporada con el PSG." },
-  { nombre: "RAPHAEL VARANE", pista: "Defensor francés, campeón del Mundial 2018 y de cuatro Champions League con el Real Madrid." },
-  { nombre: "ADRIEN RABIOT", pista: "Mediocampista francés que pasó por la Juventus antes de convertirse en referente de su selección." },
-  { nombre: "MARCUS THURAM", pista: "Delantero francés, hijo de otro campeón mundial francés, Lilian Thuram." },
-  { nombre: "DIEGO MILITO", pista: "Anotó los dos goles de la final de la Champions League de 2010 con el Inter de Milán." },
-  { nombre: "MAXI RODRIGUEZ", pista: "Anotó un golazo de volea en tiempo extra ante México, Mundial 2006." },
-  { nombre: "RODRIGO DE PAUL", pista: "Mediocampista argentino, pieza clave del equipo campeón del Mundial 2022." },
-  { nombre: "NICOLAS OTAMENDI", pista: "Defensor argentino, titular en la final del Mundial 2022." },
-  { nombre: "ENZO FERNANDEZ", pista: "Mediocampista argentino, elegido mejor jugador joven del Mundial 2022." },
-  { nombre: "ALEXIS MAC ALLISTER", pista: "Anotó un gol en la final del Mundial 2022 con Argentina." },
-  { nombre: "DIEGO GODIN", pista: "Defensor uruguayo, capitán histórico de su selección durante más de una década." },
-  { nombre: "FERNANDO MUSLERA", pista: "Arquero uruguayo, titular durante años en varias Copas del Mundo." },
-  { nombre: "ALEXIS SANCHEZ", pista: "Delantero chileno, campeón de dos Copas América consecutivas con su selección." },
-  { nombre: "ARTURO VIDAL", pista: "Mediocampista chileno de gran carácter, campeón de dos Copas América consecutivas." },
-  { nombre: "CLAUDIO BRAVO", pista: "Arquero chileno, héroe de penales en las Copas América que ganó su selección." },
-  { nombre: "DAVID OSPINA", pista: "Arquero colombiano, titular en el histórico Mundial 2014 de su selección." },
-  { nombre: "PAOLO GUERRERO", pista: "Delantero peruano, máximo goleador histórico de su selección." },
-  { nombre: "GUILLERMO OCHOA", pista: "Arquero mexicano, célebre por sus grandes atajadas ante Messi en el Mundial 2014." },
-  { nombre: "KEYLOR NAVAS", pista: "Arquero costarricense, campeón de tres Champions League seguidas con el Real Madrid." },
+  { nombre: "JUAN ROMAN RIQUELME", camiseta: "ROMAN", pista: "Mediocampista argentino de pausa y pase largo, ídolo histórico de Boca Juniors." },
+  { nombre: "HERNAN CRESPO", camiseta: "CRESPO", pista: "Delantero argentino, durante años el fichaje más caro de la historia del fútbol." },
+  { nombre: "ESTEBAN CAMBIASSO", camiseta: "CAMBIASSO", pista: "Anotó un gol recordado tras 24 pases seguidos de Argentina ante Serbia y Montenegro, Mundial 2006." },
+  { nombre: "MARIO KEMPES", camiseta: "KEMPES", pista: "Máximo goleador del Mundial 1978, campeón con Argentina." },
+  { nombre: "DANIEL PASSARELLA", camiseta: "PASSARELLA", pista: "Capitán de Argentina, campeón del Mundial 1978." },
+  { nombre: "SERGIO GOYCOCHEA", camiseta: "GOYCOCHEA", pista: "Héroe de las tandas de penales de Argentina en el Mundial 1990." },
+  { nombre: "CLAUDIO CANIGGIA", camiseta: "CANIGGIA", pista: "Anotó un gol célebre tras una gran carrera individual ante Brasil, Mundial 1990." },
+  { nombre: "JAVIER ZANETTI", camiseta: "ZANETTI", pista: "El jugador con más partidos en la historia del Inter de Milán." },
+  { nombre: "OSVALDO ARDILES", camiseta: "ARDILES", pista: "Mediocampista argentino, campeón del Mundial 1978." },
+  { nombre: "JORGE VALDANO", camiseta: "VALDANO", pista: "Delantero argentino que anotó en la final del Mundial 1986." },
+  { nombre: "SOCRATES", camiseta: "SOCRATES", pista: "Capitán del recordado Brasil de 1982, célebre por su elegancia y su activismo político." },
+  { nombre: "HULK", camiseta: "HULK", pista: "Delantero brasileño conocido por su gran potencia física y disparos muy fuertes." },
+  { nombre: "PHILIPPE COUTINHO", camiseta: "COUTINHO", pista: "Mediocampista brasileño, figura del Liverpool antes de un fichaje récord por el Barcelona." },
+  { nombre: "ADRIANO", camiseta: "ADRIANO", pista: "Delantero brasileño apodado 'el Emperador', gran figura a mediados de los 2000." },
+  { nombre: "JUNINHO PERNAMBUCANO", camiseta: "JUNINHO PERNAMBUCANO", pista: "Considerado uno de los mejores especialistas del mundo en tiros libres con efecto." },
+  { nombre: "ROBERTO FIRMINO", camiseta: "FIRMINO", pista: "Delantero brasileño, parte del histórico tridente ofensivo del Liverpool junto a Salah y Mané." },
+  { nombre: "CASEMIRO", camiseta: "CASEMIRO", pista: "Mediocampista brasileño, ganó cinco Champions League con el Real Madrid." },
+  { nombre: "FABINHO", camiseta: "FABINHO", pista: "Mediocampista brasileño, pieza del histórico mediocampo del Liverpool campeón de Champions en 2019." },
+  { nombre: "DAVID SILVA", camiseta: "DAVID SILVA", pista: "Mediocampista español, campeón del Mundial 2010 y de dos Eurocopas." },
+  { nombre: "CESC FABREGAS", camiseta: "FABREGAS", pista: "Dio la asistencia del gol decisivo de Iniesta en la final del Mundial 2010." },
+  { nombre: "JORDI ALBA", camiseta: "ALBA", pista: "Lateral español, anotó un gol en la final de la Eurocopa 2012, ganada 4-0 ante Italia." },
+  { nombre: "ALVARO MORATA", camiseta: "MORATA", pista: "Delantero español, capitán de la selección en la Eurocopa 2024." },
+  { nombre: "PEDRI", camiseta: "PEDRI", pista: "Mediocampista español, revelación mundial del Barcelona a muy corta edad." },
+  { nombre: "GAVI", camiseta: "GAVI", pista: "Mediocampista español, debutó como titular en la selección absoluta siendo casi un adolescente." },
+  { nombre: "RODRI", camiseta: "RODRI", pista: "Mediocampista español, ganador del Balón de Oro en 2024." },
+  { nombre: "LAMINE YAMAL", camiseta: "LAMINE YAMAL", pista: "Delantero español, el más joven en debutar y anotar en una final de Eurocopa." },
+  { nombre: "DANI CARVAJAL", camiseta: "CARVAJAL", pista: "Lateral español, uno de los jugadores con más títulos de Champions League en la historia del Real Madrid." },
+  { nombre: "RAHEEM STERLING", camiseta: "STERLING", pista: "Delantero inglés, figura del Manchester City en la era de Guardiola." },
+  { nombre: "MARCUS RASHFORD", camiseta: "RASHFORD", pista: "Delantero inglés surgido de las divisiones juveniles del Manchester United." },
+  { nombre: "DECLAN RICE", camiseta: "RICE", pista: "Mediocampista inglés, fichaje récord del Arsenal en 2023." },
+  { nombre: "PHIL FODEN", camiseta: "FODEN", pista: "Mediocampista inglés formado en la cantera del Manchester City." },
+  { nombre: "BUKAYO SAKA", camiseta: "SAKA", pista: "Extremo inglés, una de las principales figuras del Arsenal actual." },
+  { nombre: "PEPE", camiseta: "PEPE", pista: "Defensor portugués de gran longevidad, todavía en actividad pasados los 40 años." },
+  { nombre: "BERNARDO SILVA", camiseta: "BERNARDO SILVA", pista: "Mediocampista portugués, pieza clave del Manchester City de Guardiola." },
+  { nombre: "JOAO FELIX", camiseta: "FELIX", pista: "Delantero portugués, fichaje muy costoso del Atlético de Madrid en su juventud." },
+  { nombre: "GIANLUCA VIALLI", camiseta: "VIALLI", pista: "Delantero italiano de los 90, luego exitoso entrenador de la Sampdoria y el Chelsea." },
+  { nombre: "MARCO MATERAZZI", camiseta: "MATERAZZI", pista: "Provocó con un insulto la expulsión de Zidane en la final del Mundial 2006." },
+  { nombre: "FABIO GROSSO", camiseta: "GROSSO", pista: "Anotó el penal decisivo que le dio a Italia el título del Mundial 2006." },
+  { nombre: "LUCA TONI", camiseta: "TONI", pista: "Delantero italiano, máximo goleador del Mundial 2006 junto a otros jugadores." },
+  { nombre: "LEROY SANE", camiseta: "SANE", pista: "Extremo alemán veloz, campeón de Champions League con el Manchester City." },
+  { nombre: "JOSHUA KIMMICH", camiseta: "KIMMICH", pista: "Mediocampista alemán, capitán del Bayern Múnich." },
+  { nombre: "SERGE GNABRY", camiseta: "GNABRY", pista: "Anotó dos goles en la histórica goleada 8-2 del Bayern Múnich al Barcelona, en 2020." },
+  { nombre: "OUSMANE DEMBELE", camiseta: "DEMBELE", pista: "Extremo francés, ganador del Balón de Oro en 2025 tras una gran temporada con el PSG." },
+  { nombre: "RAPHAEL VARANE", camiseta: "VARANE", pista: "Defensor francés, campeón del Mundial 2018 y de cuatro Champions League con el Real Madrid." },
+  { nombre: "ADRIEN RABIOT", camiseta: "RABIOT", pista: "Mediocampista francés que pasó por la Juventus antes de convertirse en referente de su selección." },
+  { nombre: "MARCUS THURAM", camiseta: "MARCUS THURAM", pista: "Delantero francés, hijo de otro campeón mundial francés, Lilian Thuram." },
+  { nombre: "DIEGO MILITO", camiseta: "MILITO", pista: "Anotó los dos goles de la final de la Champions League de 2010 con el Inter de Milán." },
+  { nombre: "MAXI RODRIGUEZ", camiseta: "MAXI RODRIGUEZ", pista: "Anotó un golazo de volea en tiempo extra ante México, Mundial 2006." },
+  { nombre: "RODRIGO DE PAUL", camiseta: "DE PAUL", pista: "Mediocampista argentino, pieza clave del equipo campeón del Mundial 2022." },
+  { nombre: "NICOLAS OTAMENDI", camiseta: "OTAMENDI", pista: "Defensor argentino, titular en la final del Mundial 2022." },
+  { nombre: "ENZO FERNANDEZ", camiseta: "ENZO FERNANDEZ", pista: "Mediocampista argentino, elegido mejor jugador joven del Mundial 2022." },
+  { nombre: "ALEXIS MAC ALLISTER", camiseta: "MAC ALLISTER", pista: "Anotó un gol en la final del Mundial 2022 con Argentina." },
+  { nombre: "DIEGO GODIN", camiseta: "GODIN", pista: "Defensor uruguayo, capitán histórico de su selección durante más de una década." },
+  { nombre: "FERNANDO MUSLERA", camiseta: "MUSLERA", pista: "Arquero uruguayo, titular durante años en varias Copas del Mundo." },
+  { nombre: "ALEXIS SANCHEZ", camiseta: "ALEXIS SANCHEZ", pista: "Delantero chileno, campeón de dos Copas América consecutivas con su selección." },
+  { nombre: "ARTURO VIDAL", camiseta: "VIDAL", pista: "Mediocampista chileno de gran carácter, campeón de dos Copas América consecutivas." },
+  { nombre: "CLAUDIO BRAVO", camiseta: "BRAVO", pista: "Arquero chileno, héroe de penales en las Copas América que ganó su selección." },
+  { nombre: "DAVID OSPINA", camiseta: "OSPINA", pista: "Arquero colombiano, titular en el histórico Mundial 2014 de su selección." },
+  { nombre: "PAOLO GUERRERO", camiseta: "GUERRERO", pista: "Delantero peruano, máximo goleador histórico de su selección." },
+  { nombre: "GUILLERMO OCHOA", camiseta: "OCHOA", pista: "Arquero mexicano, célebre por sus grandes atajadas ante Messi en el Mundial 2014." },
+  { nombre: "KEYLOR NAVAS", camiseta: "NAVAS", pista: "Arquero costarricense, campeón de tres Champions League seguidas con el Real Madrid." },
 
   // --- Goles y jugadas míticas (parte 2) ---
-  { nombre: "MARCO TARDELLI", pista: "Su grito desatado al festejar un gol en la final del Mundial 1982 quedó como una de las imágenes más recordadas de la historia." },
-  { nombre: "ERIC CANTONA", pista: "Delantero francés, ídolo del Manchester United en los 90, célebre por levantarse el cuello de la camiseta al festejar." },
-  { nombre: "JOHN BARNES", pista: "Anotó un gol individual inolvidable para Inglaterra ante Brasil, en pleno estadio Maracaná, en 1984." },
-  { nombre: "DAVID SEAMAN", pista: "Arquero inglés que no pudo evitar un famoso tiro libre en forma de globo de Ronaldinho, Mundial 2002." },
-  { nombre: "ANDRES ESCOBAR", pista: "Defensor colombiano recordado por un autogol decisivo en el Mundial de 1994." },
-  { nombre: "LAURENT BLANC", pista: "Defensor francés apodado 'el presidente', anotó el primer gol de oro de la historia de los Mundiales, en 1998." },
-  { nombre: "LUIS HERNANDEZ", pista: "Delantero mexicano de pelo teñido de rubio, máximo goleador de su selección en el Mundial de 1998." },
-  { nombre: "CUAUHTEMOC BLANCO", pista: "Inventó una gambeta propia, apodada 'cuauhtemiña', usada ante Bélgica en el Mundial 1998." },
-  { nombre: "SINISA MIHAJLOVIC", pista: "Defensor serbio, uno de los mejores especialistas del mundo en tiros libres." },
-  { nombre: "PAOLO DI CANIO", pista: "Delantero italiano recordado por atajar el balón con las manos en vez de anotar a un arco vacío, por fair play." },
-  { nombre: "ASAMOAH GYAN", pista: "Falló un penal decisivo en el último minuto del alargue ante Uruguay, cuartos de final del Mundial 2010." },
-  { nombre: "MARCO ETCHEVERRY", pista: "Mediocampista boliviano apodado 'el Diablo', gran figura histórica de la MLS." },
-  { nombre: "ALESSANDRO ALTOBELLI", pista: "Anotó el tercer gol de Italia en la final del Mundial de 1982." },
-  { nombre: "IVAN ZAMORANO", pista: "Delantero chileno apodado 'Bam Bam', usó el dorsal '1+8' en el Inter tras cederle la camiseta número 9 a Ronaldo." },
-  { nombre: "ENZO FRANCESCOLI", pista: "Mediocampista uruguayo apodado 'el Príncipe', inspiró el nombre del hijo de Zinedine Zidane." },
-  { nombre: "BRANDI CHASTAIN", pista: "Definió por penal la final del Mundial femenino de 1999 y festejó quitándose la camiseta." },
-  { nombre: "MIA HAMM", pista: "Fue durante años la máxima goleadora histórica del fútbol femenino mundial, ícono del deporte en Estados Unidos." },
-  { nombre: "MARTA", pista: "Considerada una de las mejores futbolistas de la historia, máxima goleadora histórica de los Mundiales femeninos." },
-  { nombre: "ABBY WAMBACH", pista: "Anotó un cabezazo dramático en el último minuto de alargue ante Brasil, cuartos de final del Mundial femenino 2011." },
-  { nombre: "MEGAN RAPINOE", pista: "Futbolista estadounidense famosa por su festejo con los brazos abiertos, campeona del Mundial femenino 2019." },
-  { nombre: "HOMARE SAWA", pista: "Anotó el gol del empate en los minutos finales de la final del Mundial femenino 2011, que Japón terminó ganando." },
-  { nombre: "BIRGIT PRINZ", pista: "Delantera alemana, tres veces mejor futbolista del mundo, bicampeona del Mundial femenino." },
-  { nombre: "SUN WEN", pista: "Delantera china, máxima goleadora del Mundial femenino de 1999." },
-  { nombre: "MICHELLE AKERS", pista: "Delantera estadounidense, figura clave en el primer Mundial femenino de la historia, en 1991." },
-  { nombre: "FEDE VALVERDE", pista: "Mediocampista uruguayo que derribó a Morata cuando se escapaba solo, en la prórroga de la final de la Supercopa de España 2020." },
+  { nombre: "MARCO TARDELLI", camiseta: "TARDELLI", pista: "Su grito desatado al festejar un gol en la final del Mundial 1982 quedó como una de las imágenes más recordadas de la historia." },
+  { nombre: "ERIC CANTONA", camiseta: "CANTONA", pista: "Delantero francés, ídolo del Manchester United en los 90, célebre por levantarse el cuello de la camiseta al festejar." },
+  { nombre: "JOHN BARNES", camiseta: "BARNES", pista: "Anotó un gol individual inolvidable para Inglaterra ante Brasil, en pleno estadio Maracaná, en 1984." },
+  { nombre: "DAVID SEAMAN", camiseta: "SEAMAN", pista: "Arquero inglés que no pudo evitar un famoso tiro libre en forma de globo de Ronaldinho, Mundial 2002." },
+  { nombre: "ANDRES ESCOBAR", camiseta: "ESCOBAR", pista: "Defensor colombiano recordado por un autogol decisivo en el Mundial de 1994." },
+  { nombre: "LAURENT BLANC", camiseta: "BLANC", pista: "Defensor francés apodado 'el presidente', anotó el primer gol de oro de la historia de los Mundiales, en 1998." },
+  { nombre: "LUIS HERNANDEZ", camiseta: "LUIS HERNANDEZ", pista: "Delantero mexicano de pelo teñido de rubio, máximo goleador de su selección en el Mundial de 1998." },
+  { nombre: "CUAUHTEMOC BLANCO", camiseta: "CUAUHTEMOC BLANCO", pista: "Inventó una gambeta propia, apodada 'cuauhtemiña', usada ante Bélgica en el Mundial 1998." },
+  { nombre: "SINISA MIHAJLOVIC", camiseta: "MIHAJLOVIC", pista: "Defensor serbio, uno de los mejores especialistas del mundo en tiros libres." },
+  { nombre: "PAOLO DI CANIO", camiseta: "DI CANIO", pista: "Delantero italiano recordado por atajar el balón con las manos en vez de anotar a un arco vacío, por fair play." },
+  { nombre: "ASAMOAH GYAN", camiseta: "GYAN", pista: "Falló un penal decisivo en el último minuto del alargue ante Uruguay, cuartos de final del Mundial 2010." },
+  { nombre: "IVAN ZAMORANO", camiseta: "ZAMORANO", pista: "Delantero chileno apodado 'Bam Bam', usó el dorsal '1+8' en el Inter tras cederle la camiseta número 9 a Ronaldo." },
+  { nombre: "ENZO FRANCESCOLI", camiseta: "FRANCESCOLI", pista: "Mediocampista uruguayo apodado 'el Príncipe', inspiró el nombre del hijo de Zinedine Zidane." },
+  { nombre: "FEDE VALVERDE", camiseta: "VALVERDE", pista: "Mediocampista uruguayo que derribó a Morata cuando se escapaba solo, en la prórroga de la final de la Supercopa de España 2020." },
 ];
 
 let jugadorActual = null;
@@ -509,8 +521,47 @@ let score = { ganados: 0, jugados: 0 };
 const ABC = "ABCDEFGHIJKLMNÑOPQRSTUVWXYZ".split("");
 const CARITAS_VIDA = ["🟢","🟢","🟢","🟢","🟢","🟢"];
 
+const PROGRESO_KEY = "ahorcado_futbolero_progreso_v1";
+
+let progreso = cargarProgreso();
+
+function cargarProgreso(){
+  try{
+    const datos = JSON.parse(localStorage.getItem(PROGRESO_KEY) || "{}");
+    return {
+      acertados: new Set(Array.isArray(datos.acertados) ? datos.acertados : []),
+      fallados: new Set(Array.isArray(datos.fallados) ? datos.fallados : [])
+    };
+  }catch(e){
+    return { acertados:new Set(), fallados:new Set() };
+  }
+}
+
+function guardarProgreso(){
+  localStorage.setItem(PROGRESO_KEY, JSON.stringify({
+    acertados: [...progreso.acertados],
+    fallados: [...progreso.fallados]
+  }));
+}
+
 function elegirJugador(){
-  return JUGADORES[Math.floor(Math.random()*JUGADORES.length)];
+  // Los que has fallado tienen prioridad absoluta.
+  let candidatos = JUGADORES.filter(j => progreso.fallados.has(j.nombre));
+
+  // Después salen los que todavía no has acertado.
+  if(!candidatos.length){
+    candidatos = JUGADORES.filter(j => !progreso.acertados.has(j.nombre));
+  }
+
+  // Cuando ya has acertado todos, empieza un nuevo ciclo.
+  if(!candidatos.length){
+    progreso.acertados.clear();
+    progreso.fallados.clear();
+    guardarProgreso();
+    candidatos = [...JUGADORES];
+  }
+
+  return candidatos[Math.floor(Math.random() * candidatos.length)];
 }
 
 function iniciarRonda(){
@@ -527,22 +578,29 @@ function iniciarRonda(){
   actualizarMarcador();
 }
 
+const PARTES_AHORCADO = [
+  "parteCabeza",
+  "parteTorso",
+  "parteBrazoIzq",
+  "parteBrazoDer",
+  "partePiernaIzq",
+  "partePiernaDer"
+];
+
 function pintarVidas(){
-  const cont = document.getElementById("vidas");
-  cont.innerHTML = "";
-  for(let i=0;i<6;i++){
-    const s = document.createElement("span");
-    s.textContent = "⚽";
-    if(i >= vidasRestantes) s.classList.add("usada");
-    cont.appendChild(s);
-  }
+  const fallos = 6 - vidasRestantes;
+  PARTES_AHORCADO.forEach((id, i)=>{
+    const el = document.getElementById(id);
+    el.classList.toggle("visible", i < fallos);
+  });
+  document.getElementById("fallosTexto").textContent = "Fallos: " + fallos + "/6";
 }
 
 function pintarPalabra(){
   const cont = document.getElementById("campoPalabra");
   cont.innerHTML = "";
 
-  const palabras = jugadorActual.nombre.split(" ");
+  const palabras = jugadorActual.camiseta.split(" ");
   const primeraLinea = palabras[0];
   const segundaLinea = palabras.slice(1).join(" ");
   const filas = segundaLinea ? [primeraLinea, segundaLinea] : [primeraLinea];
@@ -555,6 +613,13 @@ function pintarPalabra(){
         const espacio = document.createElement("div");
         espacio.className = "letra-hueco espacio";
         fila.appendChild(espacio);
+        continue;
+      }
+      if(ch === "-"){
+        const guion = document.createElement("div");
+        guion.className = "letra-hueco";
+        guion.textContent = "-";
+        fila.appendChild(guion);
         continue;
       }
       const div = document.createElement("div");
@@ -575,7 +640,7 @@ function pintarTeclado(){
     btn.textContent = letra;
     btn.disabled = letrasUsadas.has(letra) || juegoTerminado;
     if(letrasUsadas.has(letra)){
-      btn.classList.add(jugadorActual.nombre.includes(letra) ? "correcta" : "incorrecta");
+      btn.classList.add(jugadorActual.camiseta.includes(letra) ? "correcta" : "incorrecta");
     }
     btn.onclick = () => intentarLetra(letra);
     cont.appendChild(btn);
@@ -585,7 +650,7 @@ function pintarTeclado(){
 function intentarLetra(letra){
   if(juegoTerminado || letrasUsadas.has(letra)) return;
   letrasUsadas.add(letra);
-  if(!jugadorActual.nombre.includes(letra)){
+  if(!jugadorActual.camiseta.includes(letra)){
     vidasRestantes--;
   }
   pintarVidas();
@@ -595,7 +660,7 @@ function intentarLetra(letra){
 }
 
 function revisarFinal(){
-  const letrasNombre = new Set(jugadorActual.nombre.replace(/ /g,"").split(""));
+  const letrasNombre = new Set(jugadorActual.camiseta.replace(/[ -]/g,"").split(""));
   const gano = [...letrasNombre].every(l => letrasUsadas.has(l));
   const perdio = vidasRestantes <= 0;
 
@@ -606,10 +671,22 @@ function revisarFinal(){
     const msg = document.getElementById("mensaje");
     if(gano){
       score.ganados++;
-      msg.textContent = "¡Gol! Era " + jugadorActual.nombre;
+
+      // Si lo aciertas, queda completado y no vuelve a salir
+      // hasta que se haya completado el resto.
+      progreso.acertados.add(jugadorActual.nombre);
+      progreso.fallados.delete(jugadorActual.nombre);
+      guardarProgreso();
+
+      msg.textContent = "¡Gol! Era " + jugadorActual.camiseta;
       msg.className = "mensaje gano";
     } else {
-      msg.textContent = "Fin del partido. Era " + jugadorActual.nombre;
+      // Si lo fallas, tendrá prioridad en la siguiente partida.
+      progreso.fallados.add(jugadorActual.nombre);
+      progreso.acertados.delete(jugadorActual.nombre);
+      guardarProgreso();
+
+      msg.textContent = "Fin del partido. Era " + jugadorActual.camiseta;
       msg.className = "mensaje perdio";
     }
     actualizarMarcador();
@@ -632,4 +709,3 @@ iniciarRonda();
 </script>
 </body>
 </html>
-
