@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-<title>Nebulosa — Devora el vacío</title>
+<title>Nebulosa — Circuito del vacío</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
@@ -242,19 +242,19 @@
     <div id="toast" class="pixel"></div>
     <div id="pauseOverlay" class="hidden">
       <h1 class="pixel">PAUSA</h1>
-      <p>El vacío puede esperar. Retoma cuando quieras.</p>
+      <p>El circuito puede esperar. Retoma cuando quieras.</p>
       <button class="cta" id="resumeBtn">REANUDAR</button>
       <button class="cta secondary" id="restartBtn">REINICIAR</button>
     </div>
     <div id="overlay">
       <h1 id="ovTitle" class="pixel">NEBULOSA</h1>
-      <p id="ovText">Guía a tu cometa por el laberinto estelar, devora el polvo cósmico y esquiva a los centinelas del vacío. La ruta se regenera en cada nivel y todo se acelera. No tiene final: solo tu récord.</p>
+      <p id="ovText">Pilota tu nave por sectores estelares, activa todos los núcleos de energía, esquiva los drones y alcanza la baliza de salida. Cada sector cambia y la dificultad aumenta.</p>
       <div id="ovScore" class="final-score pixel" style="display:none;"></div>
       <button class="cta" id="startBtn">JUGAR</button>
     </div>
   </div>
 
-  <div id="hint">Flechas / WASD para moverte · desliza en pantalla</div>
+  <div id="hint">Flechas / WASD para pilotar · desliza en pantalla</div>
   <div id="touch">
     <div class="dpad">
       <button id="up">▲</button>
@@ -278,7 +278,7 @@
     return arr;
   }
 
-  // ---------- Generación de laberinto ----------
+  // ---------- Generación de sectores ----------
   function generateMaze(cx, cy){
     const w = cx*2+1, h = cy*2+1;
     const grid = Array.from({length:h},()=>Array(w).fill(1));
@@ -479,7 +479,7 @@
     return dist;
   }
 
-  // ---------- Estado del juego ----------
+  // ---------- Estado del circuito ----------
   const canvas = document.getElementById('game');
   const ctx = canvas.getContext('2d');
   const overlay = document.getElementById('overlay');
@@ -562,7 +562,7 @@
     addLoops(grid,w,h, loopChanceForLevel(level));
     const tunnelRow = openTunnel(grid,w,h);
 
-    // celda de encierro central para los enemigos
+    // hangar central de drones
     const enemyTotal = enemyCountForLevel(level);
     const pen = carvePen(grid,w,h,enemyTotal);
     carveBypassRing(grid,w,h,pen);
@@ -585,9 +585,28 @@
     }
     if(startX===null){ startX=pen.gate.x; startY=Math.min(h-1, pen.gate.y+2); }
 
+    function openCellsSafe(grid,w,h,penKeys,dist,startX,startY){
+      const cells=[];
+      for(let y=0;y<h;y++){
+        for(let x=0;x<w;x++){
+          if(grid[y][x]===0 && !penKeys.has(x+','+y) && dist[y][x]!==Infinity &&
+             !(x===startX&&y===startY)) cells.push({x,y});
+        }
+      }
+      return cells;
+    }
+
     const dist = bfsDistances(grid,w,h,startX,startY);
 
-    // pellets: celdas abiertas y REALMENTE alcanzables desde el inicio, excepto
+    // Baliza de salida: celda alcanzable más alejada del inicio.
+    let exitCell = {x:startX, y:startY};
+    let exitDist = -1;
+    for(const c of openCellsSafe(grid,w,h,penKeys,dist,startX,startY)){
+      const d = dist[c.y][c.x];
+      if(Number.isFinite(d) && d > exitDist){ exitDist=d; exitCell={x:c.x,y:c.y}; }
+    }
+
+    // Núcleos de energía: celdas abiertas y REALMENTE alcanzables desde el inicio, excepto
     // la propia celda de inicio y la celda de encierro (evita pellets imposibles
     // de recoger si la sala de encierro llegara a cortar alguna rama del laberinto)
     const pellets = new Set();
@@ -616,7 +635,7 @@
       }
     }
 
-    // spawns de enemigos: dentro de la celda de encierro central
+    // puntos de lanzamiento de drones
     const count = enemyTotal;
     const spawns = pen.cells.slice(0, count);
 
@@ -643,7 +662,7 @@
 
     return {
       grid,w,h,tunnelRow,
-      startX,startY,
+      startX,startY,exitCell,
       pellets,powerPellets,
       totalPellets: pellets.size+powerPellets.size,
       spawns,
@@ -690,7 +709,7 @@
     state = {
       level:1, score:0, lives:3,
       running:false, over:false, paused:false,
-      frightTimer:0, comboCount:0,
+      frightTimer:0, comboCount:0, exitReady:false,
       lv:null, player:null, enemies:[],
       lastTime:0, toastT:0
     };
@@ -708,6 +727,7 @@
     state.levelTime = 0;
     state.graceLimit = graceTimeForLevel(state.lv, level);
     state.graceWarned = false;
+    state.exitReady = false;
     resizeCanvas();
     updateGraceBar();
   }
@@ -725,7 +745,7 @@
     state.frightTimer = 0;
     state.levelTime = 0;
     state.graceWarned = false;
-    showToast(message || '¡CUIDADO!');
+    showToast(message || '¡CUIDADO, DRON!');
   }
 
   function gameOver(){
@@ -735,7 +755,7 @@
     pauseOverlay.classList.add('hidden');
     pauseBtn.classList.remove('active');
     ovTitle.textContent='FIN DEL VIAJE';
-    ovText.textContent='Un centinela alcanzó tu cometa. El vacío es infinito, pero tú puedes volver a intentarlo.';
+    ovText.textContent='Un dron interceptó tu nave. Vuelve a intentarlo y completa el sector.';
     ovScore.style.display='block';
     ovScore.textContent='PUNTOS: '+state.score;
     startBtn.textContent='REINTENTAR';
@@ -759,7 +779,7 @@
     state.toastT = 1.4;
   }
 
-  // ---------- Canvas / render ----------
+  // ---------- Render del circuito ----------
   let cellSize = 20;
   function resizeCanvas(){
     const rect = canvas.parentElement.getBoundingClientRect();
@@ -784,7 +804,7 @@
     const size = Math.max(lv.w,lv.h)*cellSize;
     ctx.clearRect(0,0,size,size);
 
-    // paredes
+    // estructura del circuito
     ctx.strokeStyle = 'rgba(123,95,217,0.9)';
     ctx.lineWidth = Math.max(2, cellSize*0.16);
     ctx.lineCap='round';
@@ -836,29 +856,59 @@
       ctx.setLineDash([]);
     }
 
-    // pellets
+    // Núcleos de energía: cristales pequeños en lugar de puntos redondos.
     ctx.fillStyle = getComputedStyleVar('--stardust');
     lv.pellets.forEach(key=>{
       const [x,y] = key.split(',').map(Number);
       const c = cellCenter(x,y);
+      const r = Math.max(2,cellSize*0.16);
       ctx.beginPath();
-      ctx.arc(c.x,c.y,Math.max(1.5,cellSize*0.09),0,Math.PI*2);
+      ctx.moveTo(c.x,c.y-r);
+      ctx.lineTo(c.x+r*.72,c.y);
+      ctx.lineTo(c.x,c.y+r);
+      ctx.lineTo(c.x-r*.72,c.y);
+      ctx.closePath();
       ctx.fill();
     });
 
-    // power pellets (pulsantes)
-    const pulse = 0.75+Math.sin(performance.now()/180)*0.25;
+    // Núcleos mayores pulsantes.
+    const pulse = 0.8+Math.sin(performance.now()/160)*0.2;
     ctx.fillStyle = getComputedStyleVar('--power');
     ctx.shadowColor = getComputedStyleVar('--power');
-    ctx.shadowBlur = cellSize*0.8;
+    ctx.shadowBlur = cellSize*0.7;
     lv.powerPellets.forEach(key=>{
       const [x,y] = key.split(',').map(Number);
       const c = cellCenter(x,y);
+      const r=cellSize*0.28*pulse;
       ctx.beginPath();
-      ctx.arc(c.x,c.y,cellSize*0.22*pulse,0,Math.PI*2);
+      ctx.moveTo(c.x,c.y-r);
+      ctx.lineTo(c.x+r*.75,c.y-r*.2);
+      ctx.lineTo(c.x+r*.55,c.y+r*.7);
+      ctx.lineTo(c.x-r*.55,c.y+r*.7);
+      ctx.lineTo(c.x-r*.75,c.y-r*.2);
+      ctx.closePath();
       ctx.fill();
     });
     ctx.shadowBlur=0;
+
+    // Baliza de salida: aparece cuando todos los núcleos están activados.
+    if(state.exitReady && lv.exitCell){
+      const ec=cellCenter(lv.exitCell.x,lv.exitCell.y);
+      const pr=cellSize*(0.26+0.07*Math.sin(performance.now()/120));
+      ctx.save();
+      ctx.fillStyle=getComputedStyleVar('--player');
+      ctx.strokeStyle='rgba(233,230,255,.9)';
+      ctx.lineWidth=Math.max(1,cellSize*.07);
+      ctx.shadowColor=getComputedStyleVar('--player');
+      ctx.shadowBlur=cellSize*1.1;
+      ctx.beginPath();ctx.arc(ec.x,ec.y,pr,0,Math.PI*2);ctx.fill();ctx.stroke();
+      ctx.shadowBlur=0;
+      ctx.fillStyle='#08202b';
+      ctx.font=`${Math.max(7,cellSize*.25)}px 'Press Start 2P', monospace`;
+      ctx.textAlign='center';ctx.textBaseline='middle';
+      ctx.fillText('EXIT',ec.x,ec.y);
+      ctx.restore();
+    }
 
     // zonas del vacío
     if(lv.voidCells && lv.voidCells.length){
@@ -888,10 +938,10 @@
       });
     }
 
-    // jugador
+    // nave del jugador
     drawPlayer();
 
-    // enemigos
+    // drones
     state.enemies.forEach(drawEnemy);
   }
 
@@ -902,73 +952,166 @@
   function drawPlayer(){
     const p = state.player;
     const pos = { x:(p.px+0.5)*cellSize, y:(p.py+0.5)*cellSize };
-    const r = cellSize*0.4;
-    p.mouth = (p.mouth + 0.15) % (Math.PI*0.5);
-    const mouthAngle = 0.15+Math.abs(Math.sin(performance.now()/120))*0.35;
-    let baseAngle = 0;
-    if(p.dir.x===1) baseAngle=0;
-    else if(p.dir.x===-1) baseAngle=Math.PI;
-    else if(p.dir.y===1) baseAngle=Math.PI/2;
-    else if(p.dir.y===-1) baseAngle=-Math.PI/2;
+    const r = cellSize*0.48;
+
+    let angle = 0;
+    if(p.dir.x===1) angle=0;
+    else if(p.dir.x===-1) angle=Math.PI;
+    else if(p.dir.y===1) angle=Math.PI/2;
+    else if(p.dir.y===-1) angle=-Math.PI/2;
+
+    const t = performance.now();
+    const moving = p.moving;
+    const bob = moving ? Math.sin(t/95)*cellSize*.045 : Math.sin(t/520)*cellSize*.018;
+    const pulse = .96 + Math.sin(t/180)*.04;
 
     ctx.save();
-    ctx.translate(pos.x,pos.y);
-    ctx.fillStyle = getComputedStyleVar('--player');
-    ctx.shadowColor = getComputedStyleVar('--player');
-    ctx.shadowBlur = cellSize*0.7;
+    ctx.translate(pos.x,pos.y+bob);
+    ctx.rotate(angle);
+
+    // Halo suave.
+    ctx.save();
+    ctx.globalAlpha=.18;
+    ctx.fillStyle='#74ecff';
+    ctx.shadowColor='#42e8ff';
+    ctx.shadowBlur=cellSize*.7;
     ctx.beginPath();
-    if(p.moving){
-      ctx.arc(0,0,r, baseAngle+mouthAngle, baseAngle-mouthAngle+Math.PI*2);
-      ctx.lineTo(0,0);
-    } else {
-      ctx.arc(0,0,r,0,Math.PI*2);
-    }
-    ctx.closePath();
+    ctx.arc(0,0,r*1.18,0,Math.PI*2);
     ctx.fill();
     ctx.restore();
-  }
 
+    // Propulsores laterales: dos pequeñas cápsulas en vez de una cola.
+    const thr = moving ? .9 + .35*(0.5+0.5*Math.sin(t/65)) : .35;
+    function thruster(tx,ty){
+      ctx.save();
+      ctx.translate(tx,ty);
+      const g=ctx.createLinearGradient(-r*.42,0,-r*.05,0);
+      g.addColorStop(0,'rgba(255,104,54,0)');
+      g.addColorStop(.45,'#ff9a39');
+      g.addColorStop(1,'#ffe27a');
+      ctx.fillStyle=g;
+      ctx.shadowColor='#ff9a39';
+      ctx.shadowBlur=cellSize*.2;
+      ctx.beginPath();
+      ctx.ellipse(-r*.20,0,r*.33*thr,r*.12,0,0,Math.PI*2);
+      ctx.fill();
+      ctx.restore();
+    }
+
+    // Cuerpo principal tipo cápsula/OVNI.
+    ctx.fillStyle='#27b7e9';
+    ctx.strokeStyle='#07182f';
+    ctx.lineWidth=Math.max(1.5,cellSize*.06);
+    ctx.beginPath();
+    ctx.ellipse(0,r*.18,r*.86,r*.55,0,0,Math.PI*2);
+    ctx.fill();ctx.stroke();
+
+    // Parte superior transparente con pequeño alien.
+    ctx.fillStyle='#17345d';
+    ctx.beginPath();
+    ctx.ellipse(r*.03,-r*.28,r*.54,r*.47,0,0,Math.PI*2);
+    ctx.fill();
+    ctx.strokeStyle='#0a1934';
+    ctx.stroke();
+
+    // Cristal brillante.
+    const dome=ctx.createLinearGradient(-r*.4,-r*.72,r*.5,-r*.03);
+    dome.addColorStop(0,'#8ff7ff');
+    dome.addColorStop(.42,'#45d1ff');
+    dome.addColorStop(1,'#1672b8');
+    ctx.fillStyle=dome;
+    ctx.beginPath();
+    ctx.ellipse(r*.03,-r*.30,r*.43,r*.31,0,0,Math.PI*2);
+    ctx.fill();
+
+    // Alien simpático.
+    ctx.fillStyle='#8df064';
+    ctx.strokeStyle='#214a2b';
+    ctx.lineWidth=Math.max(1.2,cellSize*.045);
+    ctx.beginPath();
+    ctx.ellipse(r*.03,-r*.18,r*.24,r*.23,0,0,Math.PI*2);
+    ctx.fill();ctx.stroke();
+    // orejas / antenas
+    ctx.strokeStyle='#7fe85c';
+    ctx.lineWidth=Math.max(1.4,cellSize*.05);
+    ctx.beginPath();
+    ctx.moveTo(-r*.11,-r*.37);ctx.lineTo(-r*.22,-r*.55);
+    ctx.moveTo(r*.17,-r*.37);ctx.lineTo(r*.29,-r*.54);
+    ctx.stroke();
+    ctx.fillStyle='#d7ff7d';
+    ctx.beginPath();ctx.arc(-r*.23,-r*.58,r*.05,0,Math.PI*2);ctx.arc(r*.30,-r*.56,r*.05,0,Math.PI*2);ctx.fill();
+    // ojos
+    ctx.fillStyle='#101a24';
+    ctx.beginPath();ctx.ellipse(-r*.10,-r*.22,r*.05,r*.08,0,0,Math.PI*2);ctx.ellipse(r*.12,-r*.22,r*.05,r*.08,0,0,Math.PI*2);ctx.fill();
+    // sonrisa
+    ctx.strokeStyle='#17321e';ctx.lineWidth=Math.max(1,cellSize*.025);
+    ctx.beginPath();ctx.arc(r*.01,-r*.16,r*.09,.15,Math.PI-.15);ctx.stroke();
+
+    // Banda frontal de la cápsula.
+    ctx.fillStyle='#e7fbff';
+    ctx.globalAlpha=.9;
+    ctx.beginPath();ctx.ellipse(r*.02,r*.33,r*.63,r*.16,0,0,Math.PI*2);ctx.fill();
+    ctx.globalAlpha=1;
+    ctx.fillStyle='#ffc83e';
+    ctx.beginPath();ctx.arc(-r*.29,r*.34,r*.05,0,Math.PI*2);ctx.arc(r*.30,r*.34,r*.05,0,Math.PI*2);ctx.fill();
+    ctx.fillStyle='#42e6ff';
+    ctx.beginPath();ctx.arc(0,r*.34,r*.055,0,Math.PI*2);ctx.fill();
+
+    // Patines magnéticos.
+    ctx.fillStyle='#203a63';
+    ctx.strokeStyle='#07182f';
+    ctx.lineWidth=Math.max(1.3,cellSize*.045);
+    ctx.beginPath();ctx.roundRect(-r*.6,r*.55,r*.34,r*.22,r*.08);ctx.fill();ctx.stroke();
+    ctx.beginPath();ctx.roundRect(r*.27,r*.55,r*.34,r*.22,r*.08);ctx.fill();ctx.stroke();
+    ctx.fillStyle='#b4f5ff';
+    ctx.fillRect(-r*.54,r*.59,r*.21,r*.06);
+    ctx.fillRect(r*.33,r*.59,r*.21,r*.06);
+
+    // Propulsores laterales después de dibujar el cuerpo.
+    thruster(-r*.72,r*.10);
+    thruster(-r*.72,r*.38);
+
+    // Partículas de impulso.
+    if(moving){
+      ctx.fillStyle='rgba(255,220,122,.9)';
+      for(let i=0;i<3;i++){
+        const px=-r*(1.1+i*.25), py=(Math.sin(t/80+i)*r*.16);
+        ctx.beginPath();ctx.arc(px,py,Math.max(1,cellSize*.025),0,Math.PI*2);ctx.fill();
+      }
+    }
+
+    ctx.restore();
+  }
   function drawEnemy(e){
     const pos = { x:(e.px+0.5)*cellSize, y:(e.py+0.5)*cellSize };
-    const r = cellSize*0.38;
-    let color = e.color;
-    if(e.respawning) color='rgba(255,255,255,0.25)';
-    else if(e.waiting) color='rgba(255,255,255,0.4)';
-    else if(e.frightened){
-      const flashing = state.frightTimer < 1.5 && Math.floor(performance.now()/150)%2===0;
-      color = flashing ? '#ffffff' : '#A0C4FF';
-    }
+    const r = cellSize*0.40;
+    let color=e.respawning?'rgba(255,255,255,.25)':(e.waiting?'rgba(255,255,255,.45)':(e.frightened?'#8ecbff':e.color));
+
     ctx.save();
     ctx.translate(pos.x,pos.y);
-    ctx.fillStyle = color;
-    ctx.shadowColor = color;
-    ctx.shadowBlur = cellSize*0.55;
-    ctx.beginPath();
-    ctx.arc(0,-r*0.1,r,Math.PI,0,false);
-    ctx.lineTo(r, r*0.6);
-    for(let i=0;i<3;i++){
-      const bx = r - (i+1)*(2*r/3);
-      ctx.lineTo(bx + r/3, i%2===0? r*0.9 : r*0.55);
-    }
-    ctx.lineTo(-r, r*0.6);
-    ctx.closePath();
-    ctx.fill();
-    ctx.shadowBlur=0;
+    ctx.shadowColor=color;ctx.shadowBlur=cellSize*.45;
+    // Dron hexagonal, no silueta de fantasma.
+    ctx.fillStyle=color;ctx.beginPath();
+    for(let i=0;i<6;i++){const a=i*Math.PI/3;const rr=i%2?r:r*.92;ctx.lineTo(Math.cos(a)*rr,Math.sin(a)*rr)}
+    ctx.closePath();ctx.fill();ctx.shadowBlur=0;
+
+    // Aletas
+    ctx.strokeStyle=color;ctx.lineWidth=Math.max(1,r*.18);
+    ctx.beginPath();ctx.moveTo(-r*1.05,0);ctx.lineTo(-r*1.45,-r*.35);
+    ctx.moveTo(r*1.05,0);ctx.lineTo(r*1.45,-r*.35);ctx.stroke();
+
+    // Núcleo y sensor
+    ctx.fillStyle=e.frightened?'#0b1026':'#ffffff';
+    ctx.beginPath();ctx.arc(-r*.28,-r*.16,r*.13,0,Math.PI*2);ctx.arc(r*.28,-r*.16,r*.13,0,Math.PI*2);ctx.fill();
+    ctx.fillStyle='#0b1026';ctx.beginPath();ctx.arc(0,r*.12,r*.16,0,Math.PI*2);ctx.fill();
+
     if(e.isImmune && !e.respawning){
-      ctx.strokeStyle = 'rgba(255,255,255,0.85)';
-      ctx.lineWidth = Math.max(1, r*0.12);
-      ctx.stroke();
-    }
-    if(!e.respawning){
-      ctx.fillStyle = e.frightened ? '#0B1026' : '#ffffff';
-      const eyeOffX = r*0.35, eyeOffY = -r*0.15;
-      ctx.beginPath(); ctx.arc(-eyeOffX,eyeOffY,r*0.16,0,Math.PI*2); ctx.fill();
-      ctx.beginPath(); ctx.arc(eyeOffX,eyeOffY,r*0.16,0,Math.PI*2); ctx.fill();
+      ctx.strokeStyle='rgba(255,255,255,.8)';ctx.lineWidth=Math.max(1,r*.11);
+      ctx.beginPath();ctx.arc(0,0,r*1.25,0,Math.PI*2);ctx.stroke();
     }
     ctx.restore();
   }
-
-  // ---------- Movimiento ----------
+  // ---------- Pilotaje ----------
   // En vez de comprobar "¿estoy cerca del centro?" con un margen que un frame
   // rápido puede saltarse (y entonces seguir de largo sin comprobar el muro),
   // calculamos la distancia EXACTA hasta el borde de la celda y avanzamos como
@@ -1061,7 +1204,12 @@
         state.enemies.forEach(e=>{ if(!e.respawning && !e.isImmune) e.frightened=true; });
         updateHUD();
       }
-      if(lv.pellets.size===0 && lv.powerPellets.size===0){
+      if(lv.pellets.size===0 && lv.powerPellets.size===0 && !state.exitReady){
+        state.exitReady = true;
+        showToast('¡TODOS LOS NÚCLEOS ACTIVADOS! VE A LA BALIZA');
+      }
+      if(state.exitReady && lv.exitCell &&
+         Math.abs(p.x-lv.exitCell.x)<0.28 && Math.abs(p.y-lv.exitCell.y)<0.28){
         levelComplete();
       }
     }
@@ -1411,3 +1559,4 @@
 </script>
 </body>
 </html>
+
