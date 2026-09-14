@@ -221,6 +221,13 @@
     font-size:.75rem;
     padding:20px;
   }
+
+  .all-in-btn{
+    margin-left:8px; padding:8px 12px; border:0; border-radius:8px;
+    background:#333; color:#fff; cursor:pointer; font-weight:700;
+  }
+  .all-in-btn:hover{filter:brightness(1.15);}
+  @media (max-width:600px){.all-in-btn{margin:6px 0 0 0; width:100%;}}
 </style>
 </head>
 <body>
@@ -661,8 +668,13 @@ document.getElementById('logrosCerrar').addEventListener('click', () => document
   // ---- números pegados a la rueda ----
   let numerosHTML = '';
   ORDEN_RUEDA.forEach((num, i) => {
-    const centro = i * ANGULO; // 0deg = arriba, ya que rotamos desde -ANGULO/2
-    numerosHTML += `<div class="rl-num" style="transform:rotate(${centro}deg) translateY(-118px);">${num}</div>`;
+    // Colocamos cada número físicamente en el mismo ángulo que su segmento.
+    // Así evitamos que el texto y el resultado interno puedan desincronizarse.
+    const centro = i * ANGULO;
+    const rad = centro * Math.PI / 180;
+    const x = 140 + Math.sin(rad) * 118;
+    const y = 140 - Math.cos(rad) * 118;
+    numerosHTML += `<div class="rl-num" style="left:${x.toFixed(2)}px;top:${y.toFixed(2)}px;transform:translate(-50%,-50%);">${num}</div>`;
   });
 
   // ---- celdas de la mesa (apuestas interiores + exteriores) ----
@@ -724,6 +736,7 @@ document.getElementById('logrosCerrar').addEventListener('click', () => document
         <div class="controls-row">
           <button class="btn" id="rlGirar">Girar</button>
           <button class="btn secondary" id="rlBorrar">Borrar apuestas</button>
+          <button class="btn secondary" id="rlTodas">Usar todas mis fichas</button>
         </div>
         <div class="msg" id="rlMsg">Elige una ficha y colócala en la mesa (número, docena, columna, color…).</div>
       </div>
@@ -732,6 +745,7 @@ document.getElementById('logrosCerrar').addEventListener('click', () => document
   activarToggleReglas('ruleta');
 
   let chipVal = 1;
+  let usarTodasEnProxima = false;
   let apuestas = {}; // target -> cantidad acumulada
   let modoRL = 'solo', esHostRL = false;
   const redRL = crearRed('ruleta');
@@ -775,6 +789,21 @@ document.getElementById('logrosCerrar').addEventListener('click', () => document
     });
   }
 
+  document.getElementById('rlTodas').addEventListener('click', () => {
+    const saldo = Math.floor(Number(Casino.balance) || 0);
+    if(saldo <= 0){
+      const msg = document.getElementById('rlMsg');
+      msg.className='msg lose';
+      msg.textContent='No tienes fichas disponibles.';
+      return;
+    }
+    chipVal = saldo;
+    usarTodasEnProxima = true;
+    const msg = document.getElementById('rlMsg');
+    msg.className='msg';
+    msg.textContent = `Tienes seleccionadas todas tus fichas (${saldo}). Ahora pulsa una casilla de la ruleta.`;
+  });
+
   document.getElementById('rlTable').addEventListener('click', (e) => {
     const cell = e.target.closest('.rl-cell');
     if(!cell) return;
@@ -784,8 +813,25 @@ document.getElementById('logrosCerrar').addEventListener('click', () => document
       msg.className='msg lose'; msg.textContent='No tienes fichas suficientes para esa ficha.';
       return;
     }
+    // No permitir apuestas incompatibles: rojo/negro y par/impar son excluyentes
+    const incompatibles = {
+      rojo: 'negro', negro: 'rojo',
+      par: 'impar', impar: 'par'
+    };
+    if(incompatibles[target] && apuestas[incompatibles[target]]){
+      const msg = document.getElementById('rlMsg');
+      msg.className='msg lose';
+      msg.textContent = target === 'rojo' || target === 'negro'
+        ? 'No puedes apostar a rojo y negro a la vez.'
+        : 'No puedes apostar a par e impar a la vez.';
+      return;
+    }
     Casino.place(chipVal);
     apuestas[target] = (apuestas[target] || 0) + chipVal;
+    if(usarTodasEnProxima){
+      usarTodasEnProxima = false;
+      chipVal = 1;
+    }
     renderMarcadores();
     actualizarTotal();
     Sonido.chip();
@@ -913,6 +959,7 @@ function cartaHTML(c, oculta=false){
       <div class="field">
         <label>Apuesta (fichas)</label>
         <input type="number" id="slApuesta" value="10" min="1" step="5">
+        <button type="button" class="all-in-btn" data-allin="slApuesta">Usar todas mis fichas</button>
       </div>
       <button class="btn" id="slGirar">Girar</button>
     </div>
@@ -1020,6 +1067,7 @@ function cartaHTML(c, oculta=false){
       <div class="field">
         <label>Apuesta (fichas)</label>
         <input type="number" id="bjApuesta" value="20" min="1" step="5">
+        <button type="button" class="all-in-btn" data-allin="bjApuesta">Usar todas mis fichas</button>
       </div>
       <button class="btn" id="bjRepartir">Repartir</button>
       <button class="btn secondary" id="bjPedir" disabled>Pedir</button>
@@ -1298,6 +1346,7 @@ function cartaHTML(c, oculta=false){
       <div class="field">
         <label>Apuesta (fichas)</label>
         <input type="number" id="crApuesta" value="20" min="1" step="5">
+        <button type="button" class="all-in-btn" data-allin="crApuesta">Usar todas mis fichas</button>
       </div>
       <button class="btn" id="crCorrer">Iniciar carrera</button>
     </div>
@@ -2306,6 +2355,7 @@ function mejorMano(cartas){
       <div class="field">
         <label>Apuesta (fichas)</label>
         <input type="number" id="bcApuesta" value="20" min="1" step="5">
+        <button type="button" class="all-in-btn" data-allin="bcApuesta">Usar todas mis fichas</button>
       </div>
       <div class="field">
         <label>¿A qué apuestas?</label>
@@ -2425,6 +2475,7 @@ function mejorMano(cartas){
       <div class="field">
         <label>Apuesta (fichas)</label>
         <input type="number" id="dcApuesta" value="20" min="1" step="5">
+        <button type="button" class="all-in-btn" data-allin="dcApuesta">Usar todas mis fichas</button>
       </div>
       <div class="field">
         <label>Tipo de apuesta</label>
@@ -2561,6 +2612,7 @@ function mejorMano(cartas){
       <div class="field">
         <label>Apuesta (fichas)</label>
         <input type="number" id="bgApuesta" value="20" min="1" step="5">
+        <button type="button" class="all-in-btn" data-allin="bgApuesta">Usar todas mis fichas</button>
       </div>
       <button class="btn" id="bgJugar">Comprar cartón y jugar</button>
     </div>
@@ -2812,6 +2864,7 @@ function mejorMano(cartas){
       <div class="field">
         <label>Apuesta (fichas)</label>
         <input type="number" id="knApuesta" value="20" min="1" step="5">
+        <button type="button" class="all-in-btn" data-allin="knApuesta">Usar todas mis fichas</button>
       </div>
       <button class="btn" id="knJugar">Jugar</button>
       <button class="btn secondary" id="knLimpiar">Limpiar selección</button>
@@ -2945,6 +2998,7 @@ function mejorMano(cartas){
           <div class="field">
             <label>Apuesta (fichas)</label>
             <input type="number" id="rdApuesta" value="20" min="1" step="5">
+        <button type="button" class="all-in-btn" data-allin="rdApuesta">Usar todas mis fichas</button>
           </div>
         </div>
         <div class="controls-row" id="rdMultiplicadores">
@@ -3045,6 +3099,7 @@ function mejorMano(cartas){
       <div class="field">
         <label>Apuesta (fichas)</label>
         <input type="number" id="vpApuesta" value="10" min="1" step="5">
+        <button type="button" class="all-in-btn" data-allin="vpApuesta">Usar todas mis fichas</button>
       </div>
       <button class="btn" id="vpRepartir">Repartir</button>
       <button class="btn secondary" id="vpRobar" disabled>Robar cartas no conservadas</button>
@@ -3385,6 +3440,21 @@ function mejorMano(cartas){
   }
 </style>
 
+
+<script>
+// Atajo de interfaz: rellena la apuesta con todas las fichas virtuales disponibles.
+document.addEventListener('DOMContentLoaded', () => {
+  document.querySelectorAll('[data-allin]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const input = document.getElementById(btn.dataset.allin);
+      if (!input || typeof Casino === 'undefined') return;
+      const fichas = Math.max(0, Math.floor(Number(Casino.balance) || 0));
+      input.value = fichas;
+      input.dispatchEvent(new Event('input', {bubbles:true}));
+      input.dispatchEvent(new Event('change', {bubbles:true}));
+    });
+  });
+});
+</script>
 </body>
 </html>
-
