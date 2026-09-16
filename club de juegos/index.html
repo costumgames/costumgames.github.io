@@ -221,13 +221,6 @@
     font-size:.75rem;
     padding:20px;
   }
-
-  .all-in-btn{
-    margin-left:8px; padding:8px 12px; border:0; border-radius:8px;
-    background:#333; color:#fff; cursor:pointer; font-weight:700;
-  }
-  .all-in-btn:hover{filter:brightness(1.15);}
-  @media (max-width:600px){.all-in-btn{margin:6px 0 0 0; width:100%;}}
 </style>
 </head>
 <body>
@@ -668,13 +661,8 @@ document.getElementById('logrosCerrar').addEventListener('click', () => document
   // ---- números pegados a la rueda ----
   let numerosHTML = '';
   ORDEN_RUEDA.forEach((num, i) => {
-    // Colocamos cada número físicamente en el mismo ángulo que su segmento.
-    // Así evitamos que el texto y el resultado interno puedan desincronizarse.
-    const centro = i * ANGULO;
-    const rad = centro * Math.PI / 180;
-    const x = 140 + Math.sin(rad) * 118;
-    const y = 140 - Math.cos(rad) * 118;
-    numerosHTML += `<div class="rl-num" style="left:${x.toFixed(2)}px;top:${y.toFixed(2)}px;transform:translate(-50%,-50%);">${num}</div>`;
+    const centro = i * ANGULO; // 0deg = arriba, ya que rotamos desde -ANGULO/2
+    numerosHTML += `<div class="rl-num" style="transform:rotate(${centro}deg) translateY(-118px);">${num}</div>`;
   });
 
   // ---- celdas de la mesa (apuestas interiores + exteriores) ----
@@ -695,17 +683,18 @@ document.getElementById('logrosCerrar').addEventListener('click', () => document
         <li>El <strong>0</strong> no cuenta como par, impar, rojo, negro, alto ni bajo.</li>
       </ul>
       Elige una ficha, colócala en la mesa (puedes repartir varias apuestas a la vez) y pulsa Girar.
+      La ficha <strong>TODO</strong> apuesta de golpe todo tu saldo actual en la casilla que pulses.
       En modo Online, solo quien creó la sala gira la rueda — el resultado se comparte automáticamente con el otro jugador.
     `)}
     ${panelOnlineHTML('rl')}
     <div class="rl-wrap">
       <div>
         <div class="rl-wheel-wrap">
-          <div class="rl-pointer">▼</div>
           <div class="rl-wheel" id="rlWheel" style="background:${conic};">
             ${numerosHTML}
             <div class="rl-hub"></div>
           </div>
+          <div class="rl-ball-track" id="rlBallTrack"><div class="rl-ball"></div></div>
         </div>
       </div>
       <div style="flex:1; min-width:340px;">
@@ -715,6 +704,7 @@ document.getElementById('logrosCerrar').addEventListener('click', () => document
           <div class="chip-select chip-5" data-chip="5">5</div>
           <div class="chip-select chip-25" data-chip="25">25</div>
           <div class="chip-select chip-100" data-chip="100">100</div>
+          <div class="chip-select chip-todo" data-chip="todo">TODO</div>
           <span class="rl-total" id="rlTotalApostado">Apostado: 0</span>
         </div>
         <div class="rl-table" id="rlTable">
@@ -736,7 +726,6 @@ document.getElementById('logrosCerrar').addEventListener('click', () => document
         <div class="controls-row">
           <button class="btn" id="rlGirar">Girar</button>
           <button class="btn secondary" id="rlBorrar">Borrar apuestas</button>
-          <button class="btn secondary" id="rlTodas">Usar todas mis fichas</button>
         </div>
         <div class="msg" id="rlMsg">Elige una ficha y colócala en la mesa (número, docena, columna, color…).</div>
       </div>
@@ -745,7 +734,7 @@ document.getElementById('logrosCerrar').addEventListener('click', () => document
   activarToggleReglas('ruleta');
 
   let chipVal = 1;
-  let usarTodasEnProxima = false;
+  let modoTodoRL = false;
   let apuestas = {}; // target -> cantidad acumulada
   let modoRL = 'solo', esHostRL = false;
   const redRL = crearRed('ruleta');
@@ -767,7 +756,8 @@ document.getElementById('logrosCerrar').addEventListener('click', () => document
     el.addEventListener('click', () => {
       document.querySelectorAll('.chip-select').forEach(c => c.classList.remove('active'));
       el.classList.add('active');
-      chipVal = parseInt(el.dataset.chip);
+      if(el.dataset.chip === 'todo'){ modoTodoRL = true; }
+      else { modoTodoRL = false; chipVal = parseInt(el.dataset.chip); }
     });
   });
 
@@ -789,54 +779,34 @@ document.getElementById('logrosCerrar').addEventListener('click', () => document
     });
   }
 
-  document.getElementById('rlTodas').addEventListener('click', () => {
-    const saldo = Math.floor(Number(Casino.balance) || 0);
-    if(saldo <= 0){
-      const msg = document.getElementById('rlMsg');
-      msg.className='msg lose';
-      msg.textContent='No tienes fichas disponibles.';
-      return;
-    }
-    chipVal = saldo;
-    usarTodasEnProxima = true;
-    const msg = document.getElementById('rlMsg');
-    msg.className='msg';
-    msg.textContent = `Tienes seleccionadas todas tus fichas (${saldo}). Ahora pulsa una casilla de la ruleta.`;
-  });
-
   document.getElementById('rlTable').addEventListener('click', (e) => {
     const cell = e.target.closest('.rl-cell');
     if(!cell) return;
     const target = cell.dataset.target;
-    if(!Casino.canBet(chipVal)){
-      const msg = document.getElementById('rlMsg');
+    const monto = modoTodoRL ? Casino.balance : chipVal;
+    const msg = document.getElementById('rlMsg');
+    if(monto <= 0){
+      msg.className='msg lose'; msg.textContent='No tienes fichas para apostar.';
+      return;
+    }
+    if(!Casino.canBet(monto)){
       msg.className='msg lose'; msg.textContent='No tienes fichas suficientes para esa ficha.';
       return;
     }
-    // No permitir apuestas incompatibles: rojo/negro y par/impar son excluyentes
-    const incompatibles = {
-      rojo: 'negro', negro: 'rojo',
-      par: 'impar', impar: 'par'
-    };
-    if(incompatibles[target] && apuestas[incompatibles[target]]){
-      const msg = document.getElementById('rlMsg');
-      msg.className='msg lose';
-      msg.textContent = target === 'rojo' || target === 'negro'
-        ? 'No puedes apostar a rojo y negro a la vez.'
-        : 'No puedes apostar a par e impar a la vez.';
-      return;
-    }
-    Casino.place(chipVal);
-    apuestas[target] = (apuestas[target] || 0) + chipVal;
-    if(usarTodasEnProxima){
-      usarTodasEnProxima = false;
-      chipVal = 1;
-    }
+    Casino.place(monto);
+    apuestas[target] = (apuestas[target] || 0) + monto;
     renderMarcadores();
     actualizarTotal();
     Sonido.chip();
     Logros.registrar('primeraApuesta');
     Logros.registrarMesaJugada('ruleta');
+    if(modoTodoRL){
+      // tras apostar todo, volvemos a la ficha de 1 para evitar apuestas accidentales del resto del saldo
+      modoTodoRL = false;
+      document.querySelectorAll('.chip-select').forEach(c => c.classList.remove('active'));
+      document.querySelector('.chip-select.chip-1').classList.add('active');
+      chipVal = 1;
+    }
   });
 
   document.getElementById('rlBorrar').addEventListener('click', () => {
@@ -864,12 +834,43 @@ document.getElementById('logrosCerrar').addEventListener('click', () => document
 
     const idx = ORDEN_RUEDA.indexOf(numero);
     const centro = idx * ANGULO;
-    const vueltasExtra = 360 * 6;
-    // queremos que "centro" quede alineado con el puntero (arriba = 0deg tras la rotación)
-    const rotacionActual = (window._rlRotAcumulada || 0);
-    const objetivo = rotacionActual + vueltasExtra + (360 - centro);
+
+    // --- rueda: gira libremente, cada tirada para en un punto distinto (no siempre en la misma posición) ---
+    const vueltasRueda = 360 * (5 + Math.floor(Math.random() * 3)); // 5, 6 o 7 vueltas completas
+    const restoRueda = Math.random() * 360; // dónde para exactamente, es aleatorio
+    const rotAnterior = (window._rlRotAcumulada || 0);
+    const objetivo = rotAnterior + vueltasRueda + restoRueda;
     window._rlRotAcumulada = objetivo;
     document.getElementById('rlWheel').style.transform = `rotate(${objetivo}deg)`;
+
+    // posición final (en la pantalla) donde ha quedado el número ganador, sea cual sea el punto en el que paró la rueda
+    const anguloNumero = ((centro + objetivo) % 360 + 360) % 360;
+
+    // --- bola: gira en sentido contrario y se detiene justo alineada con el número ganador, caiga donde caiga ---
+    const ball = document.getElementById('rlBallTrack');
+    const bolaInterior = ball ? ball.querySelector('.rl-ball') : null;
+    const DURACION_BOLA = 5200;
+    if(ball && bolaInterior){
+      // reinicia el radio exterior sin transición antes de lanzar la siguiente tirada
+      bolaInterior.style.transition = 'none';
+      bolaInterior.style.transform = 'translateY(-100px)';
+      void bolaInterior.offsetWidth; // fuerza reflow para aplicar el reinicio antes de animar
+      bolaInterior.style.transition = '';
+
+      const vueltasBola = 360 * (9 + Math.floor(Math.random() * 4)); // 9 a 12 vueltas completas
+      const rotBolaAnterior = (window._rlBolaAcumulada || 0);
+      const modBolaActual = ((rotBolaAnterior % 360) + 360) % 360;
+      const deltaAtras = ((modBolaActual - anguloNumero) % 360 + 360) % 360;
+      const objetivoBola = rotBolaAnterior - vueltasBola - deltaAtras;
+      window._rlBolaAcumulada = objetivoBola;
+
+      ball.style.transitionDuration = DURACION_BOLA + 'ms';
+      ball.style.transform = `rotate(${objetivoBola}deg)`;
+      bolaInterior.style.transitionDuration = DURACION_BOLA + 'ms';
+      bolaInterior.style.transform = 'translateY(-68px)'; // cae hacia el interior al perder velocidad
+      ball.classList.add('girando');
+      setTimeout(() => ball.classList.remove('girando'), DURACION_BOLA);
+    }
 
     setTimeout(() => {
       const color = colorDe(numero);
@@ -918,7 +919,7 @@ document.getElementById('logrosCerrar').addEventListener('click', () => document
       actualizarTotal();
       document.getElementById('rlGirar').disabled = false;
       document.getElementById('rlBorrar').disabled = false;
-    }, 4300);
+    }, 5300);
   }
 })();
 
@@ -959,7 +960,6 @@ function cartaHTML(c, oculta=false){
       <div class="field">
         <label>Apuesta (fichas)</label>
         <input type="number" id="slApuesta" value="10" min="1" step="5">
-        <button type="button" class="all-in-btn" data-allin="slApuesta">Usar todas mis fichas</button>
       </div>
       <button class="btn" id="slGirar">Girar</button>
     </div>
@@ -1067,7 +1067,6 @@ function cartaHTML(c, oculta=false){
       <div class="field">
         <label>Apuesta (fichas)</label>
         <input type="number" id="bjApuesta" value="20" min="1" step="5">
-        <button type="button" class="all-in-btn" data-allin="bjApuesta">Usar todas mis fichas</button>
       </div>
       <button class="btn" id="bjRepartir">Repartir</button>
       <button class="btn secondary" id="bjPedir" disabled>Pedir</button>
@@ -1346,7 +1345,6 @@ function cartaHTML(c, oculta=false){
       <div class="field">
         <label>Apuesta (fichas)</label>
         <input type="number" id="crApuesta" value="20" min="1" step="5">
-        <button type="button" class="all-in-btn" data-allin="crApuesta">Usar todas mis fichas</button>
       </div>
       <button class="btn" id="crCorrer">Iniciar carrera</button>
     </div>
@@ -2355,7 +2353,6 @@ function mejorMano(cartas){
       <div class="field">
         <label>Apuesta (fichas)</label>
         <input type="number" id="bcApuesta" value="20" min="1" step="5">
-        <button type="button" class="all-in-btn" data-allin="bcApuesta">Usar todas mis fichas</button>
       </div>
       <div class="field">
         <label>¿A qué apuestas?</label>
@@ -2475,7 +2472,6 @@ function mejorMano(cartas){
       <div class="field">
         <label>Apuesta (fichas)</label>
         <input type="number" id="dcApuesta" value="20" min="1" step="5">
-        <button type="button" class="all-in-btn" data-allin="dcApuesta">Usar todas mis fichas</button>
       </div>
       <div class="field">
         <label>Tipo de apuesta</label>
@@ -2612,7 +2608,6 @@ function mejorMano(cartas){
       <div class="field">
         <label>Apuesta (fichas)</label>
         <input type="number" id="bgApuesta" value="20" min="1" step="5">
-        <button type="button" class="all-in-btn" data-allin="bgApuesta">Usar todas mis fichas</button>
       </div>
       <button class="btn" id="bgJugar">Comprar cartón y jugar</button>
     </div>
@@ -2864,7 +2859,6 @@ function mejorMano(cartas){
       <div class="field">
         <label>Apuesta (fichas)</label>
         <input type="number" id="knApuesta" value="20" min="1" step="5">
-        <button type="button" class="all-in-btn" data-allin="knApuesta">Usar todas mis fichas</button>
       </div>
       <button class="btn" id="knJugar">Jugar</button>
       <button class="btn secondary" id="knLimpiar">Limpiar selección</button>
@@ -2998,7 +2992,6 @@ function mejorMano(cartas){
           <div class="field">
             <label>Apuesta (fichas)</label>
             <input type="number" id="rdApuesta" value="20" min="1" step="5">
-        <button type="button" class="all-in-btn" data-allin="rdApuesta">Usar todas mis fichas</button>
           </div>
         </div>
         <div class="controls-row" id="rdMultiplicadores">
@@ -3058,7 +3051,10 @@ function mejorMano(cartas){
     const centro = idx * ANGULO;
     const vueltasExtra = 360 * 6;
     const rotAnterior = (window._rdRotAcumulada || 0);
-    const objetivo = rotAnterior + vueltasExtra + (360 - centro);
+    const modActual = ((rotAnterior % 360) + 360) % 360;
+    const modObjetivo = (360 - centro) % 360;
+    const deltaAdelante = (modObjetivo - modActual + 360) % 360;
+    const objetivo = rotAnterior + vueltasExtra + deltaAdelante;
     window._rdRotAcumulada = objetivo;
     document.getElementById('rdWheel').style.transform = `rotate(${objetivo}deg)`;
 
@@ -3099,7 +3095,6 @@ function mejorMano(cartas){
       <div class="field">
         <label>Apuesta (fichas)</label>
         <input type="number" id="vpApuesta" value="10" min="1" step="5">
-        <button type="button" class="all-in-btn" data-allin="vpApuesta">Usar todas mis fichas</button>
       </div>
       <button class="btn" id="vpRepartir">Repartir</button>
       <button class="btn secondary" id="vpRobar" disabled>Robar cartas no conservadas</button>
@@ -3253,6 +3248,23 @@ function mejorMano(cartas){
     font-size:.62rem; font-weight:700; color:var(--cream);
     transform-origin:center;
   }
+  .rl-ball-track{
+    position:absolute; inset:0;
+    transition: transform 5.2s cubic-bezier(.13,.66,.18,1);
+    pointer-events:none;
+    z-index:4;
+  }
+  .rl-ball{
+    position:absolute; top:50%; left:50%; width:11px; height:11px; margin:-5.5px;
+    border-radius:50%;
+    background:radial-gradient(circle at 35% 30%, #ffffff, #d8d8d8 55%, #8c8c8c 100%);
+    box-shadow:0 2px 5px rgba(0,0,0,.6), 0 0 0 1px rgba(0,0,0,.3);
+    transform: translateY(-100px);
+    transition: transform 5.2s cubic-bezier(.32,1.32,.6,1);
+  }
+  .rl-ball-track.girando .rl-ball{
+    box-shadow:0 0 10px 3px rgba(255,255,255,.55), 0 2px 5px rgba(0,0,0,.6);
+  }
   .rl-pointer{
     position:absolute; top:-6px; left:50%; transform:translateX(-50%);
     font-size:1.6rem; color:var(--gold-light); z-index:5;
@@ -3270,6 +3282,7 @@ function mejorMano(cartas){
   .chip-5{background:radial-gradient(circle at 35% 30%,#e08a8a,var(--red)); color:var(--cream);}
   .chip-25{background:radial-gradient(circle at 35% 30%,#7fd19a,#1c7a44); color:var(--cream);}
   .chip-100{background:radial-gradient(circle at 35% 30%,#4d4d4d,#111); color:var(--gold-light);}
+  .chip-todo{background:radial-gradient(circle at 35% 30%, var(--gold-light), var(--red) 75%); color:#fff; font-size:.58rem; letter-spacing:.3px;}
 
   .rl-table{
     display:grid;
@@ -3440,21 +3453,5 @@ function mejorMano(cartas){
   }
 </style>
 
-
-<script>
-// Atajo de interfaz: rellena la apuesta con todas las fichas virtuales disponibles.
-document.addEventListener('DOMContentLoaded', () => {
-  document.querySelectorAll('[data-allin]').forEach(btn => {
-    btn.addEventListener('click', () => {
-      const input = document.getElementById(btn.dataset.allin);
-      if (!input || typeof Casino === 'undefined') return;
-      const fichas = Math.max(0, Math.floor(Number(Casino.balance) || 0));
-      input.value = fichas;
-      input.dispatchEvent(new Event('input', {bubbles:true}));
-      input.dispatchEvent(new Event('change', {bubbles:true}));
-    });
-  });
-});
-</script>
 </body>
 </html>
