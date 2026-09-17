@@ -28,7 +28,8 @@
     --gold-light:#E8C766;
     --cream:#F1E9D2;
     --text-dim:#AFC2B6;
-    --red:#A31621;
+    --red:#C41E3A;
+    --roulette-green:#0C7C42;
     --black-suit:#151515;
     --panel:#0D251C;
     --border:#1E4A38;
@@ -173,7 +174,7 @@
     color:var(--text-dim);
     margin-bottom:5px;
   }
-  .field input[type=number], .field select{
+  .field input[type=number], .field input[type=text], .field select{
     background:var(--panel);
     border:1px solid var(--border);
     color:var(--cream);
@@ -214,6 +215,33 @@
   }
   .msg.win{border-color:var(--gold); color:var(--gold-light);}
   .msg.lose{border-color:var(--red); color:#e6a1a8;}
+
+  /* ---- chat de texto (modo online) ---- */
+  .chat-box{margin-top:14px; border:1px solid var(--border); border-radius:10px; overflow:hidden; background:rgba(0,0,0,.2);}
+  .chat-log{max-height:170px; overflow-y:auto; padding:10px 12px; display:flex; flex-direction:column; gap:6px;}
+  .chat-log:empty::before{content:'Aún no hay mensajes. ¡Saluda a tu amigo!'; color:var(--text-dim); font-size:.82rem; font-style:italic;}
+  .chat-line{padding:6px 10px; border-radius:10px; max-width:82%; word-break:break-word; font-size:.85rem; line-height:1.35;}
+  .chat-line.propio{align-self:flex-end; background:rgba(201,162,39,.2); border:1px solid rgba(201,162,39,.35);}
+  .chat-line.amigo{align-self:flex-start; background:rgba(255,255,255,.06); border:1px solid var(--border);}
+  .chat-autor{font-weight:700; color:var(--gold-light);}
+  .chat-row{display:flex; gap:8px; padding:10px 12px; border-top:1px solid var(--border);}
+  .chat-row input{flex:1; min-width:0; background:var(--panel); border:1px solid var(--border); color:var(--cream); padding:9px 10px; border-radius:8px; font-family:'Inter',sans-serif; font-size:.85rem;}
+  .chat-row .btn{padding:9px 18px;}
+
+  /* ---- historial y estadísticas ---- */
+  .stat-grid{display:grid; grid-template-columns:repeat(auto-fit,minmax(150px,1fr)); gap:14px; margin:18px 0;}
+  .stat-card{background:var(--panel); border:1px solid var(--border); border-radius:10px; padding:14px 16px; display:flex; flex-direction:column; gap:6px;}
+  .stat-label{font-size:.7rem; color:var(--text-dim); text-transform:uppercase; letter-spacing:.4px;}
+  .stat-value{font-family:'Playfair Display',serif; font-size:1.5rem; font-weight:700; color:var(--gold-light);}
+  .stat-pos{color:#7fd19a;}
+  .stat-neg{color:#e6a1a8;}
+  .stat-subtitle{margin:22px 0 10px; font-family:'Playfair Display',serif; color:var(--cream);}
+  .stat-table-wrap{overflow-x:auto; border:1px solid var(--border); border-radius:10px;}
+  .stat-table{width:100%; border-collapse:collapse; font-size:.85rem;}
+  .stat-table th, .stat-table td{padding:9px 12px; text-align:left; border-bottom:1px solid var(--border); white-space:nowrap;}
+  .stat-table th{background:rgba(0,0,0,.25); color:var(--text-dim); font-weight:600; font-size:.72rem; text-transform:uppercase;}
+  .stat-table tbody tr:last-child td{border-bottom:none;}
+  .stat-table tbody tr:hover{background:rgba(255,255,255,.03);}
 
   footer{
     text-align:center;
@@ -271,6 +299,7 @@
   <button data-target="keno">Keno</button>
   <button data-target="rueda">Rueda de la Fortuna</button>
   <button data-target="videopoker">Video Póker</button>
+  <button data-target="estadisticas">📊 Historial</button>
 </nav>
 
 <main>
@@ -352,6 +381,13 @@
     <div id="videopokerRoot"></div>
   </section>
 
+  <!-- HISTORIAL Y ESTADÍSTICAS -->
+  <section class="table-surface" id="estadisticas">
+    <h2>Historial y Estadísticas</h2>
+    <p class="sub">Tu actividad en el casino: saldo, apuestas, premios y tu mesa favorita.</p>
+    <div id="estadisticasRoot"></div>
+  </section>
+
 </main>
 
 <footer>Juego con fichas virtuales sin valor monetario real — solo entretenimiento.</footer>
@@ -360,15 +396,30 @@
 /* ================= ESTADO GLOBAL: SALDO DE FICHAS ================= */
 const Casino = {
   balance: parseInt(localStorage.getItem('casino_balance')) || 1000,
+  jugoActual: 'Ruleta',
   el: document.getElementById('balanceDisplay'),
   updateUI(){ this.el.textContent = this.balance.toLocaleString('es-ES'); },
   save(){ localStorage.setItem('casino_balance', this.balance); },
   canBet(amount){ return amount > 0 && amount <= this.balance; },
-  place(amount){ this.balance -= amount; this.save(); this.updateUI(); },
-  pay(amount){ this.balance += amount; this.save(); this.updateUI(); },
+  place(amount){ this.balance -= amount; this.save(); this.updateUI(); if(amount > 0) Historial.registrar('apuesta', amount, this.jugoActual); },
+  pay(amount){ this.balance += amount; this.save(); this.updateUI(); if(amount > 0) Historial.registrar('pago', amount, this.jugoActual); },
   reset(){ this.balance = 1000; this.save(); this.updateUI(); }
 };
 Casino.updateUI();
+
+/* ================= HISTORIAL DE PARTIDAS (para la pestaña de Estadísticas) ================= */
+const Historial = {
+  KEY: 'casino_historial',
+  MAX: 500,
+  lista(){ try{ return JSON.parse(localStorage.getItem(this.KEY)) || []; }catch(e){ return []; } },
+  registrar(tipo, monto, juego){
+    const lista = this.lista();
+    lista.push({ t: Date.now(), tipo, monto, juego: juego || '—', saldo: Casino.balance });
+    while(lista.length > this.MAX) lista.shift();
+    localStorage.setItem(this.KEY, JSON.stringify(lista));
+  },
+  borrar(){ localStorage.removeItem(this.KEY); }
+};
 
 document.getElementById('resetBtn').addEventListener('click', () => {
   if(confirm('¿Reiniciar tu saldo a 1000 fichas?')) Casino.reset();
@@ -382,55 +433,76 @@ document.getElementById('tabNav').addEventListener('click', (e) => {
   document.querySelectorAll('.table-surface').forEach(s => s.classList.remove('active'));
   btn.classList.add('active');
   document.getElementById(btn.dataset.target).classList.add('active');
+  Casino.jugoActual = btn.textContent.trim();
+  if(btn.dataset.target === 'estadisticas') renderEstadisticas();
 });
 
 /* ================= RED GENÉRICA PARA MODO ONLINE (PeerJS) — reutilizable por juego ================= */
 function crearRed(prefijo){
   return {
-    peer: null, conn: null, esHost: false,
+    peer: null, conn: null, esHost: false, chatHandler: null,
     codigoAleatorio(){
       const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
       let s = ''; for(let i = 0; i < 5; i++) s += chars[Math.floor(Math.random() * chars.length)];
       return s;
     },
+    _destruir(){
+      clearTimeout(this._avisoLento);
+      try{ if(this.conn) this.conn.close(); }catch(e){}
+      try{ if(this.peer && !this.peer.destroyed) this.peer.destroy(); }catch(e){}
+      this.conn = null; this.peer = null;
+    },
+    _recibir(msg, cb){
+      if(msg && msg.tipo === 'chat'){ if(this.chatHandler) this.chatHandler(msg.texto); return; }
+      cb.onDatos(msg);
+    },
     crear(cb){ // cb = {onEstado, onDatos, onCerrada}
+      this._destruir();
       this.esHost = true;
       const codigo = this.codigoAleatorio();
-      this.peer = new Peer(prefijo + '-' + codigo);
+      this._avisoLento = setTimeout(() => cb.onEstado('lento'), 9000);
+      this.peer = new Peer(prefijo + '-' + codigo, { debug: 0 });
       this.peer.on('open', () => cb.onEstado('creando', codigo));
       this.peer.on('connection', (c) => {
+        clearTimeout(this._avisoLento);
         this.conn = c;
         c.on('open', () => cb.onEstado('conectado', codigo));
-        c.on('data', cb.onDatos);
+        c.on('data', (msg) => this._recibir(msg, cb));
         c.on('close', () => cb.onCerrada && cb.onCerrada());
+        c.on('error', () => cb.onEstado('error', 'conexión'));
       });
-      this.peer.on('error', (err) => cb.onEstado('error', err.type));
+      this.peer.on('disconnected', () => { clearTimeout(this._avisoLento); cb.onEstado('perdido'); });
+      this.peer.on('error', (err) => { clearTimeout(this._avisoLento); cb.onEstado('error', err.type); });
     },
     unirse(codigo, cb){
+      this._destruir();
       this.esHost = false;
-      this.peer = new Peer();
+      this._avisoLento = setTimeout(() => cb.onEstado('lento'), 9000);
+      this.peer = new Peer({ debug: 0 });
       this.peer.on('open', () => {
         this.conn = this.peer.connect(prefijo + '-' + codigo, { reliable: true });
-        this.conn.on('open', () => cb.onEstado('conectado', codigo));
-        this.conn.on('data', cb.onDatos);
+        this.conn.on('open', () => { clearTimeout(this._avisoLento); cb.onEstado('conectado', codigo); });
+        this.conn.on('data', (msg) => this._recibir(msg, cb));
         this.conn.on('close', () => cb.onCerrada && cb.onCerrada());
+        this.conn.on('error', () => cb.onEstado('error', 'conexión'));
       });
-      this.peer.on('error', (err) => cb.onEstado('error', err.type));
+      this.peer.on('disconnected', () => { clearTimeout(this._avisoLento); cb.onEstado('perdido'); });
+      this.peer.on('error', (err) => { clearTimeout(this._avisoLento); cb.onEstado('error', err.type); });
     },
-    enviar(msg){ if(this.conn && this.conn.open) this.conn.send(msg); }
+    enviar(msg){ if(this.conn && this.conn.open) this.conn.send(msg); },
+    enviarChat(texto){ this.enviar({ tipo: 'chat', texto }); },
+    salir(){ this._destruir(); }
   };
 }
 function panelOnlineHTML(idPrefijo){
   return `
-    <div class="controls-row">
+    <div class="controls-row" id="${idPrefijo}ModoRow">
       <button class="btn secondary" id="${idPrefijo}ModoSolo">Jugar Solo</button>
       <button class="btn secondary" id="${idPrefijo}ModoOnline">Jugar Online (con un amigo)</button>
     </div>
     <div id="${idPrefijo}OnlinePanel" style="display:none;">
-      <div class="controls-row">
+      <div class="controls-row" id="${idPrefijo}SalaRow">
         <button class="btn" id="${idPrefijo}CrearSala">Crear sala</button>
-      </div>
-      <div class="controls-row">
         <div class="field">
           <label>Código de sala</label>
           <input type="text" id="${idPrefijo}CodigoInput" placeholder="ej: AB3F9" style="text-transform:uppercase;">
@@ -438,46 +510,120 @@ function panelOnlineHTML(idPrefijo){
         <button class="btn secondary" id="${idPrefijo}UnirseSala">Unirse a sala</button>
       </div>
       <div class="msg" id="${idPrefijo}OnlineMsg">Elige crear o unirte a una sala.</div>
+      <div class="controls-row" id="${idPrefijo}SalirRow" style="display:none;">
+        <button class="btn secondary" id="${idPrefijo}SalirSala">Salir de la sala</button>
+      </div>
+      <div class="chat-box" id="${idPrefijo}ChatBox" style="display:none;">
+        <div class="chat-log" id="${idPrefijo}ChatLog"></div>
+        <div class="chat-row">
+          <input type="text" id="${idPrefijo}ChatInput" maxlength="200" placeholder="Escribe un mensaje…">
+          <button class="btn secondary" id="${idPrefijo}ChatSend">Enviar</button>
+        </div>
+      </div>
     </div>
   `;
 }
-/* Engancha los botones de modo Solo/Online genéricos.
+/* Engancha los botones de modo Solo/Online genéricos, el chat de texto y la gestión de errores/reconexión.
    opciones.onOnlineListo(esHost) se llama cuando la conexión está establecida.
-   opciones.onDatos(msg) se llama cuando llega un mensaje del otro jugador. */
+   opciones.onDatos(msg) se llama cuando llega un mensaje del otro jugador (mensajes de tipo 'chat' se gestionan aquí).
+   opciones.onModoSolo() se llama al volver a modo solo. opciones.onDesconexion() (opcional) al perder la conexión. */
 function activarPanelOnline(idPrefijo, red, opciones){
-  document.getElementById(idPrefijo + 'ModoSolo').addEventListener('click', () => {
-    document.getElementById(idPrefijo + 'OnlinePanel').style.display = 'none';
+  const elModoSolo = document.getElementById(idPrefijo + 'ModoSolo');
+  const elModoOnline = document.getElementById(idPrefijo + 'ModoOnline');
+  const elPanel = document.getElementById(idPrefijo + 'OnlinePanel');
+  const elSalaRow = document.getElementById(idPrefijo + 'SalaRow');
+  const elSalirRow = document.getElementById(idPrefijo + 'SalirRow');
+  const elCrear = document.getElementById(idPrefijo + 'CrearSala');
+  const elUnirse = document.getElementById(idPrefijo + 'UnirseSala');
+  const elCodigo = document.getElementById(idPrefijo + 'CodigoInput');
+  const elMsg = document.getElementById(idPrefijo + 'OnlineMsg');
+  const elSalir = document.getElementById(idPrefijo + 'SalirSala');
+  const elChatBox = document.getElementById(idPrefijo + 'ChatBox');
+  const elChatLog = document.getElementById(idPrefijo + 'ChatLog');
+  const elChatInput = document.getElementById(idPrefijo + 'ChatInput');
+  const elChatSend = document.getElementById(idPrefijo + 'ChatSend');
+
+  function pintarChat(texto, propio){
+    const linea = document.createElement('div');
+    linea.className = 'chat-line' + (propio ? ' propio' : ' amigo');
+    const autor = document.createElement('span');
+    autor.className = 'chat-autor';
+    autor.textContent = (propio ? 'Tú' : 'Amigo') + ': ';
+    linea.appendChild(autor);
+    linea.appendChild(document.createTextNode(texto));
+    elChatLog.appendChild(linea);
+    elChatLog.scrollTop = elChatLog.scrollHeight;
+  }
+  red.chatHandler = (texto) => pintarChat(texto, false);
+  function enviarChat(){
+    const texto = elChatInput.value.trim();
+    if(!texto) return;
+    red.enviarChat(texto);
+    pintarChat(texto, true);
+    elChatInput.value = '';
+  }
+  elChatSend.addEventListener('click', enviarChat);
+  elChatInput.addEventListener('keydown', (e) => { if(e.key === 'Enter'){ e.preventDefault(); enviarChat(); } });
+
+  function resetPanel(){
+    elSalaRow.style.display = 'flex';
+    elSalirRow.style.display = 'none';
+    elChatBox.style.display = 'none';
+    elChatLog.innerHTML = '';
+    elCrear.disabled = false; elUnirse.disabled = false;
+  }
+  function conectado(esHost){
+    elSalaRow.style.display = 'none';
+    elSalirRow.style.display = 'flex';
+    elChatBox.style.display = 'block';
+    opciones.onOnlineListo(esHost);
+  }
+
+  elModoSolo.addEventListener('click', () => {
+    red.salir();
+    elPanel.style.display = 'none';
+    resetPanel();
+    elMsg.className = 'msg'; elMsg.textContent = 'Elige crear o unirte a una sala.';
     opciones.onModoSolo && opciones.onModoSolo();
   });
-  document.getElementById(idPrefijo + 'ModoOnline').addEventListener('click', () => {
-    document.getElementById(idPrefijo + 'OnlinePanel').style.display = 'block';
-  });
-  document.getElementById(idPrefijo + 'CrearSala').addEventListener('click', () => {
-    const msg = document.getElementById(idPrefijo + 'OnlineMsg');
-    msg.className = 'msg'; msg.textContent = 'Creando sala…';
+  elModoOnline.addEventListener('click', () => { elPanel.style.display = 'block'; });
+
+  elCrear.addEventListener('click', () => {
+    elCrear.disabled = true; elUnirse.disabled = true;
+    elMsg.className = 'msg'; elMsg.textContent = 'Creando sala…';
     red.crear({
       onEstado(estado, dato){
-        if(estado === 'creando') msg.innerHTML = `Sala creada. Comparte este código: <strong style="color:var(--gold-light);">${dato}</strong><br>Esperando a que se una…`;
-        else if(estado === 'conectado'){ msg.className = 'msg win'; msg.textContent = '¡Conectado! Ya podéis jugar juntos.'; opciones.onOnlineListo(true); }
-        else if(estado === 'error'){ msg.className = 'msg lose'; msg.textContent = 'Error creando la sala (' + dato + '). Prueba otra vez.'; }
+        if(estado === 'creando') elMsg.innerHTML = `Sala creada. Comparte este código: <strong style="color:var(--gold-light);">${dato}</strong><br>Esperando a que se una…`;
+        else if(estado === 'conectado'){ elMsg.className = 'msg win'; elMsg.textContent = '¡Conectado! Ya podéis jugar juntos.'; conectado(true); }
+        else if(estado === 'lento') elMsg.textContent = 'Sigue esperando… si tarda demasiado, puede que una de las dos redes bloquee las conexiones directas (probad con datos móviles o desactivando VPN).';
+        else if(estado === 'perdido'){ elMsg.className = 'msg lose'; elMsg.textContent = 'Se perdió la conexión con el servidor. Vuelve a crear la sala.'; resetPanel(); opciones.onDesconexion && opciones.onDesconexion(); }
+        else if(estado === 'error'){ elMsg.className = 'msg lose'; elMsg.textContent = 'Error creando la sala (' + dato + '). Prueba otra vez.'; elCrear.disabled = false; elUnirse.disabled = false; }
       },
       onDatos: opciones.onDatos,
-      onCerrada(){ opciones.onDesconexion && opciones.onDesconexion(); }
+      onCerrada(){ elMsg.className = 'msg lose'; elMsg.textContent = 'Tu amigo se ha desconectado.'; resetPanel(); opciones.onDesconexion && opciones.onDesconexion(); }
     });
   });
-  document.getElementById(idPrefijo + 'UnirseSala').addEventListener('click', () => {
-    const codigo = document.getElementById(idPrefijo + 'CodigoInput').value.trim().toUpperCase();
-    if(!codigo) return;
-    const msg = document.getElementById(idPrefijo + 'OnlineMsg');
-    msg.className = 'msg'; msg.textContent = 'Conectando…';
+  elUnirse.addEventListener('click', () => {
+    const codigo = elCodigo.value.trim().toUpperCase();
+    if(!codigo){ elMsg.className = 'msg lose'; elMsg.textContent = 'Escribe primero el código de la sala.'; return; }
+    elCrear.disabled = true; elUnirse.disabled = true;
+    elMsg.className = 'msg'; elMsg.textContent = 'Conectando…';
     red.unirse(codigo, {
       onEstado(estado, dato){
-        if(estado === 'conectado'){ msg.className = 'msg win'; msg.textContent = '¡Conectado! Ya podéis jugar juntos.'; opciones.onOnlineListo(false); }
-        else if(estado === 'error'){ msg.className = 'msg lose'; msg.textContent = 'Error al unirte (' + dato + '). Revisa el código.'; }
+        if(estado === 'conectado'){ elMsg.className = 'msg win'; elMsg.textContent = '¡Conectado! Ya podéis jugar juntos.'; conectado(false); }
+        else if(estado === 'lento') elMsg.textContent = 'Sigue intentando conectar… comprueba el código o probad con otra red.';
+        else if(estado === 'perdido'){ elMsg.className = 'msg lose'; elMsg.textContent = 'Se perdió la conexión con el servidor. Reintenta.'; resetPanel(); opciones.onDesconexion && opciones.onDesconexion(); }
+        else if(estado === 'error'){ elMsg.className = 'msg lose'; elMsg.textContent = 'Error al unirte (' + dato + '). Revisa el código.'; elCrear.disabled = false; elUnirse.disabled = false; }
       },
       onDatos: opciones.onDatos,
-      onCerrada(){ opciones.onDesconexion && opciones.onDesconexion(); }
+      onCerrada(){ elMsg.className = 'msg lose'; elMsg.textContent = 'Tu amigo se ha desconectado.'; resetPanel(); opciones.onDesconexion && opciones.onDesconexion(); }
     });
+  });
+  elSalir.addEventListener('click', () => {
+    red.salir();
+    resetPanel();
+    elMsg.className = 'msg'; elMsg.textContent = 'Elige crear o unirte a una sala.';
+    opciones.onDesconexion && opciones.onDesconexion();
   });
 }
 
@@ -653,7 +799,7 @@ document.getElementById('logrosCerrar').addEventListener('click', () => document
   let stops = [];
   ORDEN_RUEDA.forEach((num, i) => {
     const c = colorDe(num);
-    const hex = c === 'verde' ? '#146b3a' : (c === 'rojo' ? '#A31621' : '#141414');
+    const hex = c === 'verde' ? 'var(--roulette-green)' : (c === 'rojo' ? 'var(--red)' : 'var(--black-suit)');
     stops.push(`${hex} ${(i*ANGULO).toFixed(3)}deg ${((i+1)*ANGULO).toFixed(3)}deg`);
   });
   const conic = `conic-gradient(from -${ANGULO/2}deg, ${stops.join(',')})`;
@@ -677,14 +823,18 @@ document.getElementById('logrosCerrar').addEventListener('click', () => document
     ${crearBloqueReglas('ruleta', '¿Cómo se juega?', `
       <strong>Objetivo:</strong> adivinar en qué número o grupo caerá la bola.<br>
       <ul>
-        <li><strong>Número pleno:</strong> paga 35 a 1.</li>
+        <li><strong>Número pleno (1 número):</strong> paga 35 a 1.</li>
+        <li><strong>Caballo (2 números, "split"):</strong> paga 17 a 1. En una ruleta real se hace apostando sobre la línea que separa dos números vecinos.</li>
+        <li><strong>Cuadro (4 números, "corner"):</strong> paga 8 a 1. En una ruleta real se hace apostando sobre el cruce donde se tocan 4 números.</li>
         <li><strong>Docena o columna (2 a 1):</strong> paga 2 a 1.</li>
         <li><strong>Rojo/Negro, Par/Impar, 1–18/19–36:</strong> pagan 1 a 1.</li>
         <li>El <strong>0</strong> no cuenta como par, impar, rojo, negro, alto ni bajo.</li>
       </ul>
-      Elige una ficha, colócala en la mesa (puedes repartir varias apuestas a la vez) y pulsa Girar.
+      Elige una ficha y el tipo de apuesta (Pleno, Caballo o Cuadro) arriba de la mesa. En Pleno, cada clic coloca la ficha directamente.
+      En Caballo, haz clic en dos números que estén pegados en la mesa real (misma fila o columna vecina); en Cuadro, haz clic en cuatro números que formen un cuadrado.
+      Si los números elegidos no son vecinos reales, la apuesta no es válida y se te avisa para que lo intentes de nuevo.
       La ficha <strong>TODO</strong> apuesta de golpe todo tu saldo actual en la casilla que pulses.
-      En modo Online, solo quien creó la sala gira la rueda — el resultado se comparte automáticamente con el otro jugador.
+      En modo Online, cualquiera de los dos jugadores puede girar la rueda — el resultado se comparte automáticamente con el otro jugador.
     `)}
     ${panelOnlineHTML('rl')}
     <div class="rl-wrap">
@@ -706,6 +856,11 @@ document.getElementById('logrosCerrar').addEventListener('click', () => document
           <div class="chip-select chip-100" data-chip="100">100</div>
           <div class="chip-select chip-todo" data-chip="todo">TODO</div>
           <span class="rl-total" id="rlTotalApostado">Apostado: 0</span>
+        </div>
+        <div class="rl-modo-apuesta" id="rlModoApuesta">
+          <button class="modo-apuesta-btn active" data-modo="pleno" type="button">Pleno · 1 número · 35 a 1</button>
+          <button class="modo-apuesta-btn" data-modo="caballo" type="button">Caballo · 2 números · 17 a 1</button>
+          <button class="modo-apuesta-btn" data-modo="cuadro" type="button">Cuadro · 4 números · 8 a 1</button>
         </div>
         <div class="rl-table" id="rlTable">
           <div class="rl-cell zero" data-target="num-0">0</div>
@@ -743,10 +898,10 @@ document.getElementById('logrosCerrar').addEventListener('click', () => document
     onModoSolo(){ modoRL = 'solo'; document.getElementById('rlGirar').style.display = 'inline-block'; },
     onOnlineListo(esHost){
       modoRL = 'online'; esHostRL = esHost;
-      document.getElementById('rlGirar').style.display = esHost ? 'inline-block' : 'none';
+      document.getElementById('rlGirar').style.display = 'inline-block';
       const msg = document.getElementById('rlMsg');
       msg.className = 'msg';
-      msg.textContent = esHost ? 'Coloca tus apuestas y gira cuando quieras. Tu amigo verá el mismo resultado.' : 'Coloca tus apuestas. Solo el host puede girar la rueda — el resultado se compartirá automáticamente.';
+      msg.textContent = 'Coloca tus apuestas y gira cuando quieras — cualquiera de los dos puede girar la rueda y el resultado se comparte automáticamente.';
     },
     onDatos(msg){ if(msg.tipo === 'numero') ejecutarGiro(msg.numero); },
     onDesconexion(){ document.getElementById('rlMsg').textContent = 'Tu amigo se ha desconectado.'; }
@@ -760,6 +915,80 @@ document.getElementById('logrosCerrar').addEventListener('click', () => document
       else { modoTodoRL = false; chipVal = parseInt(el.dataset.chip); }
     });
   });
+
+  // ---- modo de apuesta: pleno (1 número), caballo (2 números vecinos), cuadro (4 números en escuadra) ----
+  let modoApuestaRL = 'pleno';
+  let seleccionMultiple = [];
+  function limpiarSeleccionMultiple(){
+    seleccionMultiple.forEach(nn => {
+      const c = document.querySelector(`#rlTable .rl-cell[data-target="num-${nn}"]`);
+      if(c) c.classList.remove('seleccionado-multi');
+    });
+    seleccionMultiple = [];
+  }
+  document.getElementById('rlModoApuesta').addEventListener('click', (e) => {
+    const btn = e.target.closest('.modo-apuesta-btn');
+    if(!btn) return;
+    document.querySelectorAll('#rlModoApuesta .modo-apuesta-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    modoApuestaRL = btn.dataset.modo;
+    limpiarSeleccionMultiple();
+    const msg = document.getElementById('rlMsg');
+    msg.className = 'msg';
+    msg.textContent = modoApuestaRL === 'pleno' ? 'Haz clic en un número, docena, columna o color para apostar.'
+      : modoApuestaRL === 'caballo' ? 'Haz clic en dos números que estén pegados en la mesa real (misma fila o columna vecina).'
+      : 'Haz clic en cuatro números que formen un cuadrado en la mesa real.';
+  });
+
+  // posición lógica (columna 1–12, fila 1=arriba/3=abajo) de cada número en la mesa real
+  function posicionNumero(n){
+    const c = Math.ceil(n / 3);
+    const rem = n % 3;
+    const r = rem === 1 ? 3 : (rem === 2 ? 2 : 1);
+    return { c, r };
+  }
+  function sonAdyacentesSplit(a, b){
+    if(a === 0 || b === 0){ const otro = a === 0 ? b : a; return otro === 1 || otro === 2 || otro === 3; }
+    const pa = posicionNumero(a), pb = posicionNumero(b);
+    if(pa.c === pb.c && Math.abs(pa.r - pb.r) === 1) return true;
+    if(pa.r === pb.r && Math.abs(pa.c - pb.c) === 1) return true;
+    return false;
+  }
+  function esCuadroValido(nums){
+    if(nums.some(n => n === 0)) return false;
+    const pos = nums.map(n => posicionNumero(n));
+    const cs = [...new Set(pos.map(p => p.c))], rs = [...new Set(pos.map(p => p.r))];
+    if(cs.length !== 2 || rs.length !== 2) return false;
+    if(Math.abs(cs[0] - cs[1]) !== 1 || Math.abs(rs[0] - rs[1]) !== 1) return false;
+    for(const c of cs) for(const r of rs){
+      const num = r === 1 ? 3*c : (r === 2 ? 3*c - 1 : 3*c - 2);
+      if(!nums.includes(num)) return false;
+    }
+    return true;
+  }
+  function manejarSeleccionMultiple(cell, target){
+    const msg = document.getElementById('rlMsg');
+    const n = parseInt(target.split('-')[1]);
+    const necesarios = modoApuestaRL === 'caballo' ? 2 : 4;
+    const idx = seleccionMultiple.indexOf(n);
+    if(idx >= 0){ seleccionMultiple.splice(idx, 1); cell.classList.remove('seleccionado-multi'); return; }
+    seleccionMultiple.push(n);
+    cell.classList.add('seleccionado-multi');
+    if(seleccionMultiple.length < necesarios) return;
+
+    const nums = [...seleccionMultiple].sort((a, b) => a - b);
+    const valido = modoApuestaRL === 'caballo' ? sonAdyacentesSplit(nums[0], nums[1]) : esCuadroValido(nums);
+    if(valido){
+      const clave = (modoApuestaRL === 'caballo' ? 'split-' : 'corner-') + nums.join('-');
+      colocarApuesta(clave, msg);
+    } else {
+      msg.className = 'msg lose';
+      msg.textContent = modoApuestaRL === 'caballo'
+        ? 'Esos dos números no están pegados en la mesa real. Elige dos números vecinos (misma fila o misma columna).'
+        : 'Esos cuatro números no forman un cuadrado en la mesa real. Elige 4 números que se toquen en escuadra.';
+    }
+    limpiarSeleccionMultiple();
+  }
 
   function actualizarTotal(){
     const total = Object.values(apuestas).reduce((a,b) => a+b, 0);
@@ -777,14 +1006,23 @@ document.getElementById('logrosCerrar').addEventListener('click', () => document
         cell.appendChild(m);
       }
     });
+    Object.keys(apuestas).forEach(t => {
+      if(t.startsWith('split-') || t.startsWith('corner-')){
+        t.split('-').slice(1).forEach(n => {
+          const cell = document.querySelector(`#rlTable .rl-cell[data-target="num-${n}"]`);
+          if(cell){
+            const m = document.createElement('div');
+            m.className = 'chip-marker chip-marker-multi';
+            m.textContent = apuestas[t];
+            cell.appendChild(m);
+          }
+        });
+      }
+    });
   }
 
-  document.getElementById('rlTable').addEventListener('click', (e) => {
-    const cell = e.target.closest('.rl-cell');
-    if(!cell) return;
-    const target = cell.dataset.target;
+  function colocarApuesta(target, msg){
     const monto = modoTodoRL ? Casino.balance : chipVal;
-    const msg = document.getElementById('rlMsg');
     if(monto <= 0){
       msg.className='msg lose'; msg.textContent='No tienes fichas para apostar.';
       return;
@@ -807,12 +1045,25 @@ document.getElementById('logrosCerrar').addEventListener('click', () => document
       document.querySelector('.chip-select.chip-1').classList.add('active');
       chipVal = 1;
     }
+  }
+
+  document.getElementById('rlTable').addEventListener('click', (e) => {
+    const cell = e.target.closest('.rl-cell');
+    if(!cell) return;
+    const target = cell.dataset.target;
+    const msg = document.getElementById('rlMsg');
+    if(modoApuestaRL !== 'pleno' && target.startsWith('num-')){
+      manejarSeleccionMultiple(cell, target);
+      return;
+    }
+    colocarApuesta(target, msg);
   });
 
   document.getElementById('rlBorrar').addEventListener('click', () => {
     const total = Object.values(apuestas).reduce((a,b) => a+b, 0);
     if(total > 0) Casino.pay(total); // devolver fichas
     apuestas = {};
+    limpiarSeleccionMultiple();
     renderMarcadores();
     actualizarTotal();
   });
@@ -882,6 +1133,12 @@ document.getElementById('logrosCerrar').addEventListener('click', () => document
         if(target.startsWith('num-')){
           const n = parseInt(target.split('-')[1]);
           if(n === numero){ ganaEsta = true; multiplo = 36; }
+        } else if(target.startsWith('split-')){
+          const nums = target.split('-').slice(1).map(Number);
+          if(nums.includes(numero)){ ganaEsta = true; multiplo = 18; }
+        } else if(target.startsWith('corner-')){
+          const nums = target.split('-').slice(1).map(Number);
+          if(nums.includes(numero)){ ganaEsta = true; multiplo = 9; }
         } else if(target === 'row_top' && numero !== 0 && numero % 3 === 0){ ganaEsta = true; multiplo = 3; }
         else if(target === 'row_mid' && numero !== 0 && numero % 3 === 2){ ganaEsta = true; multiplo = 3; }
         else if(target === 'row_bot' && numero !== 0 && numero % 3 === 1){ ganaEsta = true; multiplo = 3; }
@@ -978,8 +1235,8 @@ function cartaHTML(c, oculta=false){
     onModoSolo(){ modoSL = 'solo'; document.getElementById('slGirar').style.display = 'inline-block'; },
     onOnlineListo(esHost){
       modoSL = 'online'; esHostSL = esHost;
-      document.getElementById('slGirar').style.display = esHost ? 'inline-block' : 'none';
-      document.getElementById('slMsg').textContent = esHost ? 'Haz tu apuesta y gira cuando quieras.' : 'Haz tu apuesta. Solo el host gira los rodillos — veréis el mismo resultado.';
+      document.getElementById('slGirar').style.display = 'inline-block';
+      document.getElementById('slMsg').textContent = 'Haz tu apuesta y gira cuando quieras — cualquiera de los dos puede girar y veréis el mismo resultado.';
     },
     onDatos(msg){ if(msg.tipo === 'slots') ejecutarGiroSL(msg.resultado); },
     onDesconexion(){ document.getElementById('slMsg').textContent = 'Tu amigo se ha desconectado.'; }
@@ -1359,8 +1616,8 @@ function cartaHTML(c, oculta=false){
     onModoSolo(){ modoCR = 'solo'; document.getElementById('crCorrer').style.display = 'inline-block'; },
     onOnlineListo(esHost){
       modoCR = 'online'; esHostCR = esHost;
-      document.getElementById('crCorrer').style.display = esHost ? 'inline-block' : 'none';
-      document.getElementById('crMsg').textContent = esHost ? 'Elige tu caballo y lanza la carrera cuando quieras.' : 'Elige tu caballo. Solo el host lanza la carrera — veréis el mismo ganador.';
+      document.getElementById('crCorrer').style.display = 'inline-block';
+      document.getElementById('crMsg').textContent = 'Elige tu caballo y lanza la carrera cuando quieras — cualquiera de los dos puede lanzarla y veréis el mismo ganador.';
     },
     onDatos(msg){ if(msg.tipo === 'carrera') ejecutarCarrera(msg.ganador); },
     onDesconexion(){ document.getElementById('crMsg').textContent = 'Tu amigo se ha desconectado.'; }
@@ -1405,14 +1662,14 @@ function cartaHTML(c, oculta=false){
 
   function simularGanador(){
     const posiciones = CABALLOS.map(() => 0);
-    let ganador = -1;
-    while(ganador === -1){
-      for(let i = 0; i < CABALLOS.length; i++){
-        posiciones[i] += Math.random() * 4 * CABALLOS[i].vel;
-        if(posiciones[i] >= 96 && ganador === -1) ganador = i;
+    while(true){
+      for(let i = 0; i < CABALLOS.length; i++) posiciones[i] += Math.random() * 4 * CABALLOS[i].vel;
+      const cruzaron = posiciones.map((p, i) => ({ i, p })).filter(o => o.p >= 96);
+      if(cruzaron.length > 0){
+        cruzaron.sort((a, b) => b.p - a.p); // si varios cruzan a la vez, gana quien vaya más avanzado, no el de menor índice
+        return cruzaron[0].i;
       }
     }
-    return ganador;
   }
 
   document.getElementById('crCorrer').addEventListener('click', () => {
@@ -2346,6 +2603,7 @@ function mejorMano(cartas){
         <li>Con 8 o 9 en las 2 primeras cartas ("natural") no se reparten más cartas.</li>
         <li>Si no hay natural, se aplican las reglas estándar de la tercera carta (automáticas).</li>
         <li><strong>Apuesta a Jugador:</strong> paga 1 a 1. <strong>Apuesta a Banca:</strong> paga 1 a 1 menos 5% de comisión. <strong>Empate:</strong> paga 8 a 1.</li>
+        <li>Si sale <strong>empate</strong> y habías apostado a Jugador o Banca, tu apuesta queda en tablas: se te devuelve, no la pierdes (regla estándar del bacará real).</li>
       </ul>
     `)}
     ${panelOnlineHTML('bc')}
@@ -2378,8 +2636,8 @@ function mejorMano(cartas){
     onModoSolo(){ modoBC = 'solo'; document.getElementById('bcRepartir').style.display = 'inline-block'; },
     onOnlineListo(esHost){
       modoBC = 'online'; esHostBC = esHost;
-      document.getElementById('bcRepartir').style.display = esHost ? 'inline-block' : 'none';
-      document.getElementById('bcMsg').textContent = esHost ? 'Elige tu apuesta y reparte cuando quieras.' : 'Elige tu apuesta. Solo el host reparte — veréis las mismas cartas.';
+      document.getElementById('bcRepartir').style.display = 'inline-block';
+      document.getElementById('bcMsg').textContent = 'Elige tu apuesta y reparte cuando quieras — cualquiera de los dos puede repartir y veréis las mismas cartas.';
     },
     onDatos(msg){ if(msg.tipo === 'bacara') ejecutarRepartoBC(msg.jugador, msg.banca); },
     onDesconexion(){ document.getElementById('bcMsg').textContent = 'Tu amigo se ha desconectado.'; }
@@ -2444,10 +2702,14 @@ function mejorMano(cartas){
       if(tipo === 'jugador'){ pago = apuesta * 2; texto = `Gana Jugador (${pJ} contra ${pB}). Cobras ${pago} fichas.`; }
       else if(tipo === 'banca'){ pago = Math.floor(apuesta * 1.95); texto = `Gana Banca (${pB} contra ${pJ}). Cobras ${pago} fichas (comisión 5% incluida).`; }
       else { pago = apuesta * 9; texto = `¡Empate (${pJ} a ${pB})! Cobras ${pago} fichas.`; }
+    } else if(resultado === 'empate'){
+      // Regla estándar de bacará: si sale empate y habías apostado a Jugador o Banca, tu apuesta queda en tablas (se devuelve, no se pierde).
+      pago = apuesta;
+      texto = `Empate (${pJ} a ${pB}). Tu apuesta a ${tipo === 'jugador' ? 'Jugador' : 'Banca'} queda en tablas: recuperas tus ${pago} fichas.`;
     } else {
-      texto = `Resultado: Jugador ${pJ} — Banca ${pB}. Gana ${resultado === 'empate' ? 'el Empate' : resultado === 'jugador' ? 'Jugador' : 'Banca'}. Pierdes tu apuesta.`;
+      texto = `Resultado: Jugador ${pJ} — Banca ${pB}. Gana ${resultado === 'jugador' ? 'Jugador' : 'Banca'}. Pierdes tu apuesta.`;
     }
-    if(pago > 0){ Casino.pay(pago); msg.className = 'msg win'; Sonido.win(); }
+    if(pago > 0){ Casino.pay(pago); msg.className = pago > apuesta ? 'msg win' : 'msg'; if(pago > apuesta) Sonido.win(); }
     else { msg.className = 'msg lose'; Sonido.lose(); }
     Logros.comprobarBalance();
     msg.textContent = texto;
@@ -2503,8 +2765,8 @@ function mejorMano(cartas){
     onModoSolo(){ modoDC = 'solo'; document.getElementById('dcLanzar').style.display = 'inline-block'; },
     onOnlineListo(esHost){
       modoDC = 'online'; esHostDC = esHost;
-      document.getElementById('dcLanzar').style.display = esHost ? 'inline-block' : 'none';
-      document.getElementById('dcMsg').textContent = esHost ? 'Haz tu apuesta y lanza cuando quieras.' : 'Haz tu apuesta. Solo el host lanza los dados — veréis el mismo resultado.';
+      document.getElementById('dcLanzar').style.display = 'inline-block';
+      document.getElementById('dcMsg').textContent = 'Haz tu apuesta y lanza cuando quieras — cualquiera de los dos puede lanzar y veréis el mismo resultado.';
     },
     onDatos(msg){ if(msg.tipo === 'dados') ejecutarLanzamiento(msg.resultado); },
     onDesconexion(){ document.getElementById('dcMsg').textContent = 'Tu amigo se ha desconectado.'; }
@@ -2874,8 +3136,8 @@ function mejorMano(cartas){
     onModoSolo(){ modoKN = 'solo'; document.getElementById('knJugar').style.display = 'inline-block'; },
     onOnlineListo(esHost){
       modoKN = 'online'; esHostKN = esHost;
-      document.getElementById('knJugar').style.display = esHost ? 'inline-block' : 'none';
-      document.getElementById('knMsg').textContent = esHost ? 'Elige tus números y pulsa Jugar cuando quieras.' : 'Elige tus números. Solo el host sortea las bolas — veréis el mismo sorteo.';
+      document.getElementById('knJugar').style.display = 'inline-block';
+      document.getElementById('knMsg').textContent = 'Elige tus números y pulsa Jugar cuando quieras — cualquiera de los dos puede sortear y veréis el mismo sorteo.';
     },
     onDatos(msg){ if(msg.tipo === 'keno') ejecutarSorteo(msg.sorteados); },
     onDesconexion(){ document.getElementById('knMsg').textContent = 'Tu amigo se ha desconectado.'; }
@@ -3010,8 +3272,8 @@ function mejorMano(cartas){
     onModoSolo(){ modoRD = 'solo'; document.getElementById('rdGirar').style.display = 'inline-block'; },
     onOnlineListo(esHost){
       modoRD = 'online'; esHostRD = esHost;
-      document.getElementById('rdGirar').style.display = esHost ? 'inline-block' : 'none';
-      document.getElementById('rdMsg').textContent = esHost ? 'Elige tu multiplicador y gira cuando quieras.' : 'Elige tu multiplicador. Solo el host gira la rueda — veréis el mismo resultado.';
+      document.getElementById('rdGirar').style.display = 'inline-block';
+      document.getElementById('rdMsg').textContent = 'Elige tu multiplicador y gira cuando quieras — cualquiera de los dos puede girar y veréis el mismo resultado.';
     },
     onDatos(msg){ if(msg.tipo === 'rueda') ejecutarGiroRueda(msg.valor); },
     onDesconexion(){ document.getElementById('rdMsg').textContent = 'Tu amigo se ha desconectado.'; }
@@ -3201,6 +3463,86 @@ function mejorMano(cartas){
     if(modoVP === 'online') redVP.enviar({ tipo:'resultado', texto: msg.textContent, clase: msg.className.replace('msg','').trim() });
   }
 })();
+
+/* ================= HISTORIAL Y ESTADÍSTICAS ================= */
+function renderEstadisticas(){
+  const root = document.getElementById('estadisticasRoot');
+  if(!root) return;
+  const lista = Historial.lista();
+  let totalApostado = 0, totalGanado = 0;
+  const porJuego = {};
+  lista.forEach(ev => {
+    if(!porJuego[ev.juego]) porJuego[ev.juego] = { apostado: 0, ganado: 0, jugadas: 0 };
+    if(ev.tipo === 'apuesta'){ totalApostado += ev.monto; porJuego[ev.juego].apostado += ev.monto; porJuego[ev.juego].jugadas++; }
+    else { totalGanado += ev.monto; porJuego[ev.juego].ganado += ev.monto; }
+  });
+  const neto = totalGanado - totalApostado;
+  const favoritoEntry = Object.entries(porJuego).sort((a, b) => b[1].jugadas - a[1].jugadas)[0];
+  const favorito = favoritoEntry ? favoritoEntry[0] : '—';
+  const mayorPremio = lista.filter(e => e.tipo === 'pago').reduce((m, e) => Math.max(m, e.monto), 0);
+
+  const filasJuego = Object.entries(porJuego)
+    .sort((a, b) => (b[1].ganado - b[1].apostado) - (a[1].ganado - a[1].apostado))
+    .map(([juego, d]) => {
+      const n = d.ganado - d.apostado;
+      return `<tr>
+        <td>${juego}</td>
+        <td>${d.jugadas}</td>
+        <td>${d.apostado.toLocaleString('es-ES')}</td>
+        <td>${d.ganado.toLocaleString('es-ES')}</td>
+        <td class="${n >= 0 ? 'stat-pos' : 'stat-neg'}">${n >= 0 ? '+' : ''}${n.toLocaleString('es-ES')}</td>
+      </tr>`;
+    }).join('') || `<tr><td colspan="5" style="text-align:center;color:var(--text-dim);">Aún no hay partidas registradas.</td></tr>`;
+
+  const filasHist = lista.slice().reverse().slice(0, 60).map(ev => {
+    const hora = new Date(ev.t).toLocaleString('es-ES', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' });
+    const esApuesta = ev.tipo === 'apuesta';
+    return `<tr>
+      <td>${hora}</td>
+      <td>${ev.juego}</td>
+      <td class="${esApuesta ? 'stat-neg' : 'stat-pos'}">${esApuesta ? '−' : '+'}${ev.monto.toLocaleString('es-ES')}</td>
+      <td>${ev.saldo.toLocaleString('es-ES')}</td>
+    </tr>`;
+  }).join('') || `<tr><td colspan="4" style="text-align:center;color:var(--text-dim);">Sin movimientos todavía. ¡Juega en alguna mesa!</td></tr>`;
+
+  root.innerHTML = `
+    <div class="stat-grid">
+      <div class="stat-card"><span class="stat-label">Saldo actual</span><span class="stat-value">${Casino.balance.toLocaleString('es-ES')}</span></div>
+      <div class="stat-card"><span class="stat-label">Total apostado</span><span class="stat-value">${totalApostado.toLocaleString('es-ES')}</span></div>
+      <div class="stat-card"><span class="stat-label">Total ganado</span><span class="stat-value">${totalGanado.toLocaleString('es-ES')}</span></div>
+      <div class="stat-card"><span class="stat-label">Balance neto</span><span class="stat-value ${neto >= 0 ? 'stat-pos' : 'stat-neg'}">${neto >= 0 ? '+' : ''}${neto.toLocaleString('es-ES')}</span></div>
+      <div class="stat-card"><span class="stat-label">Jugadas totales</span><span class="stat-value">${lista.filter(e => e.tipo === 'apuesta').length}</span></div>
+      <div class="stat-card"><span class="stat-label">Mesa favorita</span><span class="stat-value" style="font-size:1.1rem;">${favorito}</span></div>
+      <div class="stat-card"><span class="stat-label">Mayor premio</span><span class="stat-value">${mayorPremio.toLocaleString('es-ES')}</span></div>
+    </div>
+
+    <h3 class="stat-subtitle">Por mesa</h3>
+    <div class="stat-table-wrap">
+      <table class="stat-table">
+        <thead><tr><th>Mesa</th><th>Jugadas</th><th>Apostado</th><th>Ganado</th><th>Neto</th></tr></thead>
+        <tbody>${filasJuego}</tbody>
+      </table>
+    </div>
+
+    <div class="controls-row" style="justify-content:space-between; align-items:center;">
+      <h3 class="stat-subtitle" style="margin:22px 0 0;">Últimos movimientos</h3>
+      <button class="btn secondary" id="estBorrar">Borrar historial</button>
+    </div>
+    <div class="stat-table-wrap">
+      <table class="stat-table">
+        <thead><tr><th>Fecha</th><th>Mesa</th><th>Monto</th><th>Saldo</th></tr></thead>
+        <tbody>${filasHist}</tbody>
+      </table>
+    </div>
+  `;
+  const btnBorrar = document.getElementById('estBorrar');
+  if(btnBorrar) btnBorrar.addEventListener('click', () => {
+    if(confirm('¿Borrar todo tu historial de partidas? Esta acción no se puede deshacer.')){
+      Historial.borrar();
+      renderEstadisticas();
+    }
+  });
+}
 </script>
 <style>
   .carta{
@@ -3299,9 +3641,9 @@ function mejorMano(cartas){
     transition:filter .1s;
   }
   .rl-cell:hover{filter:brightness(1.25);}
-  .rl-cell.zero{background:#146b3a; grid-row:1 / span 3; grid-column:1; font-size:.9rem;}
+  .rl-cell.zero{background:var(--roulette-green); grid-row:1 / span 3; grid-column:1; font-size:.9rem;}
   .rl-cell.rojo{background:var(--red);}
-  .rl-cell.negro{background:#141414;}
+  .rl-cell.negro{background:var(--black-suit);}
   .rl-cell.outside{font-size:.62rem; background:#0d2a1c; color:var(--text-dim); grid-column:span 2;}
   .rl-cell.twoone{font-size:.6rem; background:#0d2a1c; color:var(--text-dim);}
   .rl-cell.dozen{font-size:.62rem; background:#0d2a1c; grid-column:span 4;}
@@ -3313,6 +3655,19 @@ function mejorMano(cartas){
     box-shadow:0 2px 4px rgba(0,0,0,.5);
   }
   .rl-total{font-size:.85rem; color:var(--text-dim);}
+  .rl-modo-apuesta{display:flex; gap:8px; flex-wrap:wrap; margin:0 0 12px;}
+  .modo-apuesta-btn{
+    font-family:'Inter',sans-serif; font-size:.72rem; font-weight:600;
+    padding:7px 12px; border-radius:20px; border:1px solid var(--border);
+    background:var(--panel); color:var(--text-dim); cursor:pointer; transition:all .15s;
+  }
+  .modo-apuesta-btn:hover{border-color:var(--gold-light);}
+  .modo-apuesta-btn.active{background:var(--gold-light); color:#1a1400; border-color:var(--gold-light); font-weight:800;}
+  .rl-cell.seleccionado-multi{outline:3px solid var(--gold-light); outline-offset:-3px; filter:brightness(1.3);}
+  .chip-marker.chip-marker-multi{
+    bottom:auto; right:auto; top:-6px; left:-6px;
+    background:var(--gold-light); border-color:#1a1400;
+  }
 
   /* ---- Carreras: selector de caballos ---- */
   .horse-cards{display:flex; gap:10px; flex-wrap:wrap; margin:14px 0;}
