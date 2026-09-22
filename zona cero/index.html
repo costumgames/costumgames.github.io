@@ -131,6 +131,11 @@
   <div class="screen" id="menu">
     <h1 class="title">ZONA <span>CERO</span></h1>
     <div class="subtitle">BATTLE ROYALE 2D — PROTOTIPO</div>
+    <div style="display:flex;gap:20px;justify-content:center;flex-wrap:wrap;margin:2px 0 16px;font-size:0.8rem;color:#cbb8e0;">
+      <span>🏆 <b id="statWins">0</b> victorias</span>
+      <span>💀 <b id="statTotalKills">0</b> bajas totales</span>
+      <span>🎮 <b id="statGamesPlayed">0</b> partidas jugadas</span>
+    </div>
     <div class="menu-col">
       <button class="btn primary" id="btnBR">
         <span class="tag">20 JUGADORES</span>
@@ -185,6 +190,15 @@
           <input type="range" id="botFillSlider" min="0" max="19" step="1" value="0">
           <p style="font-size:0.72rem;color:#8a7c9e;margin:6px 0 0;">0 = solo jugaréis las personas que se unan (ideal para 3-4 amigos). Súbelo para llenar el resto de plazas con bots.</p>
         </div>
+        <div class="setting-row hidden" id="teamSizeRow" style="text-align:left;">
+          <label>Modo de equipo</label>
+          <div class="menu-col" style="gap:8px;">
+            <button class="btn" id="btnTeamSolo" data-team="1"><b>Solo</b><small>Todos contra todos</small></button>
+            <button class="btn" id="btnTeamDuo" data-team="2"><b>Dúo</b><small>Parejas — sin fuego amigo entre compañeros</small></button>
+            <button class="btn" id="btnTeamSquad" data-team="4"><b>Escuadra</b><small>Grupos de 4 — sin fuego amigo entre compañeros</small></button>
+          </div>
+          <p style="font-size:0.72rem;color:#8a7c9e;margin:6px 0 0;">Los equipos se forman automáticamente según el orden en que os conectéis a la sala.</p>
+        </div>
         <div id="onlineStatus" style="min-height:20px;font-size:0.8rem;color:#a897bd;margin:10px 0 14px;"></div>
         <div class="menu-col" style="margin:0 auto;width:min(320px,80vw);">
           <button class="btn primary" id="btnCreateGo"><b>Crear y jugar</b></button>
@@ -216,6 +230,11 @@
         <input type="range" id="sensSlider" min="0.4" max="2.6" step="0.1" value="1.0">
       </div>
       <div class="setting-row">
+        <label>Volumen: <span id="soundValue">60%</span></label>
+        <input type="range" id="soundSlider" min="0" max="100" step="5" value="60">
+        <button class="btn" id="btnMuteToggle" style="margin-top:8px;padding:8px 14px;font-size:0.85rem;"><b id="btnMuteLabel">🔊 Sonido activado</b></button>
+      </div>
+      <div class="setting-row">
         <label>Teclas (pulsa el botón y luego la tecla que quieras usar)</label>
         <div id="keybindList"></div>
       </div>
@@ -242,7 +261,7 @@
         El resto de la partida sigue. ¿Qué quieres hacer?
       </p>
       <div class="menu-col" style="margin:0 auto;width:min(320px,80vw);">
-        <button class="btn primary" id="btnSpectate"><b>👁 Seguir viendo la partida</b></button>
+        <button class="btn primary" id="btnSpectate"><b>👁 Cámara de muerte (ver a quien te eliminó)</b></button>
         <button class="btn" id="btnDeathAgain"><b>Jugar otra vez</b></button>
         <button class="btn" id="btnDeathMenu"><b>Menú principal</b></button>
       </div>
@@ -250,7 +269,7 @@
   </div>
 
   <div class="hud-panel hidden" id="spectateBanner" style="position:absolute;top:70px;left:50%;transform:translateX(-50%);z-index:12;text-align:center;">
-    👁 Modo espectador<br>
+    👁 <span id="spectateTargetName">Modo espectador</span><br>
     <button class="btn primary" id="btnStopSpectate" style="margin-top:8px;padding:8px 14px;font-size:0.85rem;"><b>Ver resultado</b></button>
   </div>
 
@@ -350,7 +369,7 @@ function currentWorldWidth(){
 const STORM_DURATION = 70, STORM_DURATION_1V1 = 46;
 
 const WEAPONS = {
-  pickaxe: {name:'Pico',      dmg:16, fireDelay:20, infinite:true, melee:true, range:74, color:'#cfd6dc'},
+  pickaxe: {name:'Pico',      dmg:16, dmgPlayer:7, fireDelay:20, infinite:true, melee:true, range:74, color:'#cfd6dc'},
   pistol:  {name:'Pistola',   dmg:9,  fireDelay:22, speed:14, infinite:true,  pellets:1, spread:0.02, color:'#f2ead9'},
   smg:     {name:'SMG',       dmg:6,  fireDelay:7,  speed:16, ammo:90,  pellets:1, spread:0.06, color:'#3ce7ff'},
   shotgun: {name:'Escopeta',  dmg:7,  fireDelay:34, speed:13, ammo:24,  pellets:6, spread:0.28, color:'#ff5a3c'},
@@ -449,6 +468,7 @@ const SETTINGS_KEY = 'zonacero_settings_v2';
 function defaultSettings(){
   return {
     sensitivity: 1.0,
+    sound: { muted:false, volume:0.6 },
     keys: { moveLeft:'KeyA', moveRight:'KeyD', jump:'Space', interact:'KeyE', editPiece:'KeyR',
             weaponPickaxe:'KeyQ', weaponPistol:'Digit1', weaponSmg:'Digit2', weaponShotgun:'Digit3', weaponRifle:'Digit4',
             buildWall:'Digit5', buildFloor:'Digit6', buildStairs:'Digit7', buildRoof:'Digit8' }
@@ -461,6 +481,8 @@ function loadSettings(){
       const parsed = JSON.parse(raw);
       const d = defaultSettings();
       return { sensitivity: (typeof parsed.sensitivity==='number')?parsed.sensitivity:d.sensitivity,
+               sound: { muted: !!(parsed.sound&&parsed.sound.muted),
+                         volume: (parsed.sound&&typeof parsed.sound.volume==='number')?parsed.sound.volume:d.sound.volume },
                keys: Object.assign({}, d.keys, parsed.keys||{}) };
     }
   }catch(err){ console.warn('No se pudieron cargar los ajustes guardados', err); }
@@ -471,6 +493,131 @@ function saveSettings(){
 }
 let settings = loadSettings();
 let rebindingAction = null;
+
+// ---------- STATS (progresión persistente) ----------
+const STATS_KEY = 'zonacero_stats_v1';
+function defaultStats(){ return { wins:0, kills:0, gamesPlayed:0 }; }
+function loadStats(){
+  try{
+    const raw = localStorage.getItem(STATS_KEY);
+    if(raw){
+      const parsed = JSON.parse(raw);
+      const d = defaultStats();
+      return {
+        wins: (typeof parsed.wins==='number')?parsed.wins:d.wins,
+        kills: (typeof parsed.kills==='number')?parsed.kills:d.kills,
+        gamesPlayed: (typeof parsed.gamesPlayed==='number')?parsed.gamesPlayed:d.gamesPlayed
+      };
+    }
+  }catch(err){ console.warn('No se pudieron cargar las estadísticas', err); }
+  return defaultStats();
+}
+function saveStats(){
+  try{ localStorage.setItem(STATS_KEY, JSON.stringify(stats)); }catch(err){ console.warn('No se pudieron guardar las estadísticas', err); }
+}
+let stats = loadStats();
+function addStats(delta){
+  stats.wins += delta.wins||0;
+  stats.kills += delta.kills||0;
+  stats.gamesPlayed += delta.gamesPlayed||0;
+  saveStats();
+  renderStatsPanel();
+}
+function renderStatsPanel(){
+  const w = document.getElementById('statWins');
+  const k = document.getElementById('statTotalKills');
+  const g = document.getElementById('statGamesPlayed');
+  if(w) w.textContent = stats.wins;
+  if(k) k.textContent = stats.kills;
+  if(g) g.textContent = stats.gamesPlayed;
+}
+
+// ---------- SOUND (sintetizado con Web Audio, sin archivos externos) ----------
+const SFX = (function(){
+  let ctx = null;
+  let muted = false;
+  let volume = 0.6;
+  function ensureCtx(){
+    if(!ctx){
+      try{ ctx = new (window.AudioContext||window.webkitAudioContext)(); }catch(err){ ctx = null; }
+    }
+    if(ctx && ctx.state==='suspended'){ ctx.resume().catch(()=>{}); }
+    return ctx;
+  }
+  function beep({freq=440, dur=0.08, type='sine', vol=1, freqEnd=null, delay=0}){
+    if(muted || volume<=0) return;
+    const ac = ensureCtx();
+    if(!ac) return;
+    const t0 = ac.currentTime + delay;
+    const osc = ac.createOscillator();
+    const gain = ac.createGain();
+    osc.type = type;
+    osc.frequency.setValueAtTime(freq, t0);
+    if(freqEnd!=null) osc.frequency.exponentialRampToValueAtTime(Math.max(freqEnd,1), t0+dur);
+    gain.gain.setValueAtTime(0.0001, t0);
+    gain.gain.linearRampToValueAtTime(Math.max(0.0001,vol*volume), t0+0.006);
+    gain.gain.exponentialRampToValueAtTime(0.0001, t0+dur);
+    osc.connect(gain); gain.connect(ac.destination);
+    osc.start(t0); osc.stop(t0+dur+0.03);
+  }
+  function noiseBurst({dur=0.15, vol=1, delay=0, filterFreq=1200}){
+    if(muted || volume<=0) return;
+    const ac = ensureCtx();
+    if(!ac) return;
+    const t0 = ac.currentTime + delay;
+    const bufSize = Math.max(1, Math.floor(ac.sampleRate*dur));
+    const buf = ac.createBuffer(1, bufSize, ac.sampleRate);
+    const data = buf.getChannelData(0);
+    for(let i=0;i<bufSize;i++) data[i] = (Math.random()*2-1) * (1 - i/bufSize);
+    const src = ac.createBufferSource();
+    src.buffer = buf;
+    const filt = ac.createBiquadFilter();
+    filt.type = 'lowpass'; filt.frequency.value = filterFreq;
+    const gain = ac.createGain();
+    gain.gain.setValueAtTime(Math.max(0.0001,vol*volume), t0);
+    gain.gain.exponentialRampToValueAtTime(0.0001, t0+dur);
+    src.connect(filt); filt.connect(gain); gain.connect(ac.destination);
+    src.start(t0);
+  }
+  const WEAPON_SFX = {
+    pistol:{freq:520, dur:0.07, type:'square', freqEnd:260},
+    smg:{freq:460, dur:0.05, type:'square', freqEnd:230},
+    shotgun:{freq:170, dur:0.17, type:'sawtooth', freqEnd:70},
+    rifle:{freq:380, dur:0.09, type:'sawtooth', freqEnd:180}
+  };
+  return {
+    setMuted(m){ muted = !!m; },
+    isMuted(){ return muted; },
+    setVolume(v){ volume = Math.max(0, Math.min(1, v)); },
+    getVolume(){ return volume; },
+    unlock(){ ensureCtx(); },
+    shot(weaponId, distant){
+      const p = WEAPON_SFX[weaponId] || WEAPON_SFX.pistol;
+      const mul = distant ? 0.35 : 1;
+      beep({freq:p.freq, dur:p.dur, type:p.type, freqEnd:p.freqEnd, vol:0.5*mul});
+      noiseBurst({dur:0.05, vol:0.22*mul, filterFreq:2600});
+    },
+    melee(){ noiseBurst({dur:0.07, vol:0.28, filterFreq:1000}); },
+    hit(){ beep({freq:180, dur:0.06, type:'square', vol:0.32, freqEnd:90}); },
+    headshot(){ beep({freq:1000, dur:0.09, type:'sine', vol:0.45, freqEnd:1700}); },
+    death(){ beep({freq:220, dur:0.45, type:'sawtooth', vol:0.4, freqEnd:35}); },
+    elim(){ beep({freq:700, dur:0.12, type:'triangle', vol:0.3, freqEnd:300}); },
+    build(){ beep({freq:320, dur:0.05, type:'square', vol:0.28}); },
+    pickup(){ beep({freq:660, dur:0.07, type:'triangle', vol:0.35, freqEnd:920}); },
+    stormTick(){ beep({freq:130, dur:0.16, type:'sawtooth', vol:0.28, freqEnd:80}); },
+    jump(){ beep({freq:340, dur:0.06, type:'triangle', vol:0.2, freqEnd:520}); },
+    win(){ [523,659,784,1046].forEach((f,i)=>beep({freq:f, dur:0.18, type:'sine', vol:0.4, delay:i*0.11})); },
+    lose(){ beep({freq:220, dur:0.5, type:'sawtooth', vol:0.35, freqEnd:60}); },
+    click(){ beep({freq:600, dur:0.04, type:'square', vol:0.22}); }
+  };
+})();
+['pointerdown','keydown'].forEach(evt=>document.addEventListener(evt, ()=>SFX.unlock(), {once:true}));
+document.addEventListener('click', (ev)=>{
+  const btn = ev.target && ev.target.closest ? ev.target.closest('.btn') : null;
+  if(btn) SFX.click();
+}, true);
+SFX.setMuted(settings.sound.muted);
+SFX.setVolume(settings.sound.volume);
 
 const KB_ACTIONS = [
   {id:'moveLeft', label:'Mover izquierda'},
@@ -727,10 +874,38 @@ let myRoomCode = '';
 let onlineMode = 'br';       // 'br' | '1v1' for the online room
 let onlineFillBots = 0;
 let onlineIsHost = false;
+let onlineTeamSize = 1;      // 1 = todos contra todos, 2 = dúo, 4 = escuadra (solo en salas 'br')
 let onlineRespawning = false, onlineRespawnTimer = 0;
 let onlineBuildCounter = 0;
 let remotePeers = new Map(); // id -> last known state object
 let remoteBots = [];         // [{id,x,y,hp,shield,alive,facing,archetype}] (non-host only)
+
+// ---------- EQUIPOS (Dúo / Escuadra online) ----------
+// El servidor solo retransmite mensajes; los equipos se calculan igual en
+// todos los clientes a partir del mismo listado ordenado de ids conectados,
+// así que no hace falta que el servidor sepa nada de equipos.
+function rosterIds(){
+  const ids = new Set([myClientId]);
+  for(const id of remotePeers.keys()) ids.add(id);
+  return Array.from(ids).sort();
+}
+function teamOf(id){
+  if(onlineTeamSize<=1 || !id) return null;
+  const roster = rosterIds();
+  const idx = roster.indexOf(id);
+  if(idx<0) return null;
+  return Math.floor(idx/onlineTeamSize);
+}
+function isTeammateId(id){
+  if(onlineTeamSize<=1 || !id || id===myClientId) return false;
+  const mine = teamOf(myClientId);
+  return mine!=null && teamOf(id)===mine;
+}
+function teamLabel(){
+  if(onlineTeamSize===2) return 'Dúo';
+  if(onlineTeamSize===4) return 'Escuadra';
+  return 'Solo';
+}
 let lastStateSend = 0;
 let lastBotStateSend = 0;
 
@@ -760,7 +935,7 @@ function resetMatch(selectedMode){
   botNamePool = [...BOT_NAMES];
   activeSlot = 'weapon'; buildPieceIndex = 0; buildMode = false; buildGhost = null;
   paused = false;
-  deathChoiceShown = false; spectating = false; pendingPlace = 1;
+  deathChoiceShown = false; spectating = false; pendingPlace = 1; killcamRef = null;
   document.getElementById('deathChoiceOverlay').classList.add('hidden');
   document.getElementById('spectateBanner').classList.add('hidden');
   countdown = 3.4; countdownActive = true;
@@ -864,6 +1039,7 @@ function handleOnlineMessage(msg){
   const d = msg.d || {};
   switch(msg.t){
     case 'peerJoined':
+      if(d.id && !remotePeers.has(d.id)) remotePeers.set(d.id, null);
       break;
     case 'peerLeft':
       remotePeers.delete(d.id);
@@ -871,10 +1047,13 @@ function handleOnlineMessage(msg){
     case 'peerState':
       remotePeers.set(d.id, d.state);
       break;
-    case 'shot':
+    case 'shot':{
+      const shooterId = d.shooterId||d.from;
+      const friendly = isTeammateId(shooterId);
       bullets.push({x:d.x,y:d.y,vx:d.vx,vy:d.vy,dmg:d.dmg,
-        owner:{remote:true, shooterId:d.shooterId||d.from}, color:d.color||'#ff5a3c', life:d.life||75});
+        owner:{remote:true, shooterId, friendly}, color: friendly ? '#5ac8ff' : (d.color||'#ff5a3c'), life:d.life||75});
       break;
+    }
     case 'kill':
       if(d.killerId===myClientId) player.kills++;
       break;
@@ -947,6 +1126,7 @@ function leaveOnline(){
   onlineActive = false;
   remotePeers = new Map();
   remoteBots = [];
+  onlineTeamSize = 1;
 }
 
 function beginOnlineMatch(){
@@ -1001,6 +1181,7 @@ function connectOnlineSocket(onOpenSend, statusElId){
         myRoomCode = msg.d.code;
         onlineMode = msg.d.mode;
         onlineFillBots = msg.d.fillBots||0;
+        onlineTeamSize = msg.d.teamSize||1;
         onlineIsHost = true;
         onlineActive = true;
         ws.onmessage = (ev2)=>{ try{ handleOnlineMessage(JSON.parse(ev2.data)); }catch(err){} };
@@ -1012,6 +1193,7 @@ function connectOnlineSocket(onOpenSend, statusElId){
         myRoomCode = msg.d.code;
         onlineMode = msg.d.mode;
         onlineFillBots = msg.d.fillBots||0;
+        onlineTeamSize = msg.d.teamSize||1;
         onlineIsHost = !!msg.d.isHost;
         onlineActive = true;
         ws.onmessage = (ev2)=>{ try{ handleOnlineMessage(JSON.parse(ev2.data)); }catch(err){} };
@@ -1027,12 +1209,12 @@ function connectOnlineSocket(onOpenSend, statusElId){
   });
 }
 
-async function createOnlineRoom(chosenMode, fillBots){
+async function createOnlineRoom(chosenMode, fillBots, teamSize){
   if(!myClientId) myClientId = genClientId();
   const statusEl = document.getElementById('onlineStatus');
   statusEl.textContent = 'Conectando...';
   const ok = await connectOnlineSocket(()=>{
-    wsSend('create', {mode: chosenMode, fillBots: chosenMode==='br'?fillBots:0});
+    wsSend('create', {mode: chosenMode, fillBots: chosenMode==='br'?fillBots:0, teamSize: chosenMode==='br'?(teamSize||1):1});
   }, 'onlineStatus');
   if(ok) beginOnlineMatch();
 }
@@ -1089,6 +1271,7 @@ function applyStormDamage(e, dt){
   if(!stormActive || !e.alive || !e.landed) return;
   if(e.x+e.w/2 < stormLeft || e.x+e.w/2 > stormRight){
     damageEntity(e, 6.5*dt/60, null);
+    if(e===player && Math.random()<0.04) SFX.stormTick();
   }
 }
 
@@ -1106,6 +1289,17 @@ function damageEntity(e, dmg, source){
     spawnDeathParticles(e.x+e.w/2, e.y+e.h/2);
     if(source && source.alive) source.kills++;
     pushKillfeed(source, e);
+    if(e===player) SFX.death();
+    else if(source===player) SFX.elim();
+    if(e===player){
+      if(source && source.remote){
+        killcamRef = {kind:'remote', id:source.shooterId};
+      } else if(source && source!==player){
+        killcamRef = {kind:'bot', ref:source};
+      } else {
+        killcamRef = null;
+      }
+    }
   }
 }
 
@@ -1172,6 +1366,7 @@ function tryFire(e, aimX, aimY){
       }
     }
   }
+  SFX.shot(e.weapon, e!==player);
   particles.push({x:cx+Math.cos(baseAngle)*18, y:cy+Math.sin(baseAngle)*18, vx:0, vy:0, life:6, color:'#fff6d8', flash:true});
   e.facing = aimX >= cx ? 1 : -1;
 }
@@ -1183,6 +1378,7 @@ function performMeleeSwing(e, aimX, aimY, w){
   const hy = cy + Math.sin(angle)*w.range*0.55;
   const hitBox = {x:hx-26, y:hy-26, w:52, h:52};
   particles.push({x:hx, y:hy, vx:0, vy:0, life:7, color:'#e8edf2', flash:true});
+  SFX.melee();
 
   for(let si=structures.length-1; si>=0; si--){
     const s = structures[si];
@@ -1230,8 +1426,10 @@ function performMeleeSwing(e, aimX, aimY, w){
     if(rectsOverlap(hitBox, t)){
       const head = getHeadRect(t);
       const isHead = rectsOverlap(hitBox, head);
-      damageEntity(t, isHead ? w.dmg*HEADSHOT_MULTIPLIER : w.dmg, e);
-      if(isHead) spawnHeadshotEffect(t.x+t.w/2, t.y-16);
+      const baseDmg = (w.dmgPlayer!=null) ? w.dmgPlayer : w.dmg;
+      damageEntity(t, isHead ? baseDmg*HEADSHOT_MULTIPLIER : baseDmg, e);
+      if(isHead){ spawnHeadshotEffect(t.x+t.w/2, t.y-16); if(e===player||t===player) SFX.headshot(); }
+      else if(e===player||t===player) SFX.hit();
       return;
     }
   }
@@ -1263,7 +1461,7 @@ function updateBullets(dt){
       }
     }
     if(!hit){
-      const targets = [player, ...bots].filter(t=>t.alive && t.landed && t!==b.owner);
+      const targets = [player, ...bots].filter(t=>t.alive && t.landed && t!==b.owner && !(t===player && b.owner && b.owner.friendly));
       for(const t of targets){
         const head = getHeadRect(t);
         const isHead = b.x>head.x && b.x<head.x+head.w && b.y>head.y && b.y<head.y+head.h;
@@ -1272,7 +1470,8 @@ function updateBullets(dt){
           const dmg = isHead ? b.dmg*HEADSHOT_MULTIPLIER : b.dmg;
           damageEntity(t, dmg, b.owner);
           hit = true;
-          if(isHead) spawnHeadshotEffect(t.x+t.w/2, t.y-16);
+          if(isHead){ spawnHeadshotEffect(t.x+t.w/2, t.y-16); if(t===player||b.owner===player) SFX.headshot(); }
+          else if(t===player||b.owner===player) SFX.hit();
           if(mode==='online' && t===player && !t.alive && b.owner && b.owner.remote && onlineActive){
             wsSend('kill', {killerId:b.owner.shooterId});
           }
@@ -1308,6 +1507,7 @@ function nearestTree(e){
 
 function openChest(e, chest){
   chest.opened = true;
+  if(e===player) SFX.pickup();
   const roll = Math.random();
   if(roll < 0.45){
     const wk = choice(['pistol','smg','shotgun','rifle']);
@@ -1478,6 +1678,7 @@ function updateBuildAction(){
           baseX:target.baseX, baseY:target.baseY, dir:target.dir, hp, rects:rectData});
       }
       player.wood -= target.piece.cost;
+      SFX.build();
     }
   }
 }
@@ -1718,7 +1919,7 @@ function updatePlayer(dt){
 
   player.vx = ((right?1:0)-(left?1:0)) * 4.4;
   if(player.vx!==0) player.facing = player.vx>0?1:-1;
-  if(jump && player.onGround){ player.vy = -14.5; }
+  if(jump && player.onGround){ player.vy = -14.5; SFX.jump(); }
   player.vy += GRAVITY*dt;
   moveEntity(player, dt);
   applyStormDamage(player, dt);
@@ -1776,14 +1977,39 @@ function updateStorm(dt){
 }
 
 // ---------- CAMERA ----------
+function getKillcamTarget(){
+  if(killcamRef){
+    if(killcamRef.kind==='bot' && killcamRef.ref && killcamRef.ref.alive) return killcamRef.ref;
+    if(killcamRef.kind==='remote'){
+      const rb = remoteBots.find(r=>r.id===killcamRef.id);
+      if(rb && rb.alive) return rb;
+    }
+  }
+  return null;
+}
+
 function updateCamera(){
   const ww = currentWorldWidth();
   let targetX = player.x;
   if(spectating){
-    const aliveBot = bots.find(b=>b.alive);
+    const killer = getKillcamTarget();
+    const aliveBot = killer || bots.find(b=>b.alive) || remoteBots.find(r=>r.alive);
     if(aliveBot) targetX = aliveBot.x;
+    updateSpectateBanner(killer);
   }
   camX = clamp(targetX - W/2, 0, Math.max(0, ww - W));
+}
+
+function updateSpectateBanner(killer){
+  const el = document.getElementById('spectateTargetName');
+  if(!el) return;
+  if(killer && killer.name){
+    el.textContent = 'Cámara de muerte: ' + killer.name + ' (te eliminó)';
+  } else if(killer){
+    el.textContent = 'Cámara de muerte: el jugador que te eliminó';
+  } else {
+    el.textContent = 'Modo espectador';
+  }
 }
 
 // ---------- RENDERING ----------
@@ -2322,12 +2548,14 @@ function handleOnlineRespawn(dt){
 
 function updateOnlineHUD(){
   const total = remotePeers.size + 1;
-  document.getElementById('playersLeft').innerHTML = total+'<small>CONECTADOS · SALA '+myRoomCode+'</small>';
+  const teamTxt = onlineTeamSize>1 ? ' · '+teamLabel() : '';
+  document.getElementById('playersLeft').innerHTML = total+'<small>CONECTADOS · SALA '+myRoomCode+teamTxt+'</small>';
 }
 
 function drawRemotePeer(id, pr){
   pr = pr || {};
   if(typeof pr.x !== 'number' || typeof pr.y !== 'number') return;
+  const ally = isTeammateId(id);
   const pseudo = {
     x: pr.x, y: pr.y, w:PLAYER_W, h:PLAYER_H,
     alive: pr.alive !== false,
@@ -2336,7 +2564,7 @@ function drawRemotePeer(id, pr){
     facing: pr.facing || 1,
     dropped:true, landed:true, chuteOpen:false, hitFlash:0,
     archetype:null, isOnlinePeer:true,
-    name: 'J-'+String(id||'????').slice(-4)
+    name: (ally?'🤝 ':'')+'J-'+String(id||'????').slice(-4)
   };
   drawEntity(pseudo);
 }
@@ -2394,6 +2622,7 @@ function drawRespawnOverlay(){
 let deathChoiceShown = false;
 let spectating = false;
 let pendingPlace = 1;
+let killcamRef = null; // quién te eliminó, para que la cámara de espectador le siga
 
 function checkEndConditions(){
   if(!running) return;
@@ -2439,6 +2668,8 @@ function endMatch(won, place){
   document.getElementById('statPlace').textContent = '#'+place;
   const secs = Math.floor(matchTime);
   document.getElementById('statTime').textContent = Math.floor(secs/60)+':'+String(secs%60).padStart(2,'0');
+  if(won) SFX.win(); else SFX.lose();
+  addStats({wins: won?1:0, kills: player.kills, gamesPlayed:1});
 }
 
 // ---------- UI WIRING ----------
@@ -2457,6 +2688,7 @@ document.getElementById('btnBR').addEventListener('click', ()=>startGame('br'));
 document.getElementById('btn1v1').addEventListener('click', ()=>startGame('1v1'));
 
 let selectedCreateMode = 'br';
+let selectedTeamSize = 1;
 
 function showOnlinePanel(which){
   document.getElementById('onlineChoice').classList.toggle('hidden', which!=='choice');
@@ -2474,6 +2706,13 @@ document.getElementById('btnOnlineBack').addEventListener('click', ()=>{
   document.getElementById('menu').classList.remove('hidden');
 });
 
+function setTeamSizeUI(size){
+  selectedTeamSize = size;
+  document.getElementById('btnTeamSolo').classList.toggle('primary', size===1);
+  document.getElementById('btnTeamDuo').classList.toggle('primary', size===2);
+  document.getElementById('btnTeamSquad').classList.toggle('primary', size===4);
+}
+
 document.getElementById('btnOnlineCreate').addEventListener('click', ()=>{
   showOnlinePanel('create');
   document.getElementById('onlineStatus').textContent = '';
@@ -2481,6 +2720,8 @@ document.getElementById('btnOnlineCreate').addEventListener('click', ()=>{
   document.getElementById('btnCreateModeBR').classList.add('primary');
   document.getElementById('btnCreateMode1v1').classList.remove('primary');
   document.getElementById('botFillRow').classList.remove('hidden');
+  document.getElementById('teamSizeRow').classList.remove('hidden');
+  setTeamSizeUI(1);
 });
 document.getElementById('btnCreateBack').addEventListener('click', ()=> showOnlinePanel('choice'));
 
@@ -2489,19 +2730,25 @@ document.getElementById('btnCreateModeBR').addEventListener('click', ()=>{
   document.getElementById('btnCreateModeBR').classList.add('primary');
   document.getElementById('btnCreateMode1v1').classList.remove('primary');
   document.getElementById('botFillRow').classList.remove('hidden');
+  document.getElementById('teamSizeRow').classList.remove('hidden');
 });
 document.getElementById('btnCreateMode1v1').addEventListener('click', ()=>{
   selectedCreateMode = '1v1';
   document.getElementById('btnCreateMode1v1').classList.add('primary');
   document.getElementById('btnCreateModeBR').classList.remove('primary');
   document.getElementById('botFillRow').classList.add('hidden');
+  document.getElementById('teamSizeRow').classList.add('hidden');
+  setTeamSizeUI(1);
 });
+document.getElementById('btnTeamSolo').addEventListener('click', ()=> setTeamSizeUI(1));
+document.getElementById('btnTeamDuo').addEventListener('click', ()=> setTeamSizeUI(2));
+document.getElementById('btnTeamSquad').addEventListener('click', ()=> setTeamSizeUI(4));
 document.getElementById('botFillSlider').addEventListener('input', (e)=>{
   document.getElementById('botFillValue').textContent = e.target.value;
 });
 document.getElementById('btnCreateGo').addEventListener('click', ()=>{
   const fillBots = parseInt(document.getElementById('botFillSlider').value, 10) || 0;
-  createOnlineRoom(selectedCreateMode, fillBots);
+  createOnlineRoom(selectedCreateMode, fillBots, selectedCreateMode==='br'?selectedTeamSize:1);
 });
 
 document.getElementById('btnOnlineJoin').addEventListener('click', ()=>{
@@ -2533,6 +2780,7 @@ document.getElementById('btnSpectate').addEventListener('click', ()=>{
   document.getElementById('deathChoiceOverlay').classList.add('hidden');
   spectating = true;
   document.getElementById('spectateBanner').classList.remove('hidden');
+  updateSpectateBanner(getKillcamTarget());
 });
 document.getElementById('btnStopSpectate').addEventListener('click', ()=>{
   finishSpectating();
@@ -2558,7 +2806,7 @@ document.getElementById('btnDeathMenu').addEventListener('click', ()=>{
 });
 document.getElementById('btnExit').addEventListener('click', ()=>{
   running = false; paused = false; spectating = false; deathChoiceShown = false;
-  if(mode==='online') leaveOnline();
+  if(mode==='online'){ addStats({kills: player.kills, gamesPlayed:1}); leaveOnline(); }
   document.getElementById('deathChoiceOverlay').classList.add('hidden');
   document.getElementById('spectateBanner').classList.add('hidden');
   document.getElementById('hud').classList.add('hidden');
@@ -2598,6 +2846,30 @@ sensSlider.addEventListener('input', ()=>{
   saveSettings();
 });
 
+const soundSlider = document.getElementById('soundSlider');
+const soundValue = document.getElementById('soundValue');
+const btnMuteToggle = document.getElementById('btnMuteToggle');
+const btnMuteLabel = document.getElementById('btnMuteLabel');
+function refreshSoundUI(){
+  soundSlider.value = Math.round(settings.sound.volume*100);
+  soundValue.textContent = Math.round(settings.sound.volume*100)+'%';
+  btnMuteLabel.textContent = settings.sound.muted ? '🔇 Sonido silenciado' : '🔊 Sonido activado';
+}
+refreshSoundUI();
+soundSlider.addEventListener('input', ()=>{
+  settings.sound.volume = parseInt(soundSlider.value,10)/100;
+  SFX.setVolume(settings.sound.volume);
+  soundValue.textContent = Math.round(settings.sound.volume*100)+'%';
+  saveSettings();
+});
+btnMuteToggle.addEventListener('click', ()=>{
+  settings.sound.muted = !settings.sound.muted;
+  SFX.setMuted(settings.sound.muted);
+  refreshSoundUI();
+  saveSettings();
+});
+renderStatsPanel();
+
 function togglePause(){
   if(!running) return;
   paused = !paused;
@@ -2631,4 +2903,3 @@ requestAnimationFrame(loop);
 </script>
 </body>
 </html>
-
