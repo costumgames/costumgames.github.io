@@ -788,7 +788,7 @@ function makeEntity(x, isBot, botTier){
   return {
     x, y: -60, w:PLAYER_W, h:PLAYER_H,
     vx:0, vy:0, onGround:false,
-    hp:100, shield:0, alive:true,
+    hp:100, shield:0, alive:true, downed:false, downedTimer:0,
     weapon:'pickaxe', hasPistol:false, ammo:{smg:0,shotgun:0,rifle:0}, wood:0, harvestCooldown:0, editCooldown:0,
     facing:1, fireCooldown:0, isBot, botTier: botTier||1,
     aiState:'roam', aiTargetX: x, aiThinkTimer:0, kills:0,
@@ -905,6 +905,15 @@ function teamLabel(){
   if(onlineTeamSize===2) return 'Dúo';
   if(onlineTeamSize===4) return 'Escuadra';
   return 'Solo';
+}
+const DOWNED_TIME = 45; // segundos derribado antes de desangrarte si nadie te revive
+const REVIVE_HOLD = 2.6; // segundos manteniendo E junto a un compañero derribado
+function hasActiveTeammate(){
+  if(onlineTeamSize<=1) return false;
+  for(const [id,st] of remotePeers){
+    if(isTeammateId(id) && st && st.alive!==false && !st.downed) return true;
+  }
+  return false;
 }
 let lastStateSend = 0;
 let lastBotStateSend = 0;
@@ -1056,6 +1065,14 @@ function handleOnlineMessage(msg){
     }
     case 'kill':
       if(d.killerId===myClientId) player.kills++;
+      break;
+    case 'revive':
+      if(d.targetId===myClientId && player.alive && player.downed){
+        player.downed = false;
+        player.downedTimer = 0;
+        player.hp = 50;
+        SFX.pickup();
+      }
       break;
     case 'build':
       if(!structures.some(s=>s.groupId===d.groupId) && Array.isArray(d.rects)){
@@ -1232,6 +1249,34 @@ async function joinOnlineRoom(code){
 
 function solids(){ return structures.length ? platforms.concat(structures) : platforms; }
 
+function segmentIntersectsRect(x1,y1,x2,y2, r){
+  const dx = x2-x1, dy = y2-y1;
+  let tmin = 0, tmax = 1;
+  const p = [-dx, dx, -dy, dy];
+  const q = [x1-r.x, (r.x+r.w)-x1, y1-r.y, (r.y+r.h)-y1];
+  for(let i=0;i<4;i++){
+    if(p[i]===0){
+      if(q[i]<0) return false;
+    } else {
+      const t = q[i]/p[i];
+      if(p[i]<0){ if(t>tmax) return false; if(t>tmin) tmin=t; }
+      else { if(t<tmin) return false; if(t<tmax) tmax=t; }
+    }
+  }
+  return true;
+}
+
+// Comprueba si hay un obstáculo (estructura, plataforma o árbol) entre dos puntos.
+function hasLineOfSight(x1,y1,x2,y2){
+  for(const s of solids()){
+    if(segmentIntersectsRect(x1,y1,x2,y2,s)) return false;
+  }
+  for(const t of trees){
+    if(t.hp>0 && segmentIntersectsRect(x1,y1,x2,y2,t)) return false;
+  }
+  return true;
+}
+
 const STEP_HEIGHT = 30;
 
 function moveEntity(e, dt){
@@ -1277,6 +1322,22 @@ function applyStormDamage(e, dt){
 
 function damageEntity(e, dmg, source){
   if(!e.alive) return;
+  if(e.downed){
+    // ya derribado: cualquier golpe adicional lo remata
+    e.downed = false;
+    e.alive = false;
+    e.hp = 0;
+    spawnDeathParticles(e.x+e.w/2, e.y+e.h/2);
+    pushKillfeed(source, e, 'remató a');
+    if(e===player) SFX.death();
+    else if(source===player) SFX.elim();
+    if(e===player){
+      if(source && source.remote){ killcamRef = {kind:'remote', id:source.shooterId}; }
+      else if(source && source!==player){ killcamRef = {kind:'bot', ref:source}; }
+      else { killcamRef = null; }
+    }
+    return;
+  }
   e.hitFlash = 6;
   if(e.shield>0){
     const absorb = Math.min(e.shield, dmg);
@@ -1285,7 +1346,19 @@ function damageEntity(e, dmg, source){
   }
   e.hp -= dmg;
   if(e.hp<=0 && e.alive){
+    if(e===player && mode==='online' && onlineTeamSize>1 && hasActiveTeammate()){
+      e.hp = 1;
+      e.downed = true;
+      e.downedTimer = DOWNED_TIME;
+      e.weapon = 'pickaxe';
+      spawnDeathParticles(e.x+e.w/2, e.y+e.h/2);
+      pushKillfeed(source, e, 'derribó a');
+      if(source && source.alive) source.kills++;
+      SFX.elim();
+      return;
+    }
     e.alive = false;
+    e.downed = false;
     spawnDeathParticles(e.x+e.w/2, e.y+e.h/2);
     if(source && source.alive) source.kills++;
     pushKillfeed(source, e);
@@ -1303,11 +1376,12 @@ function damageEntity(e, dmg, source){
   }
 }
 
-function pushKillfeed(source, victim){
+function pushKillfeed(source, victim, verb){
   const srcName = source ? (source===player ? 'Tú' : (source.remote ? 'Otro jugador' : source.name)) : 'La zona';
+  const action = verb || 'eliminó a';
   const div = document.createElement('div');
   div.className='kf-item';
-  div.textContent = `${srcName} eliminó a ${victim===player?'Tú':victim.name}`;
+  div.textContent = `${srcName} ${action} ${victim===player?'Tú':victim.name}`;
   killfeedEl.prepend(div);
   setTimeout(()=>div.remove(), 4500);
   while(killfeedEl.children.length>5) killfeedEl.removeChild(killfeedEl.lastChild);
@@ -1338,6 +1412,7 @@ function spawnHeadshotEffect(x,y){
 
 // ---------- SHOOTING ----------
 function tryFire(e, aimX, aimY){
+  if(e.downed) return;
   if(!e.landed || e.weapon==='none' || (e===player && buildMode)) return;
   if(e.fireCooldown>0) return;
   const w = WEAPONS[e.weapon];
@@ -1526,9 +1601,48 @@ function openChest(e, chest){
   }
 }
 
+let reviveHoldId = null, reviveHoldTime = 0;
 function updateInteractions(dt){
   if(player.harvestCooldown>0) player.harvestCooldown -= dt;
   if(buildMode){ promptEl.classList.add('hidden'); return; }
+
+  if(player.downed){
+    promptEl.textContent = 'DERRIBADO · espera a que te revivan ('+Math.ceil(Math.max(0,player.downedTimer))+'s)';
+    promptEl.classList.remove('hidden');
+    return;
+  }
+
+  if(mode==='online' && onlineTeamSize>1){
+    let nearestId=null, nearestD=Infinity;
+    for(const [id,st] of remotePeers){
+      if(!isTeammateId(id) || !st || st.alive===false || !st.downed) continue;
+      if(typeof st.x!=='number') continue;
+      const dd = dist(player.x+player.w/2, player.y+player.h/2, st.x+PLAYER_W/2, st.y+PLAYER_H/2);
+      if(dd<nearestD){ nearestD=dd; nearestId=id; }
+    }
+    if(nearestId && nearestD<60){
+      if(isDown('interact')){
+        if(reviveHoldId!==nearestId){ reviveHoldId=nearestId; reviveHoldTime=0; }
+        reviveHoldTime += dt/60;
+        const pct = Math.min(100, Math.round(reviveHoldTime/REVIVE_HOLD*100));
+        promptEl.textContent = 'Reanimando… '+pct+'%';
+        promptEl.classList.remove('hidden');
+        if(reviveHoldTime>=REVIVE_HOLD){
+          wsSend('revive', {targetId: nearestId});
+          reviveHoldId=null; reviveHoldTime=0;
+          promptEl.textContent = '¡Compañero reanimado!';
+          setTimeout(()=>{ if(promptEl.textContent==='¡Compañero reanimado!') promptEl.classList.add('hidden'); }, 900);
+        }
+      } else {
+        reviveHoldId=null; reviveHoldTime=0;
+        promptEl.textContent = 'Mantén '+prettyKey(settings.keys.interact)+' para reanimar';
+        promptEl.classList.remove('hidden');
+      }
+      return;
+    } else {
+      reviveHoldId=null; reviveHoldTime=0;
+    }
+  }
 
   const {chest,d:cd} = nearestChest(player);
 
@@ -1653,6 +1767,7 @@ function isBuildValid(target){
 let structGroupCounter = 0;
 
 function updateBuildAction(){
+  if(player.downed){ buildClickQueued = false; return; }
   const target = computeBuildTarget();
   buildGhost = target;
   buildGhostValid = isBuildValid(target);
@@ -1855,9 +1970,13 @@ function updateBot(b, dt){
     moveDir = Math.abs(dx) > 420 ? Math.sign(dx) : (Math.random()<0.02 ? Math.sign(dx)*-1: 0);
     b.facing = dx>=0?1:-1;
     if(Math.random() < b.aggression){
-      const jx = rand(-1,1)*b.aimError*260;
-      const jy = rand(-1,1)*b.aimError*140;
-      tryFire(b, target.x+target.w/2+jx, target.y+target.h/2+jy);
+      const eyeX = b.x+b.w/2, eyeY = b.y+b.h/2-10;
+      const tX = target.x+target.w/2, tY = target.y+target.h/2-10;
+      if(hasLineOfSight(eyeX,eyeY,tX,tY)){
+        const jx = rand(-1,1)*b.aimError*260;
+        const jy = rand(-1,1)*b.aimError*140;
+        tryFire(b, target.x+target.w/2+jx, target.y+target.h/2+jy);
+      }
     }
     if(b.canBuild && b.wood>=10 && b.buildCooldown<=0 && Math.random()<0.02*b.reactionSpeed){
       const bdir = dx>=0?1:-1;
@@ -1917,9 +2036,9 @@ function updatePlayer(dt){
   const right = isDown('moveRight')||touchRight;
   const jump = isDown('jump')||touchJump;
 
-  player.vx = ((right?1:0)-(left?1:0)) * 4.4;
+  player.vx = ((right?1:0)-(left?1:0)) * (player.downed ? 1.6 : 4.4);
   if(player.vx!==0) player.facing = player.vx>0?1:-1;
-  if(jump && player.onGround){ player.vy = -14.5; SFX.jump(); }
+  if(jump && player.onGround && !player.downed){ player.vy = -14.5; SFX.jump(); }
   player.vy += GRAVITY*dt;
   moveEntity(player, dt);
   applyStormDamage(player, dt);
@@ -2467,6 +2586,7 @@ function loop(now){
         }
         updateBullets(dt);
         if(!onlineIsHost) checkBulletsAgainstRemoteBots();
+        updateDowned(dt);
         handleOnlineRespawn(dt);
 
         if(onlineActive && now-lastStateSend > 60){
@@ -2474,7 +2594,7 @@ function loop(now){
           wsSend('state', {
             x: player.x, y: player.y, hp: player.hp, shield: player.shield,
             alive: player.alive, weapon: player.weapon, facing: player.facing,
-            kills: player.kills
+            kills: player.kills, downed: player.downed
           });
         }
         if(onlineActive && onlineIsHost && bots.length>0 && now-lastBotStateSend > 110){
@@ -2538,6 +2658,16 @@ function loop(now){
   requestAnimationFrame(loop);
 }
 
+function updateDowned(dt){
+  if(!player.alive || !player.downed) return;
+  player.downedTimer -= dt/60;
+  if(player.downedTimer<=0){
+    player.downed = false;
+    player.alive = false;
+    player.hp = 0;
+  }
+}
+
 function handleOnlineRespawn(dt){
   if(!player.alive){
     if(!onlineRespawning){ onlineRespawning = true; onlineRespawnTimer = ONLINE_RESPAWN_TIME; }
@@ -2563,8 +2693,8 @@ function drawRemotePeer(id, pr){
     shield: typeof pr.shield==='number' ? pr.shield : 0,
     facing: pr.facing || 1,
     dropped:true, landed:true, chuteOpen:false, hitFlash:0,
-    archetype:null, isOnlinePeer:true,
-    name: (ally?'🤝 ':'')+'J-'+String(id||'????').slice(-4)
+    archetype:null, isOnlinePeer:true, downed: !!pr.downed,
+    name: (ally?'🤝 ':'')+(pr.downed?'DERRIBADO ':'')+'J-'+String(id||'????').slice(-4)
   };
   drawEntity(pseudo);
 }
