@@ -1,1 +1,3204 @@
+<!DOCTYPE html>
+<html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
+<title>Mirada</title>
+<style>
+html,
+body {
+  -webkit-tap-highlight-color: transparent;
+  -webkit-touch-callout: none;
+  overscroll-behavior: none;
+  touch-action: none;
+  -webkit-user-select: none;
+  user-select: none;
+  margin: 0;
+  height: 100%;
+  background: #050507;
+  overflow: hidden;
+  font-family: Georgia, "Times New Roman", serif;
+  color: #e8e2d0;
+}
+canvas {
+  display: block;
+}
+#lid {
+  position: fixed;
+  inset: 0;
+  background: #000;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.08s;
+}
+#bar3 {
+  position: fixed;
+  left: 20px;
+  bottom: 44px;
+  width: 140px;
+  height: 5px;
+  background: #ffffff22;
+  display: none;
+}
+#bar3f {
+  display: block;
+  height: 100%;
+  background: #e08040;
+}
+#tm {
+  position: fixed;
+  right: 20px;
+  top: 16px;
+  font-size: 15px;
+  opacity: 0.75;
+  text-shadow: 0 0 6px #000;
+  pointer-events: none;
+}
+#opt {
+  margin-top: 18px;
+  font-size: 14px;
+  color: #bdb7a5;
+  cursor: default;
+}
+#opt select,
+#opt input {
+  margin: 0 10px 0 4px;
+  vertical-align: middle;
+}
+#cap {
+  position: fixed;
+  left: 0;
+  right: 0;
+  top: 14%;
+  text-align: center;
+  font-size: 17px;
+  color: #e8e2d0;
+  text-shadow: 0 0 6px #000;
+  opacity: 0;
+  transition: opacity 0.2s;
+  pointer-events: none;
+}
+#bar4 {
+  position: fixed;
+  left: 20px;
+  bottom: 56px;
+  width: 140px;
+  height: 5px;
+  background: #ffffff22;
+}
+#bar4f {
+  display: block;
+  height: 100%;
+  background: #a070e0;
+}
+#grain {
+  position: fixed;
+  inset: -50%;
+  pointer-events: none;
+  opacity: 0.09;
+  animation: gr 0.6s steps(6) infinite;
+}
+@keyframes gr {
+  0% {
+    transform: translate(0, 0);
+  }
+  20% {
+    transform: translate(-3%, 2%);
+  }
+  40% {
+    transform: translate(2%, -4%);
+  }
+  60% {
+    transform: translate(-4%, -2%);
+  }
+  80% {
+    transform: translate(3%, 3%);
+  }
+  100% {
+    transform: translate(0, 0);
+  }
+}
+body.touch #grain {
+  display: none;
+}
+#err {
+  display: none;
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 99;
+  background: #400d;
+  color: #fff;
+  font: 12px monospace;
+  padding: 6px 10px;
+  white-space: pre-wrap;
+}
+#tc {
+  position: fixed;
+  inset: 0;
+  display: none;
+  pointer-events: none;
+}
+#jz {
+  display: none;
+  position: fixed;
+  width: 30vmin;
+  height: 30vmin;
+  transform: translate(-50%, -50%);
+  border-radius: 50%;
+  background: #ffffff12;
+  border: 1px solid #ffffff30;
+  pointer-events: none;
+}
+#jk {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 12vmin;
+  height: 12vmin;
+  margin: -6vmin 0 0 -6vmin;
+  border-radius: 50%;
+  background: #f0c06066;
+}
+#tb {
+  position: absolute;
+  right: 3vmin;
+  bottom: 3vmin;
+  display: grid;
+  grid-template-columns: repeat(2, 17vmin);
+  gap: 2vmin;
+}
+#tb b,
+#bz,
+#bh {
+  pointer-events: auto;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 12vmin;
+  border-radius: 3vmin;
+  background: #ffffff14;
+  border: 1px solid #ffffff30;
+  font: 600 2.6vmin Georgia;
+  color: #e8e2d0;
+}
+#tb b.on {
+  background: #f0c06055;
+}
+#bz {
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+  top: 2vmin;
+  height: 7vmin;
+  padding: 0 4vmin;
+  font-size: 3vmin;
+}
+#rot {
+  position: fixed;
+  inset: 0;
+  z-index: 9;
+  background: #050507;
+  color: #f0c060;
+  align-items: center;
+  justify-content: center;
+  font-size: 22px;
+  display: none;
+  text-align: center;
+}
+@media (orientation: portrait) {
+  body.touch #rot {
+    display: flex;
+  }
+}
+@media (max-height: 500px) {
+  h1 {
+    font-size: 40px !important;
+  }
+  #ov p {
+    font-size: 14px;
+    margin: 0.2em;
+  }
+  #opt {
+    margin-top: 8px;
+    font-size: 12px;
+  }
+  #hud {
+    font-size: 11px;
+    padding: 4px 8px;
+  }
+  #tm {
+    font-size: 11px;
+  }
+  #msg {
+    font-size: 15px;
+    bottom: 24%;
+  }
+}
+#bar::before,
+#bar2::before,
+#bar3::before,
+#bar4::before {
+  position: absolute;
+  left: 150px;
+  top: -4px;
+  font: 11px Georgia;
+  color: #e8e2d0;
+  opacity: 0.8;
+  white-space: nowrap;
+  text-shadow: 0 0 4px #000;
+}
+#bar::before {
+  content: "Aliento";
+}
+#bar2::before {
+  content: "Concentración (F)";
+}
+#bar3::before {
+  content: "Fatiga";
+}
+#bar4::before {
+  content: "Cordura";
+}
+#bh {
+  position: absolute;
+  left: calc(50% + 13vmin);
+  top: 2vmin;
+  height: 7vmin;
+  width: 7vmin;
+  font-size: 3vmin;
+  padding: 0;
+}
+#cmp {
+  position: fixed;
+  left: 50%;
+  top: 52px;
+  margin-left: -10px;
+  font-size: 20px;
+  color: #f0c060;
+  opacity: 0;
+  pointer-events: none;
+  text-shadow: 0 0 6px #000;
+}
+#vig {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  background: radial-gradient(ellipse at center, transparent 40%, #500 125%);
+  opacity: 0;
+}
+#ret {
+  position: fixed;
+  left: 50%;
+  top: 50%;
+  width: 6px;
+  height: 6px;
+  margin: -3px;
+  border-radius: 50%;
+  background: #e8e2d0;
+  opacity: 0.55;
+  pointer-events: none;
+  transition: all 0.15s;
+}
+#ret.on {
+  width: 24px;
+  height: 24px;
+  margin: -12px;
+  background: transparent;
+  border: 1px solid #f0c060;
+  opacity: 0.9;
+}
+#hud {
+  background: #0007;
+  padding: 8px 14px;
+  border-left: 2px solid #f0c06099;
+  position: fixed;
+  left: 20px;
+  top: 16px;
+  font-size: 15px;
+  line-height: 1.6;
+  opacity: 0.75;
+  text-shadow: 0 0 6px #000;
+  pointer-events: none;
+}
+#bar {
+  position: fixed;
+  left: 20px;
+  bottom: 20px;
+  width: 140px;
+  height: 5px;
+  background: #ffffff22;
+}
+#barf {
+  display: block;
+  height: 100%;
+  background: #f0c060;
+}
+#bar2 {
+  position: fixed;
+  left: 20px;
+  bottom: 32px;
+  width: 140px;
+  height: 5px;
+  background: #ffffff22;
+}
+#bar2f {
+  display: block;
+  height: 100%;
+  background: #70e8ff;
+}
+#msg {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 12%;
+  text-align: center;
+  font-style: italic;
+  font-size: 19px;
+  padding: 0 20px;
+  text-shadow: 0 0 8px #000;
+  transition: opacity 0.8s;
+  opacity: 0;
+  pointer-events: none;
+}
+#ov {
+  overflow: auto;
+  position: fixed;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  justify-content: safe center;
+  background: rgba(5, 5, 7, 0.55);
+  text-align: center;
+  cursor: pointer;
+  padding: 24px;
+}
+h1 {
+  font-size: clamp(52px, 11vw, 120px);
+  font-weight: 400;
+  letter-spacing: 0.1em;
+  margin: 0 0 0.15em;
+  text-shadow:
+    0 0 40px #f0c06055,
+    0 0 4px #000;
+}
+#ov p {
+  max-width: 540px;
+  line-height: 1.65;
+  font-size: 17px;
+  margin: 0.4em 0;
+  color: #bdb7a5;
+}
+#ov b {
+  color: #f0c060;
+  font-weight: 400;
+}
+#go:hover {
+  background: #f0c06022;
+}
+#go {
+  transition: background 0.2s;
+  margin-top: 24px;
+  border: 1px solid #f0c060;
+  padding: 10px 30px;
+  color: #f0c060;
+  font-size: 17px;
+}
+
+</style></head><body>
+<div id="cmp">▲</div><div id="grain"></div><div id="cap"></div><div id="lid"></div><div id="vig"></div><div id="ret"></div><div id="hud"></div><div id="tm"></div><div id="msg"></div><div id="bar4"><i id="bar4f"></i></div><div id="bar3"><i id="bar3f"></i></div><div id="bar2"><i id="bar2f"></i></div><div id="bar"><i id="barf"></i></div>
+<div id="tc"><div id="jz"><div id="jk"></div></div><div id="tb"><b id="bq">Piedra</b><b id="bf">Fijar</b><b id="bp">Parpadear</b><b id="bc">Agacharse</b><b id="br">Correr</b></div><div id="bz">Pausa</div><div id="bh">?</div></div><div id="rot" onclick="this.style.display='none'">Gira el móvil en horizontal (toca para ocultar)</div><div id="err"></div><div id="ov"><h1 id="t">Mirada</h1><p id="d"><b>Las puertas y las llaves</b> crecen cuando las miras.<br><b>Lo que te persigue</b> crece cuando le das la espalda.</p><p id="c">WASD para moverte, ratón para mirar, Shift para correr, C para agacharte, E o clic para lanzar una piedra, F para fijar la mirada, Espacio para parpadear (desde la sala 3), H para ayuda, Esc para pausar.<br>El fantasma azul repite tu mejor carrera en cada sala.<br>Las barras de abajo tienen su nombre.<br>Si el ratón no gira, arrastra con el botón pulsado o usa las flechas.</p><div id="go">Entrar</div><div id="opt">Sala <select id="lvsel"></select> <span id="rs" style="cursor:pointer;color:#f0c060;border:1px solid #f0c06066;padding:3px 10px">Reiniciar sala</span> <span id="dly" style="cursor:pointer;color:#70e8ff;border:1px solid #70e8ff66;padding:3px 10px">Reto diario</span> <span id="qt" style="cursor:pointer;color:#bdb7a5;border:1px solid #bdb7a566;padding:3px 10px">Salir al menú</span> <span id="hl" style="cursor:pointer;color:#bdb7a5;border:1px solid #bdb7a566;padding:3px 10px">Ayuda</span> <span id="al" style="cursor:pointer;color:#bdb7a5;border:1px solid #bdb7a566;padding:3px 10px">Logros</span><br><br>Sensibilidad <input id="sens" type="range" min="1" max="10" value="5"> Volumen <input id="vol" type="range" min="1" max="10" value="5"> Fondo <input id="ambv" type="range" min="0" max="10" value="3"> Campo de visión <input id="fov" type="range" min="60" max="100" value="72"><br><br>Calidad <select id="qs"><option value="0">Alta (sombras y relieve)</option><option value="1" selected>Media (sin sombras)</option><option value="2">Baja (sin relieve ni linterna)</option></select> Dificultad <select id="dif"><option value="0">Fácil</option><option value="1" selected>Normal</option><option value="2">Pesadilla</option></select> <label><input id="capc" type="checkbox"> Subtítulos de sonidos</label> <label><input id="cbc" type="checkbox"> Daltónicos</label> <label><input id="rfx" type="checkbox"> Reducir efectos</label><br><br>Ambiente <select id="amb"><option value="4" selected>Pesadilla (más miedo)</option><option value="0">Viento y goteo</option><option value="1">Drone clásico</option><option value="2">Silencio inquietante</option><option value="3">Máquinas</option></select></div></div>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js" onerror="document.getElementById('d').innerHTML='No se pudo cargar three.js. Descarga el archivo y ábrelo en tu navegador con conexión a internet.'"></script>
+<script>
+/* ======================================================================
+   MIRADA · juego 3D de terror en primera persona (un solo archivo)
+   Guía: 1 Configuración y estado · 2 Funciones por tema · 3 Arranque
+   Las funciones están agrupadas por tema; el orden de las sentencias de
+   configuración (sección 1) no se debe cambiar: dependen unas de otras.
+   ====================================================================== */
+
+/* ======================================================================
+   1 · CONFIGURACIÓN, ESCENA Y ESTADO
+   ====================================================================== */
+
+/* ---- Avisos de error y utilidades ---- */
+
+addEventListener("error", (e) => {
+  const b = document.getElementById("err");
+  if (b) {
+    b.style.display = "block";
+    b.textContent = "Error: " + (e.message || e) + (e.lineno ? " (línea " + e.lineno + ")" : "");
+  }
+});
+const $ = (id) => document.getElementById(id),
+  clamp = (v, a, b) => Math.max(a, Math.min(b, v));
+
+/* ---- Escena, render y luces ---- */
+
+const scene = new THREE.Scene(),
+  cam = new THREE.PerspectiveCamera(72, innerWidth / innerHeight, 0.05, 80);
+cam.rotation.order = "YXZ";
+scene.add(cam);
+const rd = new THREE.WebGLRenderer({ antialias: true });
+rd.setPixelRatio(Math.min(devicePixelRatio, 1.5));
+rd.setSize(innerWidth, innerHeight);
+rd.setClearColor(0x08080c);
+rd.shadowMap.enabled = true;
+document.body.prepend(rd.domElement);
+scene.fog = new THREE.FogExp2(0x08080c, 0.045);
+scene.add(new THREE.HemisphereLight(0x8890b8, 0x2a2018, 0.9));
+const lamp = new THREE.PointLight(0xffe8c0, 0.9, 30, 1.3);
+cam.add(lamp);
+const torch = new THREE.SpotLight(0xfff0d0, 1.6, 45, 0.5, 0.5, 1);
+torch.castShadow = true;
+torch.shadow.mapSize.set(512, 512);
+torch.target.position.set(0, 0, -1);
+cam.add(torch, torch.target);
+const doorLight = new THREE.PointLight(0xffc060, 0, 10, 2);
+scene.add(doorLight);
+addEventListener("resize", () => {
+  cam.aspect = innerWidth / innerHeight;
+  cam.updateProjectionMatrix();
+  rd.setSize(innerWidth, innerHeight);
+});
+
+/* ---- Sprites y texturas auxiliares ---- */
+
+const halo = (() => {
+  const c = document.createElement("canvas");
+  c.width = c.height = 64;
+  const g = c.getContext("2d"),
+    r = g.createRadialGradient(32, 32, 0, 32, 32, 32);
+  r.addColorStop(0, "rgba(255,255,255,1)");
+  r.addColorStop(1, "rgba(255,255,255,0)");
+  g.fillStyle = r;
+  g.fillRect(0, 0, 64, 64);
+  return new THREE.CanvasTexture(c);
+})();
+const glow = (col) =>
+  new THREE.Sprite(
+    new THREE.SpriteMaterial({
+      map: halo,
+      color: col,
+      blending: THREE.AdditiveBlending,
+      depthWrite: false,
+      transparent: true,
+    }),
+  );
+const ringT = (() => {
+  const c = document.createElement("canvas");
+  c.width = c.height = 64;
+  const g = c.getContext("2d");
+  g.strokeStyle = "#fff";
+  g.lineWidth = 3;
+  g.beginPath();
+  g.arc(32, 32, 26, 0, 7);
+  g.stroke();
+  return new THREE.CanvasTexture(c);
+})();
+const pinMark = new THREE.Sprite(
+  new THREE.SpriteMaterial({ map: ringT, color: 0xf0c060, transparent: true, depthTest: false }),
+);
+pinMark.visible = false;
+scene.add(pinMark);
+
+/* ---- Audio: variables ---- */
+
+let ac,
+  ma,
+  lp,
+  dg,
+  GD,
+  WG,
+  SG,
+  HG,
+  AMB = 0,
+  NG,
+  AB,
+  rv,
+  nz;
+const DR = [];
+
+/* ---- Datos del juego: niveles, estilos, textos y estado ---- */
+
+const LV = 50,
+  RM = [1, 1, 2, 2, 3, 3, 3, 4, 4, 5],
+  NM = [1, 1, 2, 2, 3, 3, 4, 4, 5, 5],
+  NK = [0, 1, 1, 1, 1, 2, 2, 2, 3, 3];
+const rooms = (n) => (n <= 10 ? RM[n - 1] : Math.min(7, 5 + Math.floor((n - 11) / 5))),
+  imf = (n) => (n > 30 ? 1 - Math.exp(-(n - 30) / 40) : 0),
+  mcount = (n) => (n <= 10 ? NM[n - 1] : Math.min(9 + Math.round(3 * imf(n)), 5 + Math.floor((n - 10) / 4))),
+  kcount = (n) => (n <= 10 ? NK[n - 1] : Math.min(5, 3 + Math.floor((n - 10) / 8)));
+const MODS = [
+  "",
+  "Niebla espesa. No te fíes de lo que no ves.",
+  "La luz parpadea.",
+  "Crecen más deprisa.",
+  "La puerta se encoge enseguida. Fíjala.",
+  "Empiezan ya enormes.",
+];
+const NEWS = {
+    8: "Mirar sin parar cansa los ojos. Parpadea con Espacio antes de que lo haga tu cuerpo.",
+    9: "Algunos crecen cuando los miras. A esos, no los mires.",
+    12: "Los espejos te enseñan lo que tienes detrás, pero ellos también te ven.",
+    3: "Mirar fijamente cansa los ojos: parpadea con Espacio (o el botón Parpadear).",
+    5: "Pasillos largos: cuidado con lo que viene por el otro extremo.",
+    6: "Techo bajo: aquí no crecen tanto, pero no hay dónde huir.",
+    7: "Algunas puertas interiores solo se abren mientras las miras.",
+    10: "Bajo la luz dorada nada crece: es un refugio.",
+    14: "Algunos reptan, más rápidos y difíciles de encoger.",
+    16: "Una llave puede no ser una llave.",
+  },
+  EC = [
+    [1, 0, 0],
+    [0.2, 0.5, 1],
+    [1, 0, 0],
+    [1, 0.5, 0],
+    [0.3, 1, 0.9],
+    [1, 0.3, 1],
+    [1, 1, 1],
+  ],
+  M = (k) => MOD === k || MODB === k,
+  AUC = [0xff3020, 0x4080ff, 0xff3020, 0xff8020, 0x40ffe0, 0xff40ff, 0xffffff],
+  BOSSMSG = [
+    "",
+    "Un coloso que nunca te pierde. Fíjalo cuando esté pequeño.",
+    "Este solo se encoge si lo ves en un espejo.",
+    "Este crece cuando lo miras. No lo mires.",
+    "Son dos.",
+    "Este te cansa los ojos. Parpadea.",
+  ],
+  THEMES = [
+    { w: "#5a5568", f: "#3c3a46", fc: [0.03, 0.03, 0.04], lamp: 0xffe8c0 },
+    { w: "#4a6a64", f: "#2e4a46", fc: [0.02, 0.05, 0.05], lamp: 0xcfffe8 },
+    { w: "#3f5f3a", f: "#2a3a1e", fc: [0.02, 0.05, 0.02], lamp: 0xe0ffc0 },
+    { w: "#6a4a4a", f: "#3a2424", fc: [0.06, 0.02, 0.02], lamp: 0xffd0c0 },
+    { w: "#4a4a78", f: "#2a2a4a", fc: [0.02, 0.02, 0.07], lamp: 0xc8d0ff },
+  ];
+THEMES.forEach((t, i) => {
+  t.m = i;
+  t.pm = [1, 1.12, 0.89, 1.19, 0.8][i];
+});
+const hints = [
+  "La puerta es diminuta. Mírala y crecerá. Lo que no miras, también crece.",
+  "Una llave diminuta. Mírala hasta poder cogerla.",
+  "Ahora hay más de una sala. Las paredes cortan tu mirada y la suya.",
+  "Agáchate (C) y te oirán menos. Si corres, te oirán de lejos.",
+  "Fija la mirada (F): lo que miras se queda como está, aunque mires a otro lado.",
+  "Dos llaves, en salas distintas. Fija la puerta o a una criatura para ganar tiempo.",
+  "No puedes mirarlo todo.",
+  "Si te pierden, siguen creciendo.",
+  "Tres llaves. Cada sala guarda algo que espera.",
+  "Nada de esto ha terminado.",
+];
+const S = {
+    st: "menu",
+    lv: 1,
+    deaths: 0,
+    got: 0,
+    need: 0,
+    stones: 0,
+    sta: 1,
+    tired: 0,
+    hb: 1,
+    fat: 0,
+    bl: 0,
+    fs: "",
+    foc: 1,
+    pin: null,
+    cand: null,
+    last: "",
+  },
+  P = { x: 0, z: 0, yaw: 0, pitch: 0, t: 0 },
+  keys = {};
+let IM = 0,
+  W = new THREE.Group(),
+  H = 15,
+  pillars = [],
+  mons = [],
+  KS = [],
+  WL = [],
+  stones = [],
+  CH = 4.2,
+  SALT = 0,
+  DC = [],
+  MQ = [],
+  PA = [],
+  FRM = 0,
+  LB = 0.9,
+  LOWFX = false,
+  TM = 0,
+  SEED = 0,
+  DAILY = 0,
+  SC = [],
+  OR = [],
+  MOD = 0,
+  MODB = 0,
+  BS = false,
+  BR = 0,
+  INV = false,
+  GT = [],
+  LZ = [],
+  MIM = 0,
+  FCb = [0.03, 0.03, 0.04],
+  MR = [],
+  FB = 0.045,
+  sa = 0,
+  door,
+  mt;
+
+/* ---- Sistemas: mirada, partículas, fantasma, ayuda y logros ---- */
+
+const rc = new THREE.Raycaster(),
+  fw = new THREE.Vector3(),
+  tv = new THREE.Vector3();
+const seg = (z) => WL.filter((w) => w.z < z).length;
+const gr = (u, s) =>
+  u.type === 1
+    ? s
+      ? 0.9
+      : -0.35
+    : u.type === 3
+      ? BR === 3
+        ? s
+          ? 0.5
+          : -0.3
+        : s
+          ? -0.7
+          : 0.3
+      : s
+        ? -1.1 * (u.type === 2 ? 0.6 : 1)
+        : (0.1 + 0.012 * Math.min(S.lv, 25)) * (M(3) ? 1.8 : 1) * (1 + 0.5 * IM);
+const mirT = (() => {
+  const c = document.createElement("canvas");
+  c.width = 64;
+  c.height = 128;
+  const g = c.getContext("2d"),
+    gr = g.createLinearGradient(0, 0, 64, 128);
+  gr.addColorStop(0, "#6f9fb0");
+  gr.addColorStop(0.5, "#d8f0f8");
+  gr.addColorStop(1, "#5f8ea0");
+  g.fillStyle = gr;
+  g.fillRect(0, 0, 64, 128);
+  g.fillStyle = "rgba(255,255,255,.35)";
+  g.beginPath();
+  g.moveTo(10, 0);
+  g.lineTo(30, 0);
+  g.lineTo(0, 50);
+  g.lineTo(0, 30);
+  g.fill();
+  return new THREE.CanvasTexture(c);
+})();
+Object.assign(NEWS, {
+  13: "Nota en la pared: «Si te pierden, siguen creciendo.»",
+  17: "Nota en la pared: «Las puertas no se abren, se dejan mirar.»",
+  19: "Nota en la pared: «Conté 19 salas. Ya no sé qué es contar.»",
+  23: "Nota en la pared: «El espejo no miente, pero tampoco te quiere.»",
+  27: "Nota en la pared: «Hay una luz dorada que no es para ti.»",
+  33: "Nota en la pared: «Si la llave sonríe, no la cojas.»",
+  37: "Nota en la pared: «Ellos también cuentan salas.»",
+  43: "Nota en la pared: «Casi. Ya casi. No parpadees.»",
+  47: "Nota en la pared: «Al otro lado hay otra sala igual.»",
+});
+Object.assign(NEWS, {
+  15: "Una columna con polvo dorado no es una columna. Mírala.",
+  18: "Una criatura imita tus pasos.",
+  24: "Una criatura grita y llama a las demás.",
+  28: "Algo solo avanza cuando cierras los ojos.",
+});
+const GM = new THREE.Group();
+{
+  const gm = new THREE.MeshBasicMaterial({
+      color: 0x9fd8ff,
+      transparent: true,
+      opacity: 0.25,
+      blending: THREE.AdditiveBlending,
+      depthWrite: false,
+    }),
+    a = new THREE.Mesh(new THREE.CylinderGeometry(0.25, 0.25, 1.5, 8), gm),
+    b = new THREE.Mesh(new THREE.SphereGeometry(0.22, 8, 6), gm);
+  a.position.y = 0.85;
+  b.position.y = 1.75;
+  GM.add(a, b);
+  GM.visible = false;
+  scene.add(GM);
+}
+const PN = 300,
+  pp = new Float32Array(PN * 3).fill(-50),
+  pc = new Float32Array(PN * 3),
+  pv = new Float32Array(PN * 3),
+  pl = new Float32Array(PN);
+let pi = 0;
+const pg2 = new THREE.BufferGeometry();
+pg2.setAttribute("position", new THREE.BufferAttribute(pp, 3));
+pg2.setAttribute("color", new THREE.BufferAttribute(pc, 3));
+const parts = new THREE.Points(
+  pg2,
+  new THREE.PointsMaterial({
+    size: 0.12,
+    vertexColors: true,
+    transparent: true,
+    depthWrite: false,
+    blending: THREE.AdditiveBlending,
+  }),
+);
+parts.frustumCulled = false;
+scene.add(parts);
+const JS = { x: 0, y: 0 },
+  GP = { x: 0, y: 0 };
+const HELP =
+  "<b>Mirar cambia el tamaño.</b> Puertas y llaves crecen cuando las miras. Las criaturas se encogen cuando las miras y crecen cuando les das la espalda.<br><b>Fijar (F):</b> congela unos segundos el tamaño de lo que miras.<br><b>Aliento:</b> se gasta al correr (Shift). <b>Concentración:</b> se gasta al fijar. <b>Fatiga:</b> mirar fijamente la llena y, al llenarse, parpadeas sin querer. <b>Cordura:</b> baja con peligro cerca y se recupera en la luz dorada.<br><b>Parpadear (Espacio):</b> baja la fatiga, pero un instante no ves nada.<br><b>Agacharte (C)</b> y caminar hacen menos ruido. <b>Piedra (E o clic):</b> atrae a las criaturas.<br><b>Estrellas:</b> cada sala da hasta 3 según tu tiempo y tus caídas; se ven en el selector de salas.<br><b>Ayuda (H o botón ?):</b> abre esto de nuevo.";
+const AL = {
+  ojos: "Parpadeo involuntario",
+  escudo: "Un escudo dorado",
+  mimico: "Era un mímico",
+  luz: "Refugio dorado",
+  c1: "Primer coloso (sala 10)",
+  s25: "Sala 25",
+  s50: "Sala 50",
+  est: "Tres estrellas a partir de la sala 10",
+};
+let ACH = null;
+let GPOFF = 0;
+$("ov").onclick = () => {
+  try {
+    ini();
+    ac.resume();
+    applyOpt();
+  } catch (e) {}
+  if (TOUCH) {
+    try {
+      document.documentElement.requestFullscreen().catch(() => {});
+      screen.orientation.lock("landscape").catch(() => {});
+    } catch (e) {}
+  }
+  if (S.st === "dead") build(S.lv);
+  else if (S.st === "win") {
+    S.lv++;
+    build(S.lv);
+  }
+  S.st = "play";
+  $("ov").style.display = "none";
+  $("c").textContent = "";
+  try {
+    rd.domElement.requestPointerLock && rd.domElement.requestPointerLock();
+  } catch (e) {}
+};
+document.addEventListener("pointerlockchange", () => {
+  if (!document.pointerLockElement && S.st === "play") {
+    S.st = "menu";
+    show("Pausa", "Mientras no miras, algo sigue creciendo.", "Continuar");
+  }
+});
+let drag = 0;
+addEventListener("mousedown", () => {
+  drag = 1;
+  if (document.pointerLockElement) toss();
+});
+addEventListener("mouseup", () => (drag = 0));
+addEventListener("mousemove", (e) => {
+  if (S.st === "play" && !TOUCH && (document.pointerLockElement || drag)) {
+    P.yaw -= e.movementX * SENS;
+    P.pitch = clamp(P.pitch - e.movementY * SENS, -1.3, 1.3);
+  }
+});
+addEventListener("keydown", (e) => {
+  keys[e.code] = 1;
+  if (e.code === "KeyE" && !e.repeat) toss();
+  if (e.code === "KeyF" && !e.repeat) fix();
+  if (e.code === "KeyH" && !e.repeat) help();
+  if (e.code === "Space" && !e.repeat) blink();
+  if (e.code.startsWith("Arrow") || e.code === "Space") e.preventDefault();
+});
+addEventListener("keyup", (e) => (keys[e.code] = 0));
+try {
+  S.lv = Math.min(999, +localStorage.getItem("mirada") || 1);
+} catch (e) {}
+
+/* ======================================================================
+   2 · FUNCIONES POR TEMA
+   ====================================================================== */
+
+/* ---- Utilidades y texturas ---- */
+
+function rng(s) {
+  return () => {
+    s |= 0;
+    s = (s + 0x6d2b79f5) | 0;
+    let t = Math.imul(s ^ (s >>> 15), 1 | s);
+    t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+  };
+}
+function tex(base, rx, ry, mode) {
+  const c = document.createElement("canvas");
+  c.width = c.height = 256;
+  const g = c.getContext("2d"),
+    rnd = Math.random;
+  g.fillStyle = base;
+  g.fillRect(0, 0, 256, 256);
+  for (let i = 0; i < 14; i++) {
+    const x = rnd() * 256,
+      y = rnd() * 256,
+      r = 20 + rnd() * 60,
+      gr = g.createRadialGradient(x, y, 0, x, y, r);
+    gr.addColorStop(0, rnd() < 0.5 ? "rgba(0,0,0,.22)" : "rgba(255,255,255,.07)");
+    gr.addColorStop(1, "rgba(0,0,0,0)");
+    g.fillStyle = gr;
+    g.fillRect(0, 0, 256, 256);
+  }
+  g.strokeStyle = "rgba(0,0,0,.55)";
+  g.lineWidth = 3;
+  if (mode === 0) {
+    for (let y = 0; y < 256; y += 32) {
+      g.beginPath();
+      g.moveTo(0, y);
+      g.lineTo(256, y);
+      g.stroke();
+      for (let x = ((y / 32) % 2) * 32; x < 256; x += 64) {
+        g.beginPath();
+        g.moveTo(x, y);
+        g.lineTo(x, y + 32);
+        g.stroke();
+      }
+    }
+  } else if (mode === 1 || mode === 5) {
+    const q = mode === 5 ? 128 : 32;
+    for (let k = 0; k <= 256; k += q) {
+      g.beginPath();
+      g.moveTo(k, 0);
+      g.lineTo(k, 256);
+      g.moveTo(0, k);
+      g.lineTo(256, k);
+      g.stroke();
+    }
+  } else if (mode === 2) {
+    for (let i = 0; i < 9; i++) {
+      g.lineWidth = 1 + rnd() * 2;
+      g.beginPath();
+      g.moveTo(rnd() * 256, rnd() * 256);
+      for (let k = 0; k < 5; k++) g.lineTo(rnd() * 256, rnd() * 256);
+      g.stroke();
+    }
+    for (let i = 0; i < 40; i++) {
+      g.fillStyle = "rgba(40,90,30,.18)";
+      g.beginPath();
+      g.arc(rnd() * 256, rnd() * 256, 4 + rnd() * 12, 0, 7);
+      g.fill();
+    }
+  } else if (mode === 3) {
+    g.strokeStyle = "rgba(120,10,10,.5)";
+    for (let i = 0; i < 12; i++) {
+      g.lineWidth = 1 + rnd() * 3;
+      g.beginPath();
+      let x = rnd() * 256,
+        y = 0;
+      g.moveTo(x, y);
+      while (y < 256) {
+        x += (rnd() - 0.5) * 30;
+        y += 20;
+        g.lineTo(x, y);
+      }
+      g.stroke();
+    }
+  } else if (mode === 6) {
+    for (let x = 0; x < 256; x += 32) {
+      g.beginPath();
+      g.moveTo(x, 0);
+      g.lineTo(x, 256);
+      g.stroke();
+    }
+    g.lineWidth = 1;
+    g.strokeStyle = "rgba(0,0,0,.14)";
+    for (let i = 0; i < 60; i++) {
+      const x = rnd() * 256;
+      g.beginPath();
+      g.moveTo(x, 0);
+      g.lineTo(x + (rnd() - 0.5) * 10, 256);
+      g.stroke();
+    }
+  } else {
+    for (let k = 0; k <= 256; k += 128) {
+      g.beginPath();
+      g.moveTo(k, 0);
+      g.lineTo(k, 256);
+      g.moveTo(0, k);
+      g.lineTo(256, k);
+      g.stroke();
+    }
+    g.strokeStyle = "rgba(160,180,255,.18)";
+    g.lineWidth = 2;
+    g.strokeRect(10, 10, 108, 108);
+    g.strokeRect(138, 138, 108, 108);
+  }
+  const d = g.getImageData(0, 0, 256, 256),
+    a = d.data;
+  for (let i = 0; i < a.length; i += 4) {
+    const v = (rnd() - 0.5) * 26;
+    a[i] += v;
+    a[i + 1] += v;
+    a[i + 2] += v;
+  }
+  g.putImageData(d, 0, 0);
+  const t = new THREE.CanvasTexture(c);
+  t.wrapS = t.wrapT = THREE.RepeatWrapping;
+  t.repeat.set(rx, ry);
+  t.anisotropy = 4;
+  return t;
+}
+
+/* ---- Interfaz, mensajes y opciones ---- */
+
+function msg(t) {
+  if (S.last === t) return;
+  S.last = t;
+  const m = $("msg");
+  m.textContent = t;
+  m.style.opacity = 1;
+  clearTimeout(mt);
+  mt = setTimeout(() => {
+    S.last = "";
+    if (MQ.length) msg(MQ.shift());
+    else m.style.opacity = 0;
+  }, 5500);
+}
+function hud() {
+  $("hud").innerHTML =
+    `Sala ${S.lv}${S.lv > LV ? " (infinito)" : " de " + LV}${IM > 0 ? " · intensidad " + Math.round(IM * 100) + "%" : ""}<br>Llaves: ${S.got} de ${S.need}<br>Piedras: ${S.stones}<br>Caídas: ${S.deaths}${S.shield ? "<br>Escudo: activo" : ""}<br>Mirar: ratón (arrastra) o flechas<br>${TOUCH ? "Ayuda: botón ?" : "Ayuda: H"}`;
+}
+function msgs(a) {
+  const l = a.concat(PA);
+  PA = [];
+  MQ = l.slice(1);
+  S.last = "";
+  msg(l[0] || "");
+}
+function capt(x, z, t) {
+  if (!CAP) return;
+  const dx = x - P.x,
+    dz = z - P.z,
+    f = -(dx * Math.sin(P.yaw) + dz * Math.cos(P.yaw)),
+    r = dx * Math.cos(P.yaw) - dz * Math.sin(P.yaw);
+  $("cap").textContent =
+    "[" +
+    t +
+    " " +
+    (Math.abs(r) > Math.abs(f) ? (r > 0 ? "a la derecha" : "a la izquierda") : f > 0 ? "delante" : "detrás") +
+    "]";
+  $("cap").style.opacity = 1;
+  clearTimeout(ct);
+  ct = setTimeout(() => ($("cap").style.opacity = 0), 900);
+}
+function show(t, d, b) {
+  fill();
+  document.exitPointerLock();
+  $("t").textContent = t;
+  $("d").innerHTML = d;
+  $("c").textContent = "";
+  $("go").textContent = b;
+  $("ov").style.display = "flex";
+}
+function fill() {
+  const m = Math.max(mx(), S.lv);
+  let o = {};
+  try {
+    o = JSON.parse(localStorage.getItem("miradaStars") || "{}");
+  } catch (e) {}
+  $("lvsel").innerHTML = Array.from(
+    { length: m },
+    (_, i) =>
+      `<option value="${i + 1}"${i + 1 === S.lv ? " selected" : ""}>${i + 1}${"★".repeat(o[i + 1] || 0)}</option>`,
+  ).join("");
+}
+function mx() {
+  try {
+    return +localStorage.getItem("miradaMax") || 1;
+  } catch (e) {
+    return 1;
+  }
+}
+function pause() {
+  if (S.st !== "play") return;
+  S.st = "menu";
+  show("Pausa", "Mientras no miras, algo sigue creciendo.", "Continuar");
+}
+function help() {
+  if (S.st !== "play") return;
+  S.st = "menu";
+  show("Ayuda", HELP, "Continuar");
+}
+function applyOpt() {
+  SENS = (0.0022 * $("sens").value) / 5;
+  FOV = +$("fov").value;
+  DIF = +$("dif").value;
+  CAP = $("capc").checked;
+  CB = $("cbc").checked;
+  RFX = $("rfx").checked;
+  $("grain").style.display = RFX ? "none" : "";
+  amb(+$("amb").value);
+  if (ma) ma.gain.value = ($("vol").value / 10) * 1.1;
+  if (AB) AB.gain.value = $("ambv").value / 5;
+  const q = +$("qs").value;
+  if (q !== QL) {
+    QL = q;
+    rd.shadowMap.enabled = q === 0;
+    torch.castShadow = q === 0;
+    torch.visible = q !== 2;
+    LOWFX = q === 2;
+    LB = q === 2 ? 1.5 : 0.9;
+    rd.setPixelRatio(Math.min(devicePixelRatio, [1.5, 1, 0.75][q]));
+    rd.setSize(innerWidth, innerHeight);
+    W.traverse((o) => {
+      if (o.material) {
+        if (LOWFX && o.material.bumpMap) o.material.bumpMap = null;
+        o.material.needsUpdate = true;
+      }
+    });
+  }
+}
+function saveOpt() {
+  try {
+    localStorage.setItem(
+      "miradaOpt2",
+      JSON.stringify({
+        q: +$("qs").value,
+        d: +$("dif").value,
+        f: +$("fov").value,
+        s: +$("sens").value,
+        v: +$("vol").value,
+        ab: +$("ambv").value,
+        c: $("capc").checked,
+        b: $("cbc").checked,
+        r: $("rfx").checked,
+        a2: +$("amb").value,
+      }),
+    );
+  } catch (e) {}
+}
+function diag() {
+  try {
+    const bad = (rd.info.programs || []).filter((p) => p.diagnostics && p.diagnostics.runnable === false);
+    if (!bad.length) return;
+    const d = bad[0].diagnostics,
+      log = (
+        (d.programLog || "") +
+        " " +
+        ((d.vertexShader && d.vertexShader.log) || "") +
+        " " +
+        ((d.fragmentShader && d.fragmentShader.log) || "")
+      )
+        .trim()
+        .slice(0, 260),
+      b = $("err");
+    b.style.display = "block";
+    b.textContent = "Tu dispositivo no soporta algunos efectos. Cambio a calidad Baja. " + log;
+    $("qs").value = 2;
+    applyOpt();
+    saveOpt();
+    build(S.lv);
+  } catch (e) {}
+}
+
+/* ---- Audio ---- */
+
+function ini() {
+  if (ac) return;
+  ac = new (window.AudioContext || window.webkitAudioContext)();
+  ma = ac.createGain();
+  ma.gain.value = 0.55;
+  AB = ac.createGain();
+  AB.connect(ma);
+  ma.connect(ac.destination);
+  lp = ac.createBiquadFilter();
+  lp.type = "lowpass";
+  lp.frequency.value = 200;
+  GD = ac.createGain();
+  lp.connect(GD);
+  GD.connect(AB);
+  [55, 55.8, 82.4].forEach((h) => {
+    const o = ac.createOscillator();
+    o.type = "sawtooth";
+    o.frequency.value = h;
+    const g = ac.createGain();
+    g.gain.value = 0.05;
+    o.connect(g);
+    g.connect(lp);
+    o.start();
+    DR.push(o);
+  });
+  dg = ac.createGain();
+  dg.gain.value = 0;
+  dg.connect(ma);
+  [233, 246.9, 370].forEach((h) => {
+    const o = ac.createOscillator();
+    o.type = "triangle";
+    o.frequency.value = h;
+    const g = ac.createGain();
+    g.gain.value = 0.3;
+    o.connect(g);
+    g.connect(dg);
+    o.start();
+  });
+  newLayers();
+}
+function newLayers() {
+  const nb = ac.createBuffer(1, ac.sampleRate * 2, ac.sampleRate),
+    d = nb.getChannelData(0);
+  for (let i = 0; i < d.length; i++) d[i] = Math.random() * 2 - 1;
+  nz = nb;
+  const rb = ac.createBuffer(2, ac.sampleRate * 2.5, ac.sampleRate);
+  for (let c = 0; c < 2; c++) {
+    const x = rb.getChannelData(c);
+    for (let i = 0; i < x.length; i++) x[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / x.length, 3);
+  }
+  rv = ac.createConvolver();
+  rv.buffer = rb;
+  const rg = ac.createGain();
+  rg.gain.value = 0.6;
+  rv.connect(rg);
+  rg.connect(ma);
+  const ws = ac.createBufferSource();
+  ws.buffer = nb;
+  ws.loop = true;
+  const bp = ac.createBiquadFilter();
+  bp.type = "bandpass";
+  bp.frequency.value = 450;
+  bp.Q.value = 0.9;
+  WG = ac.createGain();
+  WG.gain.value = 0;
+  ws.connect(bp);
+  bp.connect(WG);
+  WG.connect(AB);
+  ws.start();
+  const lf = ac.createOscillator(),
+    lg = ac.createGain();
+  lf.frequency.value = 0.07;
+  lg.gain.value = 220;
+  lf.connect(lg);
+  lg.connect(bp.frequency);
+  lf.start();
+  SG = ac.createGain();
+  SG.gain.value = 0;
+  const so = ac.createOscillator();
+  so.frequency.value = 41;
+  so.connect(SG);
+  SG.connect(AB);
+  so.start();
+  HG = ac.createGain();
+  HG.gain.value = 0;
+  const hp = ac.createGain(),
+    hf = ac.createBiquadFilter();
+  hp.gain.value = 0.8;
+  hf.type = "lowpass";
+  hf.frequency.value = 260;
+  hf.connect(hp);
+  hp.connect(HG);
+  HG.connect(AB);
+  [50, 100.4].forEach((f) => {
+    const o = ac.createOscillator();
+    o.type = "square";
+    o.frequency.value = f;
+    o.connect(hf);
+    o.start();
+  });
+  const hl = ac.createOscillator(),
+    hlg = ac.createGain();
+  hl.frequency.value = 0.25;
+  hlg.gain.value = 0.2;
+  hl.connect(hlg);
+  hlg.connect(hp.gain);
+  hl.start();
+  // Pesadilla: drone disonante (tritono) que "respira" y un zumbido agudo de oído
+  NG = ac.createGain();
+  NG.gain.value = 0;
+  NG.connect(AB);
+  const nf = ac.createBiquadFilter();
+  nf.type = "lowpass";
+  nf.frequency.value = 380;
+  nf.connect(NG);
+  const nl = ac.createOscillator(),
+    nlg = ac.createGain();
+  nl.frequency.value = 0.09;
+  nlg.gain.value = 140;
+  nl.connect(nlg);
+  nlg.connect(nf.frequency);
+  nl.start();
+  // tonos suaves (seno) en tritono: casi inaudibles, solo dan inquietud
+  [98, 138.6].forEach((f) => {
+    const o = ac.createOscillator(), g = ac.createGain();
+    o.type = "sine";
+    o.frequency.value = f;
+    g.gain.value = 0.012;
+    o.connect(g);
+    g.connect(nf);
+    o.start();
+  });
+  amb(AMB);
+}
+function amb(k) {
+  AMB = k;
+  if (!ac || !GD) return;
+  const T = [
+    [0, 0.09, 0.06, 0, 0],
+    [1, 0, 0, 0, 0],
+    [0, 0.025, 0.03, 0, 0],
+    [0, 0.03, 0, 0.08, 0],
+    [0, 0.05, 0.04, 0, 1],
+  ][k];
+  [GD, WG, SG, HG, NG].forEach((g, i) => g.gain.setTargetAtTime(T[i], ac.currentTime, 0.8));
+}
+function drip() {
+  if (!rv) return;
+  const o = ac.createOscillator(),
+    g = ac.createGain(),
+    d = ac.createGain(),
+    f = 700 + Math.random() * 1200,
+    t = ac.currentTime;
+  o.frequency.setValueAtTime(f, t);
+  o.frequency.exponentialRampToValueAtTime(f * 0.45, t + 0.12);
+  g.gain.setValueAtTime(0.12, t);
+  g.gain.exponentialRampToValueAtTime(0.001, t + 0.25);
+  o.connect(g);
+  g.connect(rv);
+  d.gain.value = 0.4;
+  g.connect(d);
+  d.connect(ma);
+  o.start(t);
+  o.stop(t + 0.3);
+}
+function clank() {
+  if (!rv) return;
+  const s = ac.createBufferSource(),
+    bp = ac.createBiquadFilter(),
+    g = ac.createGain(),
+    t = ac.currentTime;
+  s.buffer = nz;
+  bp.type = "bandpass";
+  bp.frequency.value = 500 + Math.random() * 900;
+  bp.Q.value = 8;
+  g.gain.setValueAtTime(0.35, t);
+  g.gain.exponentialRampToValueAtTime(0.001, t + 0.6);
+  s.connect(bp);
+  bp.connect(g);
+  g.connect(rv);
+  g.connect(ma);
+  s.start(t);
+  s.stop(t + 0.7);
+}
+function beep(fr, d, ty, v) {
+  if (!ac) return;
+  const o = ac.createOscillator(),
+    g = ac.createGain();
+  o.type = ty;
+  o.frequency.value = fr;
+  g.gain.setValueAtTime(v, ac.currentTime);
+  g.gain.exponentialRampToValueAtTime(0.001, ac.currentTime + d);
+  o.connect(g);
+  g.connect(ma);
+  o.start();
+  o.stop(ac.currentTime + d);
+}
+function snd(x, z, fr, v) {
+  if (!ac) return;
+  const dx = x - P.x,
+    dz = z - P.z,
+    d = Math.hypot(dx, dz) || 1,
+    vol = v / (1 + d * 0.35);
+  if (vol < 0.01) return;
+  const o = ac.createOscillator(),
+    g = ac.createGain(),
+    pn = ac.createStereoPanner ? ac.createStereoPanner() : null;
+  o.type = "sine";
+  o.frequency.value = fr;
+  g.gain.setValueAtTime(vol, ac.currentTime);
+  g.gain.exponentialRampToValueAtTime(0.001, ac.currentTime + 0.18);
+  o.connect(g);
+  if (pn) {
+    pn.pan.value = clamp((dx * Math.cos(P.yaw) - dz * Math.sin(P.yaw)) / d, -1, 1);
+    g.connect(pn);
+    pn.connect(ma);
+  } else g.connect(ma);
+  o.start();
+  o.stop(ac.currentTime + 0.2);
+}
+function ps(x, z, type, f0, f1, dur, vol) {
+  if (!ac || !rv) return;
+  const dx = x - P.x, dz = z - P.z, d = Math.hypot(dx, dz) || 1, v = vol / (1 + d * 0.25);
+  if (v < 0.01) return;
+  const t = ac.currentTime, o = ac.createOscillator(), g = ac.createGain(), f = ac.createBiquadFilter();
+  const pn = ac.createStereoPanner ? ac.createStereoPanner() : null;
+  o.type = type;
+  o.frequency.setValueAtTime(f0, t);
+  o.frequency.exponentialRampToValueAtTime(f1, t + dur);
+  f.type = "lowpass";
+  f.frequency.value = 500;
+  g.gain.setValueAtTime(0.0001, t);
+  g.gain.linearRampToValueAtTime(v, t + dur * 0.15);
+  g.gain.exponentialRampToValueAtTime(0.001, t + dur);
+  o.connect(f);
+  f.connect(g);
+  if (pn) {
+    pn.pan.value = clamp((dx * Math.cos(P.yaw) - dz * Math.sin(P.yaw)) / d, -1, 1);
+    g.connect(pn);
+    pn.connect(ma);
+    pn.connect(rv);
+  } else {
+    g.connect(ma);
+    g.connect(rv);
+  }
+  o.start(t);
+  o.stop(t + dur + 0.05);
+}
+function whisper() {
+  if (!ac || !rv || !nz) return;
+  const t = ac.currentTime, g = ac.createGain(), pn = ac.createStereoPanner ? ac.createStereoPanner() : null;
+  g.gain.value = 0;
+  if (pn) {
+    pn.pan.value = Math.random() * 2 - 1;
+    g.connect(pn);
+    pn.connect(ma);
+    pn.connect(rv);
+  } else {
+    g.connect(ma);
+    g.connect(rv);
+  }
+  const s = ac.createBufferSource(), b1 = ac.createBiquadFilter(), b2 = ac.createBiquadFilter();
+  s.buffer = nz;
+  b1.type = b2.type = "bandpass";
+  b1.frequency.value = 700 + Math.random() * 300;
+  b2.frequency.value = 1700 + Math.random() * 600;
+  b1.Q.value = b2.Q.value = 4;
+  s.connect(b1);
+  s.connect(b2);
+  b1.connect(g);
+  b2.connect(g);
+  const n = 3 + Math.floor(Math.random() * 4);
+  let tt = t;
+  for (let i = 0; i < n; i++) {
+    g.gain.setValueAtTime(0.0001, tt);
+    g.gain.linearRampToValueAtTime(0.22, tt + 0.04);
+    g.gain.exponentialRampToValueAtTime(0.001, tt + 0.16);
+    tt += 0.12 + Math.random() * 0.12;
+  }
+  s.start(t);
+  s.stop(tt + 0.2);
+}
+function wail() {
+  ps(P.x + (Math.random() - 0.5) * 40, P.z + (Math.random() - 0.5) * 40, "sine", 520, 300, 3.2, 0.5);
+}
+function creak() {
+  ps(P.x + (Math.random() - 0.5) * 20, P.z + (Math.random() - 0.5) * 20, "sawtooth", 90, 160, 1.4, 0.6);
+}
+function stinger() {
+  if (!ac || !rv) return;
+  const t = ac.currentTime, g = ac.createGain();
+  g.gain.setValueAtTime(0.3, t);
+  g.gain.exponentialRampToValueAtTime(0.001, t + 1.1);
+  g.connect(ma);
+  g.connect(rv);
+  [233, 247, 311, 466].forEach((f) => {
+    const o = ac.createOscillator();
+    o.type = "sawtooth";
+    o.frequency.setValueAtTime(f, t);
+    o.frequency.exponentialRampToValueAtTime(f * 0.92, t + 1.1);
+    o.connect(g);
+    o.start(t);
+    o.stop(t + 1.2);
+  });
+  if (nz) {
+    const s = ac.createBufferSource(), nb = ac.createGain();
+    s.buffer = nz;
+    nb.gain.setValueAtTime(0.25, t);
+    nb.gain.exponentialRampToValueAtTime(0.001, t + 0.25);
+    s.connect(nb);
+    nb.connect(ma);
+    s.start(t);
+    s.stop(t + 0.3);
+  }
+}
+function note() {
+  if (!rv) return;
+  const sc = [0, 3, 5, 7, 10],
+    b = [110, 98, 123, 87, 104][TM],
+    f = b * Math.pow(2, sc[Math.floor(Math.random() * 5)] / 12) * (Math.random() < 0.4 ? 2 : 1),
+    o = ac.createOscillator(),
+    g = ac.createGain(),
+    t = ac.currentTime;
+  o.type = "sine";
+  o.frequency.value = f;
+  g.gain.setValueAtTime(0, t);
+  g.gain.linearRampToValueAtTime(0.06, t + 0.6);
+  g.gain.exponentialRampToValueAtTime(0.001, t + 3.5);
+  o.connect(g);
+  g.connect(rv);
+  g.connect(ma);
+  o.start(t);
+  o.stop(t + 3.6);
+}
+function thump() {
+  beep(55, 0.12, "sine", 0.55);
+  setTimeout(() => beep(46, 0.16, "sine", 0.4), 170);
+}
+
+/* ---- Construcción de salas ---- */
+
+function build(n) {
+  const nn = S.note,
+    pa = PA.slice();
+  for (SALT = 0; SALT < 12; SALT++) {
+    S.note = nn;
+    PA = pa.slice();
+    build0(n);
+    if (!unreach().length) break;
+  }
+}
+function build0(n) {
+  scene.remove(W);
+  W = new THREE.Group();
+  scene.add(W);
+  const r = rng(n * 7919 + 13 + SEED + SALT * 977),
+    TH = THEMES[Math.floor((n - 1) / 10) % 5];
+  H = Math.min(13 + n * 1.6, 36);
+  MOD = n < 11 ? 0 : ((n - 11) % 5) + 1;
+  MODB = n > 30 ? ((n - 31) % 5) + 1 : 0;
+  IM = imf(n);
+  if (n > 50 && n % 10 === 1) {
+    S.shield = 1;
+    S.note = (S.note ? S.note + " " : "") + "Un respiro: empiezas con un escudo.";
+  }
+  FB = M(1) ? 0.085 : 0.045;
+  S.pin = null;
+  S.foc = 1;
+  S.fat = 0;
+  S.bl = 0;
+  S.san = 1;
+  BS = n % 10 === 0;
+  CH = BS || n < 5 || (n + 1) % 4 !== 3 ? 4.2 : 3.2;
+  BR = BS ? ((n / 10 - 1) % 5) + 1 : 0;
+  INV = !BS && n >= 14 && n % 7 === 0;
+  MIM = BS || n < 16 ? 0 : Math.min(3, 1 + Math.floor((n - 16) / 10));
+  S.t1 = 0;
+  S.t2 = 0;
+  S.tm = 0;
+  lamp.color.set(TH.lamp);
+  TM = TH.m;
+  DR.forEach((o, i) => (o.frequency.value = [55, 55.8, 82.4][i] * TH.pm));
+  FCb = TH.fc;
+  S.path = [];
+  S.lastp = -1;
+  S.px = undefined;
+  try {
+    S.gh = JSON.parse(localStorage.getItem("miradaGh") || "{}")[n] || null;
+  } catch (e) {
+    S.gh = null;
+  }
+  try {
+    S.best = JSON.parse(localStorage.getItem("miradaBest") || "{}")[n] || 0;
+  } catch (e) {
+    S.best = 0;
+  }
+  rd.domElement.style.filter = "";
+  S.fs = "";
+  $("lid").style.opacity = 0;
+  S.got = 0;
+  S.need = BS ? 3 : kcount(n);
+  S.stones = 3 + (n > 3 ? 2 : 0) + Math.min(3, Math.floor(Math.max(0, n - 30) / 15));
+  S.sta = 1;
+  stones = [];
+  P.x = 0;
+  P.z = H - 2;
+  P.yaw = 0;
+  P.pitch = 0;
+  const tw = tex(TH.w, H, 2.1, TH.m),
+    tf = tex(TH.f, H, H, 5),
+    wm = new THREE.MeshStandardMaterial({ map: tw, bumpMap: tw, bumpScale: 0.8, roughness: 0.92 }),
+    fm = new THREE.MeshStandardMaterial({ map: tf, bumpMap: tf, bumpScale: 0.8, roughness: 0.85 }),
+    cm = new THREE.MeshStandardMaterial({ map: tf, color: 0x777777, roughness: 1 });
+  const fl = new THREE.Mesh(new THREE.PlaneGeometry(H * 2, H * 2), fm);
+  fl.rotation.x = -Math.PI / 2;
+  fl.receiveShadow = true;
+  W.add(fl);
+  const ce = fl.clone();
+  ce.material = cm;
+  ce.position.y = CH;
+  ce.rotation.x = Math.PI / 2;
+  W.add(ce);
+  [
+    [0, -H, 0],
+    [0, H, Math.PI],
+    [-H, 0, Math.PI / 2],
+    [H, 0, -Math.PI / 2],
+  ].forEach(([x, z, ry]) => {
+    const w = new THREE.Mesh(new THREE.PlaneGeometry(H * 2, 4.2), wm);
+    w.position.set(x, 2.1, z);
+    w.rotation.y = ry;
+    w.receiveShadow = true;
+    W.add(w);
+  });
+  // puerta
+  const dx = (r() - 0.5) * (H - 6);
+  door = new THREE.Group();
+  door.position.set(dx, 0, -H + 0.05);
+  const dtx = tex("#6a4a2c", 1, 1, 6),
+    dm = new THREE.MeshStandardMaterial({ map: dtx, bumpMap: dtx, roughness: 0.8 });
+  [
+    [-0.75, 1.3, 0.2, 2.7],
+    [0.75, 1.3, 0.2, 2.7],
+    [0, 2.7, 1.7, 0.2],
+  ].forEach(([x, y, w, h]) => {
+    const b = new THREE.Mesh(new THREE.BoxGeometry(w, h, 0.3), dm);
+    b.position.set(x, y, 0);
+    door.add(b);
+  });
+  const pn = new THREE.Mesh(
+    new THREE.PlaneGeometry(1.3, 2.6),
+    new THREE.MeshBasicMaterial({ color: 0xffd890 }),
+  );
+  pn.position.set(0, 1.3, 0.02);
+  door.add(pn);
+  const dg = glow(0xffb040);
+  dg.scale.set(5, 5, 1);
+  dg.position.set(0, 1.3, 0.4);
+  door.add(dg);
+  door.userData = { s: 0.18, min: 0.1, r: 1.4, cy: 1.3 };
+  W.add(door);
+  // paredes interiores y columnas
+  const R = BS ? 1 : rooms(n),
+    E = [-H];
+  WL = [];
+  pillars = [];
+  GT = [];
+  const tp = tex(TH.w, 2, 2, TH.m),
+    pm = new THREE.MeshStandardMaterial({
+      map: tp,
+      bumpMap: tp,
+      bumpScale: 0.8,
+      color: 0xbbbbbb,
+      roughness: 0.9,
+    });
+  const box = (x, z, hx, hz) => {
+    const m = new THREE.Mesh(new THREE.BoxGeometry(hx * 2, 4.2, hz * 2), pm);
+    m.position.set(x, 2.1, z);
+    m.userData = { hx, hz };
+    m.castShadow = m.receiveShadow = true;
+    m.updateMatrixWorld();
+    W.add(m);
+    pillars.push(m);
+  };
+  for (let k = 1; k < R; k++) {
+    const z = -H + (k * 2 * H) / R,
+      gx = (r() - 0.5) * H * 1.2;
+    WL.push({ z, gx });
+    E.push(z);
+    box((-H + gx - 1.7) / 2, z, (gx - 1.7 + H) / 2, 0.2);
+    box((H + gx + 1.7) / 2, z, (H - gx - 1.7) / 2, 0.2);
+    if (n >= 7 && !BS && r() < 0.6) {
+      const g = new THREE.Mesh(
+        new THREE.BoxGeometry(3.4, 4.2, 0.3),
+        new THREE.MeshStandardMaterial({ color: 0x2a1a10, emissive: 0x401800, roughness: 0.7 }),
+      );
+      g.position.set(gx, 2.1, z);
+      g.userData = { hx: 1.7, hz: 0.2, k: 1, r: 1.9, cy: 0, o: 0 };
+      g.updateMatrixWorld();
+      W.add(g);
+      pillars.push(g);
+      GT.push(g);
+    }
+  }
+  E.push(H);
+  const SH = BS || n < 5 ? 0 : (n + 1) % 4,
+    inb = (x, z) =>
+      pillars.some(
+        (p) =>
+          Math.abs(p.position.x - x) < p.userData.hx + 0.8 &&
+          Math.abs(p.position.z - z) < p.userData.hz + 0.8,
+      );
+  if (SH === 1 || SH === 2)
+    for (let k = 0; k < R; k++) {
+      const dsg = E[k + 1] - E[k],
+        zc = (E[k] + E[k + 1]) / 2 + (r() - 0.5) * dsg * 0.2,
+        hzb = dsg * 0.2,
+        hxb = H * 0.4;
+      if (SH === 1) {
+        const sx = r() < 0.5 ? -1 : 1;
+        box(sx * (H - hxb), zc, hxb, hzb);
+      } else {
+        box(-H * 0.55, zc, hxb, hzb * 1.4);
+        box(H * 0.55, zc, hxb, hzb * 1.4);
+      }
+    }
+  for (let i = 0, t = 0; i < 4 + n * 2 && t < 300; t++) {
+    const x = (r() - 0.5) * H * 1.8,
+      z = (r() - 0.5) * H * 1.8;
+    if (z > H - 5 || Math.hypot(x - dx, z + H) < 3 || WL.some((w) => Math.abs(z - w.z) < 2.5)) continue;
+    box(x, z, 0.65, 0.65);
+    i++;
+  }
+  // llaves
+  SC = [];
+  OR = [];
+  if (n >= 15 && !BS && (n === 15 || r() < 0.5)) {
+    const q = pillars[pillars.length - 1];
+    if (q && q.userData.hx === 0.65) {
+      q.material = q.material.clone();
+      q.material.transparent = true;
+      Object.assign(q.userData, { k: 1, r: 1.3, cy: 0, sg: 0 });
+      SC.push(q);
+    }
+  }
+  KS = [];
+  const km = new THREE.MeshBasicMaterial({ color: CB ? 0xffff80 : 0x70e8ff });
+  for (let i = 0; i < S.need + MIM; i++) {
+    const sg = R > 1 ? (R - 2 - (i % (R - 1)) + R - 1) % (R - 1) : 0;
+    let x,
+      z,
+      t = 0;
+    do {
+      x = (r() - 0.5) * H * 1.6;
+      z = E[sg] + 2 + r() * (E[sg + 1] - E[sg] - 4) * (R > 1 ? 1 : 0.6);
+      t++;
+    } while (
+      t < 30 &&
+      pillars.some(
+        (p) =>
+          Math.abs(p.position.x - x) < p.userData.hx + 1 && Math.abs(p.position.z - z) < p.userData.hz + 1,
+      )
+    );
+    const g = new THREE.Group();
+    g.position.set(x, 1.1, z);
+    const ring = new THREE.Mesh(new THREE.TorusGeometry(0.22, 0.06, 8, 16), km);
+    ring.position.y = 0.3;
+    const sh = new THREE.Mesh(new THREE.BoxGeometry(0.07, 0.55, 0.07), km);
+    sh.position.y = -0.1;
+    const t1 = new THREE.Mesh(new THREE.BoxGeometry(0.2, 0.07, 0.07), km);
+    t1.position.set(0.1, -0.3, 0);
+    const kg = glow(0x40c8ff);
+    kg.scale.set(2.2, 2.2, 1);
+    g.add(ring, sh, t1, kg);
+    g.userData = { s: 0.15, min: 0.12, r: 0.5, cy: 0, mim: i >= S.need };
+    W.add(g);
+    KS.push(g);
+  }
+  // criaturas
+  DC = [];
+  decor(
+    r,
+    TH.m,
+    H,
+    n,
+    (x, z) =>
+      !inb(x, z) &&
+      Math.hypot(x - P.x, z - P.z) > 4 &&
+      Math.hypot(x - dx, z + H) > 4 &&
+      !KS.some((k) => Math.hypot(k.position.x - x, k.position.z - z) < 2.5) &&
+      !WL.some((w) => Math.abs(z - w.z) < 3),
+  );
+  mons = [];
+  for (let i = 0; i < (BS ? 2 : Math.max(1, mcount(n) + DIF - 1)); i++) {
+    const T = n < 9 ? 0 : [0, 1, 2, 4, 5, 6][i % (n < 14 ? 2 : n < 18 ? 3 : n < 24 ? 4 : n < 28 ? 5 : 6)],
+      g = makeMon(r, T);
+    let x, z;
+    do {
+      const sg = Math.floor(r() * R);
+      x = (r() - 0.5) * H * 1.8;
+      z = E[sg] + 1.5 + r() * (E[sg + 1] - E[sg] - 3);
+    } while (Math.hypot(x - P.x, z - P.z) < 11 || inb(x, z));
+    g.position.set(x, 0, z);
+    Object.assign(g.userData, {
+      type: T,
+      s: M(5) ? 1.3 : 0.55,
+      ph: r() * 9,
+      r: 1.1,
+      cy: 1.3,
+      st: n <= 2 ? 1 : 0,
+      tx: P.x,
+      tz: P.z,
+      cd: 0,
+      wait: r() * 3,
+      t2: 10,
+      sees: false,
+      walk: 0,
+    });
+    mons.push(g);
+    W.add(g);
+  }
+  // espejos
+  MR = [];
+  for (let i = 0, c = BR === 2 ? 2 : n < 12 ? 0 : 1 + Math.floor(n / 15); i < c; i++) {
+    const sg = Math.floor(r() * R),
+      x = (r() - 0.5) * H * 1.5;
+    let z = E[sg] + 2 + r() * (E[sg + 1] - E[sg] - 4);
+    if (z > H - 5) z = H - 6;
+    const g = new THREE.Group();
+    g.position.set(x, 0, z);
+    const fr = new THREE.Mesh(
+      new THREE.BoxGeometry(1.5, 2.6, 0.15),
+      new THREE.MeshStandardMaterial({ color: 0x4a3a28 }),
+    );
+    fr.position.y = 1.4;
+    const cr = new THREE.Mesh(new THREE.PlaneGeometry(1.3, 2.4), new THREE.MeshBasicMaterial({ map: mirT }));
+    cr.position.set(0, 1.4, 0.09);
+    g.add(fr, cr);
+    g.userData = { s: 1, r: 1.2, cy: 1.4 };
+    W.add(g);
+    MR.push(g);
+  }
+  if (BS)
+    for (let q = 0; q < (BR === 4 ? 2 : 1); q++) {
+      const g = makeMon(r, 3);
+      g.position.set(q ? H * 0.35 : -H * 0.35, 0, -H * 0.55);
+      Object.assign(g.userData, {
+        type: 3,
+        s: 1.6,
+        min: 1,
+        max: 3.6,
+        ph: 1,
+        r: 1.1,
+        cy: 1.3,
+        st: 1,
+        tx: P.x,
+        tz: P.z,
+        cd: 0,
+        wait: 0,
+        t2: 99,
+        sees: true,
+        walk: 0,
+      });
+      mons.push(g);
+      W.add(g);
+    }
+  // zonas de luz
+  LZ = [];
+  for (let i = 0, c = BS ? 1 : n < 10 ? 0 : 1 + Math.floor(n / 12); i < c; i++) {
+    const sg = Math.floor(r() * R),
+      x = (r() - 0.5) * H * 1.4,
+      z = E[sg] + 2 + r() * (E[sg + 1] - E[sg] - 4);
+    const d = new THREE.Mesh(
+      new THREE.CircleGeometry(3, 24),
+      new THREE.MeshBasicMaterial({
+        color: 0xffc060,
+        transparent: true,
+        opacity: 0.28,
+        blending: THREE.AdditiveBlending,
+        depthWrite: false,
+      }),
+    );
+    d.rotation.x = -Math.PI / 2;
+    d.position.set(x, 0.03, z);
+    const cy = new THREE.Mesh(
+      new THREE.CylinderGeometry(3, 3, 4.2, 20, 1, true),
+      new THREE.MeshBasicMaterial({
+        color: 0xffc060,
+        transparent: true,
+        opacity: 0.07,
+        side: THREE.DoubleSide,
+        blending: THREE.AdditiveBlending,
+        depthWrite: false,
+      }),
+    );
+    cy.position.set(x, 2.1, z);
+    W.add(d, cy);
+    LZ.push({ x, z, r: 3 });
+  }
+  // polvo
+  const pg = new THREE.BufferGeometry(),
+    pa = new Float32Array(900);
+  for (let i = 0; i < 900; i += 3) {
+    pa[i] = (r() - 0.5) * 2 * H;
+    pa[i + 1] = r() * 4;
+    pa[i + 2] = (r() - 0.5) * 2 * H;
+  }
+  pg.setAttribute("position", new THREE.BufferAttribute(pa, 3));
+  W.add(
+    new THREE.Points(
+      pg,
+      new THREE.PointsMaterial({ color: 0x998f80, size: 0.04, transparent: true, opacity: 0.5 }),
+    ),
+  );
+  S.last = "";
+  msgs(
+    [
+      S.note,
+      NEWS[n],
+      BS && BOSSMSG[BR],
+      INV && "Sala invertida: lo que miras se encoge. Mira hacia otro lado y crecerá.",
+      hints[n - 1] || (MOD ? MODS[MOD] : ""),
+      MODB ? MODS[MODB] : "",
+    ].filter(Boolean),
+  );
+  S.note = "";
+  hud();
+  if (LOWFX)
+    W.traverse((o) => {
+      if (o.material && o.material.bumpMap) o.material.bumpMap = null;
+    });
+}
+function decor(r, m, H, n, ok) {
+  const mk = (g, c) => {
+      const o = new THREE.Mesh(g, new THREE.MeshStandardMaterial({ color: c, roughness: 0.9 }));
+      o.castShadow = true;
+      W.add(o);
+      return o;
+    },
+    B = (x, z, h) => DC.push({ x, z, hx: h, hz: h });
+  for (let i = 0, t = 0; i < 6 + Math.min(12, n >> 1) && t < 250; t++) {
+    const x = (r() - 0.5) * H * 1.9,
+      z = (r() - 0.5) * H * 1.9;
+    if (z > H - 4 || !ok(x, z)) continue;
+    i++;
+    if (m === 0) {
+      const o = mk(new THREE.BoxGeometry(1, 0.8, 1), 0x5a4630);
+      o.position.set(x, 0.4, z);
+      o.rotation.y = r() * 3;
+      B(x, z, 0.6);
+      if (r() < 0.4) {
+        const b = mk(new THREE.CylinderGeometry(0.35, 0.35, 0.9, 10), 0x3a3a44);
+        b.position.set(x + 1, 0.45, z + 0.3);
+        B(x + 1, z + 0.3, 0.4);
+      }
+    } else if (m === 1) {
+      const o = mk(new THREE.BoxGeometry(0.9, 0.5, 2), 0xd8d4cc),
+        l = mk(new THREE.BoxGeometry(0.9, 0.1, 2), 0x6a7a78);
+      o.position.set(x, 0.55, z);
+      l.position.set(x, 0.3, z);
+      o.rotation.y = l.rotation.y = r() > 0.5 ? 0 : 1.57;
+      B(x, z, 0.95);
+    } else if (m === 2) {
+      const o = mk(new THREE.DodecahedronGeometry(0.5 + r() * 0.5), 0x4a5a44);
+      o.position.set(x, 0.35, z);
+      o.scale.y = 0.7;
+      B(x, z, 0.6);
+      for (let k = 0; k < 3; k++) {
+        const q = mk(new THREE.ConeGeometry(0.15, 0.8 + r() * 0.8, 6), 0x6a7a58);
+        q.position.set(x + (r() - 0.5) * 1.8, 0.4, z + (r() - 0.5) * 1.8);
+      }
+    } else if (m === 3) {
+      const o = mk(new THREE.SphereGeometry(0.5 + r() * 0.4, 10, 8), 0x7a2a2a);
+      o.scale.set(1.2, 0.6, 1);
+      o.position.set(x, 0.3, z);
+      B(x, z, 0.6);
+    } else {
+      const o = mk(new THREE.BoxGeometry(1, 2, 0.08), 0x2a3050);
+      o.position.set(x, 1, z);
+      o.rotation.y = r() * 3;
+      o.rotation.z = (r() - 0.5) * 0.3;
+      B(x, z, 0.5);
+      const q = mk(new THREE.PlaneGeometry(0.2, 0.3), 0x9fd8e8);
+      q.position.set(x + 0.6, 0.02, z);
+      q.rotation.x = -1.5;
+    }
+  }
+  for (let i = 0; i < 10; i++) {
+    const d = new THREE.Mesh(
+      new THREE.CircleGeometry(0.6 + r() * 1.2, 12),
+      new THREE.MeshBasicMaterial({ color: 0, transparent: true, opacity: 0.35, depthWrite: false }),
+    );
+    d.rotation.x = -Math.PI / 2;
+    d.position.set((r() - 0.5) * H * 1.9, 0.02, (r() - 0.5) * H * 1.9);
+    W.add(d);
+  }
+}
+function unreach() {
+  const gs = new Set(GT),
+    sv = pillars;
+  pillars = sv.filter((p) => !gs.has(p));
+  const st = 0.5,
+    N = Math.ceil((2 * H) / st),
+    W1 = N + 1,
+    ix = (x, z) => [Math.round((x + H) / st), Math.round((z + H) / st)],
+    fr = (i, j) => {
+      const x = -H + i * st,
+        z = -H + j * st,
+        c = col(x, z, 0.35);
+      return Math.hypot(c[0] - x, c[1] - z) < 0.01;
+    },
+    sn = new Uint8Array(W1 * W1),
+    s0 = ix(P.x, P.z),
+    q = [s0];
+  sn[s0[1] * W1 + s0[0]] = 1;
+  while (q.length) {
+    const c = q.pop();
+    for (const d of [
+      [1, 0],
+      [-1, 0],
+      [0, 1],
+      [0, -1],
+      [1, 1],
+      [1, -1],
+      [-1, 1],
+      [-1, -1],
+    ]) {
+      const a = c[0] + d[0],
+        b = c[1] + d[1];
+      if (a < 0 || b < 0 || a > N || b > N || sn[b * W1 + a] || !fr(a, b)) continue;
+      sn[b * W1 + a] = 1;
+      q.push([a, b]);
+    }
+  }
+  pillars = sv;
+  const ok = (x, z) => {
+      const c = ix(x, z);
+      for (let a = -2; a <= 2; a++)
+        for (let b = -2; b <= 2; b++) {
+          const i = c[0] + a,
+            j = c[1] + b;
+          if (i >= 0 && j >= 0 && i <= N && j <= N && sn[j * W1 + i]) return true;
+        }
+      return false;
+    },
+    bad = [];
+  if (!ok(door.position.x, -H + 1.2)) bad.push(0);
+  KS.forEach((k) => {
+    if (!k.userData.mim && !ok(k.position.x, k.position.z)) bad.push(1);
+  });
+  return bad;
+}
+function col(x, z, rad) {
+  for (const p of pillars) {
+    const px = p.position.x,
+      pz = p.position.z,
+      hx = p.userData.hx,
+      hz = p.userData.hz,
+      qx = clamp(x, px - hx, px + hx),
+      qz = clamp(z, pz - hz, pz + hz),
+      ex = x - qx,
+      ez = z - qz,
+      d = Math.hypot(ex, ez);
+    if (d < rad) {
+      if (d > 1e-4) {
+        x = qx + (ex / d) * rad;
+        z = qz + (ez / d) * rad;
+      } else x += rad;
+    }
+  }
+  if (rad < 0.4)
+    for (const d of DC) {
+      const qx = clamp(x, d.x - d.hx, d.x + d.hx),
+        qz = clamp(z, d.z - d.hz, d.z + d.hz),
+        ex = x - qx,
+        ez = z - qz,
+        dd = Math.hypot(ex, ez);
+      if (dd < rad) {
+        if (dd > 1e-4) {
+          x = qx + (ex / dd) * rad;
+          z = qz + (ez / dd) * rad;
+        } else x += rad;
+      }
+    }
+  return [clamp(x, -H + rad, H - rad), clamp(z, -H + rad, H - rad)];
+}
+
+/* ---- Criaturas e IA ---- */
+
+function makeMon(r, t) {
+  const g = new THREE.Group(),
+    b = new THREE.Group(),
+    sk = new THREE.MeshStandardMaterial({
+      color:
+        t === 1
+          ? 0xd0ccd8
+          : t === 3
+            ? 0x3a0c0c
+            : t === 4
+              ? 0x1d3a52
+              : t === 5
+                ? 0x4a2a5a
+                : t === 6
+                  ? 0xd8d0c0
+                  : 0x1b1a22,
+      roughness: 0.85,
+      emissive: t === 3 ? 0x200404 : 0x0a0610,
+    }),
+    pale = new THREE.MeshStandardMaterial({ color: 0xcfc8b8, roughness: 0.7, emissive: 0x1a1814 }),
+    blk = new THREE.MeshBasicMaterial({ color: 0 });
+  const jit = (geo, a) => {
+    const p = geo.attributes.position;
+    for (let i = 0; i < p.count; i++)
+      p.setXYZ(i, p.getX(i) * (1 + (r() - 0.5) * a), p.getY(i), p.getZ(i) * (1 + (r() - 0.5) * a));
+    geo.computeVertexNormals();
+    return geo;
+  };
+  const torso = new THREE.Mesh(jit(new THREE.CylinderGeometry(0.13, 0.2, 1.25, 8, 3), 0.5), sk);
+  torso.position.y = 1.55;
+  torso.rotation.x = 0.12;
+  b.add(torso);
+  const cloth = new THREE.Mesh(
+    jit(new THREE.CylinderGeometry(0.22, 0.6, 1.3, 10, 2, true), 0.6),
+    new THREE.MeshStandardMaterial({
+      color: t === 1 ? 0x9a96a8 : t === 3 ? 0x180606 : 0x0c0b10,
+      roughness: 1,
+      side: THREE.DoubleSide,
+    }),
+  );
+  cloth.position.y = 1;
+  b.add(cloth);
+  const neck = new THREE.Mesh(new THREE.CylinderGeometry(0.04, 0.06, 0.4, 6), sk);
+  neck.position.set(0, 2.35, 0.08);
+  b.add(neck);
+  const head = new THREE.Group();
+  head.position.set(0, 2.62, 0.12);
+  b.add(head);
+  const face = new THREE.Mesh(new THREE.SphereGeometry(0.2, 12, 10), pale);
+  face.scale.set(0.8, 1.35, 0.85);
+  head.add(face);
+  const eyes = [-0.07, 0.07].map((x) => {
+    const so = new THREE.Mesh(new THREE.SphereGeometry(0.065, 8, 6), blk);
+    so.scale.set(1, 1.5, 0.5);
+    so.position.set(x, 0.06, 0.15);
+    head.add(so);
+    const e = new THREE.Mesh(
+      new THREE.SphereGeometry(0.022, 6, 6),
+      new THREE.MeshBasicMaterial({ color: 0xff2020 }),
+    );
+    e.position.set(x, 0.06, 0.19);
+    head.add(e);
+    return e;
+  });
+  const mo = new THREE.Mesh(
+    new THREE.TorusGeometry(0.09, 0.012, 4, 14, Math.PI),
+    new THREE.MeshBasicMaterial({ color: 0x300000 }),
+  );
+  mo.position.set(0, -0.14, 0.17);
+  mo.rotation.z = Math.PI;
+  head.add(mo);
+  for (let k = -2; k <= 2; k++) {
+    const th = new THREE.Mesh(
+      new THREE.BoxGeometry(0.012, 0.04, 0.01),
+      new THREE.MeshBasicMaterial({ color: 0xe8e0c8 }),
+    );
+    th.position.set(k * 0.03, -0.13 - Math.abs(k) * 0.004, 0.18);
+    head.add(th);
+  }
+  const gl = glow(0xff2010);
+  gl.scale.set(0.7, 0.7, 1);
+  gl.position.set(0, 0.06, 0.3);
+  head.add(gl);
+  const au = glow(AUC[t || 0]);
+  au.scale.set(2.6, 3.6, 1);
+  au.position.set(0, 1.4, 0);
+  au.material.opacity = 0.2;
+  g.add(au);
+  const limb = (len, w) => {
+    const m = new THREE.Mesh(new THREE.BoxGeometry(w, len, w), sk);
+    m.position.y = -len / 2;
+    return m;
+  };
+  const arms = [-1, 1].map((sd) => {
+    const sh = new THREE.Group();
+    sh.position.set(sd * 0.24, 2.15, 0);
+    sh.add(limb(0.9, 0.07));
+    const el = new THREE.Group();
+    el.position.y = -0.9;
+    el.add(limb(0.95, 0.055));
+    for (let f = -1; f <= 1; f++) {
+      const fg = limb(0.28, 0.015);
+      fg.position.set(f * 0.03, -1.09, 0);
+      el.add(fg);
+    }
+    sh.add(el);
+    sh.userData.el = el;
+    b.add(sh);
+    return sh;
+  });
+  const legs = [-1, 1].map((sd) => {
+    const lg = new THREE.Group();
+    lg.position.set(sd * 0.1, 1.05, 0);
+    lg.add(limb(0.55, 0.07));
+    const kn = new THREE.Group();
+    kn.position.y = -0.55;
+    kn.add(limb(0.55, 0.06));
+    lg.add(kn);
+    lg.userData.kn = kn;
+    b.add(lg);
+    return lg;
+  });
+  g.add(b);
+  if (t === 2) {
+    b.rotation.x = 1.25;
+    b.position.y = 0.3;
+  }
+  g.userData = { eyes, head, arms, legs, gl, au };
+  return g;
+}
+function spawn(x, z, T, s0) {
+  const g = makeMon(Math.random, T);
+  g.position.set(x, 0, z);
+  Object.assign(g.userData, {
+    type: T,
+    s: s0,
+    ph: Math.random() * 9,
+    r: 1.1,
+    cy: 1.3,
+    st: 1,
+    tx: P.x,
+    tz: P.z,
+    cd: 0,
+    wait: 0,
+    t2: 10,
+    sees: false,
+    walk: 0,
+  });
+  mons.push(g);
+  W.add(g);
+}
+function route(x, z, tx, tz) {
+  const a = seg(z),
+    b = seg(tz);
+  if (a === b) return [tx, tz];
+  const w = WL[a < b ? a : a - 1];
+  return Math.abs(z - w.z) < 1.2 && Math.abs(x - w.gx) < 2 ? [tx, tz] : [w.gx, w.z];
+}
+
+/* ---- Mirada y acciones del jugador ---- */
+
+function seen(o) {
+  if (S.bl > 0) return false;
+  const u = o.userData;
+  tv.set(o.position.x, o.position.y + u.cy * (u.k || u.s), o.position.z).sub(cam.position);
+  const d = tv.length();
+  tv.divideScalar(d);
+  cam.getWorldDirection(fw);
+  const an = Math.acos(clamp(fw.dot(tv), -1, 1));
+  if (an > Math.atan((u.r * (u.k || u.s)) / d) + 0.1) return false;
+  sa = an;
+  rc.set(cam.position, tv);
+  rc.far = d;
+  return rc.intersectObjects(pillars).filter((h) => h.object !== o).length === 0;
+}
+function fix() {
+  if (S.st !== "play") return;
+  if (S.pin) {
+    S.pin = null;
+    beep(300, 0.1, "sine", 0.1);
+  } else if (S.cand && S.foc > 0.25) {
+    S.pin = S.cand;
+    {
+      const c = S.cand,
+        u = c.userData;
+      puff(c.position.x, c.position.y + u.cy * (u.k || u.s), c.position.z, [1, 0.85, 0.4], 25, 2, 0.4);
+    }
+    beep(660, 0.15, "sine", 0.15);
+  }
+}
+function toss() {
+  if (S.st !== "play" || S.stones <= 0) return;
+  S.stones--;
+  hud();
+  const b = new THREE.Mesh(
+    new THREE.SphereGeometry(0.09, 6, 6),
+    new THREE.MeshStandardMaterial({ color: 0x888078 }),
+  );
+  b.position.copy(cam.position);
+  cam.getWorldDirection(fw);
+  b.userData = {
+    v: fw
+      .clone()
+      .multiplyScalar(13)
+      .add(new THREE.Vector3(0, 2.5, 0)),
+  };
+  W.add(b);
+  stones.push(b);
+  beep(520, 0.06, "triangle", 0.1);
+}
+function blink() {
+  if (S.st === "play" && S.bl <= 0 && S.lv >= 3) {
+    S.bl = 0.4;
+    S.fat = Math.max(0, S.fat - 0.5);
+  }
+}
+function pad(dt) {
+  GP.x = GP.y = 0;
+  if (GPOFF) return;
+  let g = null;
+  try {
+    g = navigator.getGamepads ? navigator.getGamepads()[0] : null;
+  } catch (e) {
+    GPOFF = 1;
+    return;
+  }
+  if (!g) return;
+  const dz = (v) => (Math.abs(v) < 0.15 ? 0 : v),
+    b = (i) => g.buttons[i] && g.buttons[i].pressed;
+  GP.x = dz(g.axes[0]);
+  GP.y = dz(g.axes[1]);
+  P.yaw -= (dz(g.axes[2]) * 2.6 * dt * SENS) / 0.0022;
+  P.pitch = clamp(P.pitch - dz(g.axes[3]) * 1.8 * dt, -1.3, 1.3);
+  keys.GpRun = b(6) || b(10);
+  keys.GpCr = b(1);
+  [
+    ["a", 0, fix],
+    ["x", 2, toss],
+    ["y", 3, blink],
+    ["s", 9, pause],
+    ["h", 8, help],
+  ].forEach(([n, i, f]) => {
+    if (b(i) && !GP[n]) f();
+    GP[n] = b(i);
+  });
+}
+
+/* ---- Efectos visuales ---- */
+
+function puff(x, y, z, col, n, sp, up) {
+  for (let k = 0; k < n; k++) {
+    const i = pi++ % PN,
+      a = Math.random() * 6.28,
+      e = (Math.random() - 0.5) * 2;
+    pp[i * 3] = x;
+    pp[i * 3 + 1] = y;
+    pp[i * 3 + 2] = z;
+    pv[i * 3] = Math.cos(a) * sp * (0.3 + Math.random());
+    pv[i * 3 + 1] = e * sp * 0.5 + up;
+    pv[i * 3 + 2] = Math.sin(a) * sp * (0.3 + Math.random());
+    pc[i * 3] = col[0];
+    pc[i * 3 + 1] = col[1];
+    pc[i * 3 + 2] = col[2];
+    pl[i] = 0.7 + Math.random() * 0.7;
+  }
+}
+function stepP(dt) {
+  for (let i = 0; i < PN; i++) {
+    if (pl[i] > 0) {
+      pl[i] -= dt;
+      for (let c = 0; c < 3; c++) {
+        pp[i * 3 + c] += pv[i * 3 + c] * dt;
+        pc[i * 3 + c] *= 0.965;
+      }
+    } else pp[i * 3 + 1] = -50;
+  }
+  pg2.attributes.position.needsUpdate = true;
+  pg2.attributes.color.needsUpdate = true;
+}
+function ghostStep() {
+  const g = S.gh;
+  if (!g) {
+    GM.visible = false;
+    return;
+  }
+  const k = S.tm / 0.2,
+    i = Math.floor(k) * 2;
+  if (i + 3 >= g.length) {
+    GM.visible = false;
+    return;
+  }
+  const f = k % 1;
+  GM.visible = true;
+  GM.position.set(g[i] + (g[i + 2] - g[i]) * f, 0, g[i + 1] + (g[i + 3] - g[i + 1]) * f);
+}
+
+/* ---- Progreso, estrellas y logros ---- */
+
+function ldA() {
+  if (!ACH) {
+    try {
+      ACH = JSON.parse(localStorage.getItem("miradaAch") || "{}");
+    } catch (e) {
+      ACH = {};
+    }
+  }
+}
+function ach(id, q) {
+  ldA();
+  if (ACH[id]) return;
+  ACH[id] = 1;
+  try {
+    localStorage.setItem("miradaAch", JSON.stringify(ACH));
+  } catch (e) {}
+  const t = "Logro: " + AL[id];
+  if (q) PA.push(t);
+  else if (!S.last) msg(t);
+  else MQ.push(t);
+}
+function stars() {
+  const par = Math.min(240, 30 + 5 * S.lv),
+    ld = S.ld || 0;
+  return ld === 0 && S.tm < par ? 3 : ld <= 1 && S.tm < par * 2 ? 2 : 1;
+}
+function svStar(v) {
+  try {
+    const o = JSON.parse(localStorage.getItem("miradaStars") || "{}");
+    if (!o[S.lv] || o[S.lv] < v) o[S.lv] = v;
+    localStorage.setItem("miradaStars", JSON.stringify(o));
+  } catch (e) {}
+}
+function stT() {
+  try {
+    return Object.values(JSON.parse(localStorage.getItem("miradaStars") || "{}")).reduce((a, b) => a + b, 0);
+  } catch (e) {
+    return 0;
+  }
+}
+function rec() {
+  try {
+    const b = JSON.parse(localStorage.getItem("miradaBest") || "{}");
+    if (!b[S.lv] || S.tm < b[S.lv]) {
+      b[S.lv] = S.tm;
+      localStorage.setItem("miradaBest", JSON.stringify(b));
+      const gh = JSON.parse(localStorage.getItem("miradaGh") || "{}");
+      gh[S.lv] = S.path;
+      localStorage.setItem("miradaGh", JSON.stringify(gh));
+    }
+  } catch (e) {}
+}
+function die(m) {
+  S.km = m;
+  S.dd = 0.7;
+  S.st = "dead";
+  S.deaths++;
+  S.ld = (S.ld || 0) + 1;
+  hud();
+  beep(70, 0.9, "sawtooth", 0.9);
+  beep(1800, 0.25, "square", 0.5);
+  cam.fov = RFX ? FOV : 105;
+  cam.updateProjectionMatrix();
+  const L = $("lid");
+  L.style.background = "#b00";
+  L.style.opacity = RFX ? 0 : 1;
+  setTimeout(() => {
+    L.style.background = "#000";
+    L.style.opacity = 0;
+  }, 220);
+  setTimeout(() => {
+    if (S.st === "dead") show("No miraste", "Se hizo enorme a tu espalda.", "Reintentar");
+  }, 750);
+}
+function next() {
+  beep(523, 0.3, "triangle", 0.2);
+  beep(784, 0.5, "triangle", 0.15);
+  if (DAILY) {
+    const d = DAILY,
+      tm = S.tm;
+    DAILY = 0;
+    SEED = 0;
+    try {
+      const bk = +localStorage.getItem("miradaD" + d) || 1e9;
+      if (tm < bk) localStorage.setItem("miradaD" + d, tm);
+      S.lv = +localStorage.getItem("mirada") || 1;
+    } catch (e) {
+      S.lv = 1;
+    }
+    build(S.lv);
+    S.st = "menu";
+    show(
+      "Reto diario superado",
+      `Tiempo: ${tm.toFixed(1)} s.<br>Mañana habrá otra sala.`,
+      "Volver a tu partida",
+    );
+    return;
+  }
+  rec();
+  const stv = stars();
+  S.note = "Sala superada: " + "★".repeat(stv) + "☆".repeat(3 - stv) + " (" + S.tm.toFixed(1) + " s)";
+  svStar(stv);
+  S.ld = 0;
+  if (S.lv === 10) ach("c1", 1);
+  if (S.lv === 25) ach("s25", 1);
+  if (S.lv === 50) ach("s50", 1);
+  if (stv === 3 && S.lv >= 10) ach("est", 1);
+  if (S.lv === LV && !S.inf) {
+    S.inf = 1;
+    S.st = "win";
+    show(
+      "Saliste",
+      `Superaste las ${LV} salas con ${S.deaths} caídas.<br>Al abrir la última puerta hay otra sala igual, y en ella alguien de espaldas que se parece a ti.<br>El edificio no se acaba: sigue el modo infinito.`,
+      "Seguir en modo infinito",
+    );
+  } else {
+    S.lv++;
+    try {
+      localStorage.setItem("mirada", S.lv);
+      localStorage.setItem("miradaMax", Math.max(mx(), S.lv));
+    } catch (e) {}
+    build(S.lv);
+  }
+}
+
+/* ---- Bucle principal de juego ---- */
+
+function upd(dt) {
+  P.t += dt;
+  const k = keys;
+  pad(dt);
+  P.yaw += ((k.ArrowLeft ? 1 : 0) - (k.ArrowRight ? 1 : 0)) * 1.8 * dt;
+  P.pitch = clamp(P.pitch + ((k.ArrowUp ? 1 : 0) - (k.ArrowDown ? 1 : 0)) * 1.4 * dt, -1.3, 1.3);
+  const f = clamp((k.KeyW ? 1 : 0) - (k.KeyS ? 1 : 0) - JS.y - GP.y, -1, 1),
+    sd = clamp((k.KeyD ? 1 : 0) - (k.KeyA ? 1 : 0) + JS.x + GP.x, -1, 1),
+    mv = f || sd,
+    crouch = k.KeyC || k.ControlLeft || k.GpCr;
+  S.tired = S.sta <= 0 ? 1 : S.sta > 0.3 ? 0 : S.tired;
+  const sprint = (k.ShiftLeft || k.ShiftRight || k.GpRun) && !crouch && !S.tired && mv;
+  S.sta = clamp(S.sta + (sprint ? -0.28 : 0.18) * dt, 0, 1);
+  $("barf").style.width = S.sta * 100 + "%";
+  S.step = (S.step || 0) + (crouch ? 1.6 : sprint ? 4.8 : 3) * dt * (mv ? 1 : 0);
+  if (S.step > 1.3) {
+    S.step = 0;
+    beep(crouch ? 70 : sprint ? 120 : 95, 0.07, "triangle", crouch ? 0.03 : 0.09);
+  }
+  if (AMB === 1 && Math.random() < dt * 0.08) beep(40 + Math.random() * 50, 1.2, "sine", 0.05);
+  S.dr = (S.dr || 3) - dt;
+  if (S.dr <= 0 && ac) {
+    S.dr = 2 + Math.random() * 6;
+    if (AMB === 0 || AMB === 2 || AMB === 4) drip();
+  }
+  S.cl = (S.cl || 6) - dt;
+  if (S.cl <= 0 && ac) {
+    S.cl = 5 + Math.random() * 8;
+    if (AMB === 3) clank();
+  }
+  S.nt = (S.nt || 4) - dt;
+  if (S.nt <= 0 && ac) {
+    S.nt = 3 + Math.random() * 5 - (S.dgr || 0) * 3;
+    if (AMB !== 2 && AMB !== 4) note();
+  }
+  S.wh = (S.wh || 5) - dt;
+  if (S.wh <= 0 && ac) {
+    S.wh = 6 + Math.random() * 9 - (1 - S.san) * 4;
+    if (AMB === 4) whisper();
+  }
+  S.wl = (S.wl || 25) - dt;
+  if (S.wl <= 0 && ac) {
+    S.wl = 25 + Math.random() * 30;
+    if (AMB === 4) wail();
+  }
+  S.ck = (S.ck || 12) - dt;
+  if (S.ck <= 0 && ac) {
+    S.ck = 14 + Math.random() * 18;
+    if (AMB === 4) creak();
+  }
+  S.sting = (S.sting || 0) - dt;
+  const sp = (crouch ? 1.6 : sprint ? 4.8 : 3) * dt,
+    l = Math.max(1, Math.hypot(f, sd));
+  [P.x, P.z] = col(
+    P.x + ((-Math.sin(P.yaw) * f + Math.cos(P.yaw) * sd) / l) * sp,
+    P.z + ((-Math.cos(P.yaw) * f - Math.sin(P.yaw) * sd) / l) * sp,
+    0.35,
+  );
+  S.pdx = S.px === undefined ? 0 : P.x - S.px;
+  S.pdz = S.pz === undefined ? 0 : P.z - S.pz;
+  S.px = P.x;
+  S.pz = P.z;
+  let foc = false,
+    fm = false,
+    danger = 0,
+    cand = null,
+    cdist = 1e9;
+  // criaturas
+  const inZ = LZ.some((z) => Math.hypot(P.x - z.x, P.z - z.z) < z.r);
+  let mir = false;
+  for (const q of MR)
+    if (seen(q)) {
+      mir = true;
+      foc = true;
+    }
+  for (const m of mons) {
+    const u = m.userData,
+      bh =
+        mir &&
+        Math.hypot(P.x - m.position.x, P.z - m.position.z) < 14 &&
+        (m.position.x - P.x) * -Math.sin(P.yaw) + (m.position.z - P.z) * -Math.cos(P.yaw) < 0,
+      s = seen(m) || bh;
+    foc = foc || s;
+    fm = fm || s;
+    if (bh) {
+      u.sees = true;
+      u.cd = 0.3;
+    }
+    if (m !== S.pin && Math.random() < dt * 16) {
+      const px = m.position.x + (Math.random() - 0.5) * 0.8 * u.s,
+        pz = m.position.z + (Math.random() - 0.5) * 0.8 * u.s,
+        py = Math.random() * 2.6 * u.s;
+      if (u.type === 1 ? !s : s) puff(px, py, pz, [0.7, 0.85, 1], 1, 0.5, -0.6);
+      else puff(px, py, pz, [0.6, 0.08, 0.05], 1, 0.5, 0.7);
+    }
+    if (m !== S.pin) {
+      let gv = gr(u, BR === 2 && u.type === 3 ? bh : s);
+      if (gv > 0) gv *= [0.7, 1, 1.4][DIF];
+      if (inZ && gv > 0) gv = -0.08;
+      u.s = clamp(u.s + gv * dt, u.min || 0.3, u.max || (CH < 4 ? 1.05 : 2.3));
+    }
+    m.scale.setScalar(u.s);
+    if (s && sa < cdist) {
+      cdist = sa;
+      cand = m;
+    }
+    const hd = Math.hypot(P.x - m.position.x, P.z - m.position.z);
+    if (u.fake) {
+      u.life -= dt;
+      if (u.life <= 0 || hd < 1.5 || (s && u.s < 0.5)) {
+        if (hd < 1.5) {
+          S.san = Math.max(0, S.san - 0.15);
+          beep(1500, 0.3, "square", 0.2);
+        }
+        W.remove(m);
+        mons.splice(mons.indexOf(m), 1);
+        continue;
+      }
+    }
+    u.cd -= dt;
+    if (u.cd <= 0) {
+      u.cd = 0.3;
+      rc.set(
+        tv.set(m.position.x, 1.6 * u.s, m.position.z),
+        fw.set(P.x - m.position.x, 1.4 - 1.6 * u.s, P.z - m.position.z).normalize(),
+      );
+      rc.far = hd;
+      u.sees = hd < (crouch ? 7 : 15) + 4 * IM && rc.intersectObjects(pillars).length === 0;
+      if (u.sees && !u.ws && !u.fake && AMB === 4 && (S.sting || 0) <= 0 && u.type !== 5) {
+        stinger();
+        S.sting = 8;
+      }
+      u.ws = u.sees;
+    }
+    if (u.type === 3 || u.type === 6 || u.sees || (sprint && hd < 14)) {
+      u.tx = P.x;
+      u.tz = P.z;
+      u.st = 1;
+      u.t2 = 10;
+    }
+    if (u.type === 5 && u.sees && (u.scr = (u.scr || 0) - dt) <= 0) {
+      u.scr = 7;
+      for (const o of mons)
+        if (o !== m && Math.hypot(o.position.x - m.position.x, o.position.z - m.position.z) < 30) {
+          o.userData.tx = P.x;
+          o.userData.tz = P.z;
+          o.userData.st = 1;
+          o.userData.t2 = 10;
+        }
+      beep(300, 0.7, "sawtooth", 0.4);
+      capt(m.position.x, m.position.z, "grito");
+    }
+    if (u.st > 0) {
+      u.t2 -= dt;
+      if (u.t2 <= 0 || Math.hypot(u.tx - m.position.x, u.tz - m.position.z) < 1.2) {
+        u.st = 0;
+        u.wait = 2 + Math.random() * 3;
+      }
+    } else {
+      u.wait -= dt;
+      if (u.wait <= 0) {
+        u.tx = (Math.random() - 0.5) * H * 1.8;
+        u.tz = (Math.random() - 0.5) * H * 1.8;
+        u.st = 2;
+        u.t2 = 10;
+      }
+    }
+    const [ax, az] = route(m.position.x, m.position.z, u.tx, u.tz),
+      dx = ax - m.position.x,
+      dz = az - m.position.z,
+      d = Math.hypot(dx, dz) || 1;
+    const v =
+      u.st === 0
+        ? 0
+        : (u.s > 0.45 ? 0.5 + 0.8 * u.s : 0.2) *
+          (0.9 + 0.1 * Math.min(S.lv, 10)) * (1 + 0.2 * IM) *
+          (s ? 0.35 : 1) *
+          (u.st === 2 ? 0.55 : 1) *
+          (u.type === 2
+            ? 1.7
+            : u.type === 3
+              ? 0.85
+              : u.type === 4
+                ? 0.5
+                : u.type === 5
+                  ? hd > 9
+                    ? 0.3
+                    : 0
+                  : u.type === 6
+                    ? S.bl > 0
+                      ? 5
+                      : 0
+                    : 1) *
+          [0.85, 1, 1.15][DIF];
+    const sg = u.sd > 0 ? u.sg : 0,
+      ux = sg ? (-dz / d) * sg : dx / d,
+      uz = sg ? (dx / d) * sg : dz / d,
+      ox = m.position.x,
+      oz = m.position.z;
+    if (u.sd > 0) u.sd -= dt;
+    const [nx, nz] = col(
+      ox + ux * v * dt + (u.type === 4 ? S.pdx || 0 : 0),
+      oz + uz * v * dt + (u.type === 4 ? S.pdz || 0 : 0),
+      0.5,
+    );
+    m.position.x = nx;
+    m.position.z = nz;
+    if (v > 0) m.rotation.y = Math.atan2(ux, uz);
+    if (v > 0 && Math.hypot(nx - ox, nz - oz) < v * dt * 0.3) {
+      u.stk = (u.stk || 0) + dt;
+      if (u.stk > 0.5) {
+        u.stk = 0;
+        u.sd = 1.2;
+        u.sg = Math.random() < 0.5 ? 1 : -1;
+      }
+    } else u.stk = 0;
+    const w = (u.walk += v * dt * 2.2),
+      stp = Math.floor(w / Math.PI);
+    if (stp !== u.stp) {
+      u.stp = stp;
+      if (v > 0) {
+        snd(m.position.x, m.position.z, Math.max(35, 90 - u.s * 25), 0.5 + u.s * 0.3);
+        if (hd < 14) capt(m.position.x, m.position.z, u.fake ? "susurro" : "pasos");
+      }
+    }
+    u.legs.forEach((l, i) => {
+      const a = Math.sin(w + i * Math.PI);
+      l.rotation.x = a * 0.6;
+      l.userData.kn.rotation.x = Math.max(0, -a) * 0.9;
+    });
+    u.arms.forEach((a, i) => {
+      a.rotation.x = -0.15 + Math.sin(w + Math.PI + i * Math.PI) * 0.35;
+      a.userData.el.rotation.x = -0.4;
+      a.rotation.z = (i ? 1 : -1) * 0.12;
+    });
+    u.au.material.opacity = 0.1 + 0.3 * clamp(1 - hd / 12, 0, 1) * (s ? 0.4 : 1);
+    u.br = (u.br || 0) - dt;
+    if (u.br <= 0 && hd < 9 && u.st === 1) {
+      u.br = 2.2;
+      snd(m.position.x, m.position.z, 150 + u.s * 20, 0.25);
+      if (AMB === 4 && hd < 7) ps(m.position.x, m.position.z, "sawtooth", 80, 45, 0.9, 0.5);
+    }
+    if (hd < 4 && u.st === 1) u.arms.forEach((a) => (a.rotation.x = -2.3 + Math.sin(P.t * 14) * 0.15));
+    u.head.rotation.z = Math.sin(P.t * 0.7 + u.ph) * 0.15;
+    u.head.rotation.y = Math.sin(P.t * 0.4 + u.ph) * 0.3;
+    u.gl.material.opacity = s ? 0.15 : 0.8;
+    {
+      const ec = CB ? [1, 1, 0.5] : EC[u.type || 0],
+        bb = s ? 0.25 : 0.8 + Math.random() * 0.2;
+      u.eyes.forEach((e) => e.material.color.setRGB(ec[0] * bb, ec[1] * bb, ec[2] * bb));
+    }
+    danger = Math.max(
+      danger,
+      (1 - clamp(hd / 14, 0, 1)) * clamp((u.s - 0.3) / 1.5, 0, 1) * 1.4 * (u.st === 0 ? 0.4 : 1),
+    );
+    if (u.s > 0.6 && u.type !== 5 && hd < 0.55 + 0.5 * u.s) {
+      if (S.shield) {
+        S.shield = 0;
+        hud();
+        u.s = 0.3;
+        msg("El escudo se rompió.");
+        beep(200, 0.4, "square", 0.5);
+      } else {
+        die(m);
+        return;
+      }
+    }
+  }
+  danger = Math.min(danger, 1);
+  S.dgr = danger;
+  // puerta
+  const du = door.userData,
+    ds = seen(door);
+  foc = foc || ds;
+  if (ds && sa < cdist) {
+    cdist = sa;
+    cand = door;
+  }
+  if (door !== S.pin) du.s = clamp(du.s + (ds !== INV ? 0.45 : M(4) ? -1.3 : -0.4) * dt, du.min, 1);
+  door.scale.setScalar(du.s);
+  if (ds !== INV && du.s < 0.99 && Math.random() < dt * 20)
+    puff(
+      door.position.x + (Math.random() - 0.5) * du.s * 1.4,
+      Math.random() * 2.6 * du.s,
+      door.position.z + 0.3,
+      [1, 0.8, 0.3],
+      1,
+      0.5,
+      0.8,
+    );
+  doorLight.position.set(door.position.x, 1.3 * du.s, door.position.z + 1);
+  doorLight.intensity = 2.2 * du.s;
+  // llaves
+  for (const g of KS)
+    if (g.visible) {
+      const ku = g.userData,
+        ks = seen(g);
+      foc = foc || ks;
+      if (ks && sa < cdist) {
+        cdist = sa;
+        cand = g;
+      }
+      if (g !== S.pin) ku.s = clamp(ku.s + (ks !== INV ? 1 : -0.5) * dt, ku.min, 1);
+      g.scale.setScalar(ku.s);
+      if (ks !== INV && ku.s < 0.99 && Math.random() < dt * 20)
+        puff(g.position.x, g.position.y, g.position.z, [0.3, 0.9, 1], 1, 0.6, 0.4);
+      g.rotation.y += dt * 2;
+      g.position.y = 1.1 + Math.sin(P.t * 2) * 0.08;
+      if (ku.s > 0.75 && Math.hypot(P.x - g.position.x, P.z - g.position.z) < 1.5) {
+        if (ku.mim) {
+          g.visible = false;
+          if (S.pin === g) S.pin = null;
+          spawn(g.position.x, g.position.z, 0, 1.4);
+          msg("Era un mímico.");
+          ach("mimico");
+          beep(90, 0.5, "sawtooth", 0.6);
+          continue;
+        }
+        g.visible = false;
+        if (S.pin === g) S.pin = null;
+        S.got++;
+        puff(g.position.x, g.position.y, g.position.z, [0.3, 0.9, 1], 30, 2.5, 0.5);
+        beep(880, 0.25, "sine", 0.15);
+        beep(1320, 0.4, "sine", 0.1);
+        hud();
+        msg(
+          S.got >= S.need
+            ? "Tienes todas las llaves. Ahora, la puerta."
+            : `Una llave. Faltan ${S.need - S.got}.`,
+        );
+      }
+    }
+  for (let i = SC.length - 1; i >= 0; i--) {
+    const q = SC[i],
+      u = q.userData,
+      vs = seen(q);
+    foc = foc || vs;
+    if (vs) {
+      u.sg += dt * 0.35;
+      if (Math.random() < dt * 10)
+        puff(
+          q.position.x + (Math.random() - 0.5),
+          1 + Math.random() * 2,
+          q.position.z + (Math.random() - 0.5),
+          [0.9, 0.7, 0.3],
+          1,
+          0.3,
+          0.1,
+        );
+    } else u.sg = Math.max(0, u.sg - dt * 0.2);
+    q.material.opacity = 1 - u.sg * 0.9;
+    if (u.sg >= 1) {
+      W.remove(q);
+      pillars.splice(pillars.indexOf(q), 1);
+      SC.splice(i, 1);
+      const o = new THREE.Group(),
+        og = glow(0xffc060);
+      og.scale.set(2.4, 2.4, 1);
+      o.add(
+        new THREE.Mesh(
+          new THREE.SphereGeometry(0.22, 10, 8),
+          new THREE.MeshBasicMaterial({ color: 0xfff0b0 }),
+        ),
+        og,
+      );
+      o.position.set(q.position.x, 1.2, q.position.z);
+      W.add(o);
+      OR.push(o);
+      puff(q.position.x, 1.2, q.position.z, [1, 0.8, 0.3], 30, 2.5, 0.5);
+      beep(500, 0.3, "sine", 0.2);
+    }
+  }
+  for (const o of OR)
+    if (o.visible) {
+      o.position.y = 1.2 + Math.sin(P.t * 2) * 0.1;
+      if (Math.hypot(P.x - o.position.x, P.z - o.position.z) < 1.4) {
+        o.visible = false;
+        S.shield = 1;
+        hud();
+        msg("Algo te protege. Una vez.");
+        ach("escudo");
+        puff(o.position.x, 1.2, o.position.z, [1, 0.8, 0.3], 30, 2.5, 0.5);
+        beep(660, 0.3, "sine", 0.2);
+        beep(990, 0.5, "sine", 0.15);
+      }
+    }
+  for (const q of GT) {
+    const u = q.userData,
+      gs = seen(q);
+    foc = foc || gs;
+    if (gs && sa < cdist) {
+      cdist = sa;
+      cand = q;
+    }
+    if (q !== S.pin) u.o = clamp(u.o + (gs ? 0.6 : -0.6) * dt, 0, 1);
+    q.scale.y = 1 - 0.92 * u.o;
+    q.position.y = 4.2 - 2.1 * q.scale.y;
+    const open = u.o > 0.6,
+      ix = pillars.indexOf(q);
+    if (open && ix >= 0) pillars.splice(ix, 1);
+    else if (!open && ix < 0) pillars.push(q);
+  }
+  for (let i = stones.length - 1; i >= 0; i--) {
+    const b = stones[i],
+      q = b.userData;
+    q.v.y -= 14 * dt;
+    b.position.addScaledVector(q.v, dt);
+    const bp = b.position;
+    if (
+      bp.y < 0.1 ||
+      Math.abs(bp.x) > H ||
+      Math.abs(bp.z) > H ||
+      pillars.some(
+        (p) => Math.abs(p.position.x - bp.x) < p.userData.hx && Math.abs(p.position.z - bp.z) < p.userData.hz,
+      )
+    ) {
+      W.remove(b);
+      stones.splice(i, 1);
+      beep(240, 0.12, "square", 0.25);
+      capt(bp.x, bp.z, "piedra");
+      for (const m of mons) {
+        const u = m.userData;
+        if (Math.hypot(m.position.x - bp.x, m.position.z - bp.z) < 22) {
+          u.tx = bp.x;
+          u.tz = bp.z;
+          u.st = 2;
+          u.t2 = 10;
+        }
+      }
+    }
+  }
+  if (du.s > 0.9 && Math.hypot(P.x - door.position.x, P.z - door.position.z) < 1.6) {
+    if (S.got < S.need) msg(`La puerta pide ${S.need - S.got} llave(s).`);
+    else {
+      next();
+      return;
+    }
+  }
+  // fijar la mirada
+  S.cand = cand;
+  if (S.pin) {
+    S.foc -= dt / 7;
+    if (S.foc <= 0) {
+      S.pin = null;
+      S.foc = 0;
+    }
+  } else S.foc = Math.min(1, S.foc + dt * 0.12);
+  $("bar2f").style.width = S.foc * 100 + "%";
+  $("bar2").style.display = S.lv >= 5 || S.foc < 0.99 ? "block" : "none";
+  if (S.pin) {
+    const u = S.pin.userData,
+      z = Math.max(0.8, u.r * u.s * 2.6);
+    pinMark.visible = true;
+    pinMark.position.set(S.pin.position.x, S.pin.position.y + u.cy * u.s, S.pin.position.z);
+    pinMark.scale.set(z, z, 1);
+  } else pinMark.visible = false;
+  lamp.intensity = M(2) && !RFX && Math.random() < 0.05 ? 0.1 : LB;
+  torch.intensity = lamp.intensity * 1.8;
+  stepP(dt);
+  S.tm += dt;
+  {
+    const a = door.position.x - P.x,
+      b = door.position.z - P.z,
+      sy = Math.sin(P.yaw),
+      cy = Math.cos(P.yaw);
+    $("cmp").style.transform = `rotate(${Math.atan2(a * cy - b * sy, -(a * sy + b * cy))}rad)`;
+    $("cmp").style.opacity = clamp((S.tm - 45) / 60, 0, 0.7);
+  }
+  if (S.tm - S.lastp > 0.2) {
+    S.lastp = S.tm;
+    S.path.push(+P.x.toFixed(1), +P.z.toFixed(1));
+  }
+  ghostStep();
+  $("tm").textContent = S.tm.toFixed(1) + " s" + (S.best ? " / récord " + S.best.toFixed(1) : "");
+  if (S.lv === 1 && door.userData.s > 0.6 && !S.t1) {
+    S.t1 = 1;
+    msg("Bien. Acércate sin dejar de mirarla.");
+  }
+  if (S.lv === 1 && !S.t2 && mons[0] && mons[0].userData.s > 1.3) {
+    S.t2 = 1;
+    msg("Se hace grande a tu espalda. Míralo y se encogerá.");
+  }
+  if (inZ) ach("luz");
+  S.san = clamp(S.san + (danger > 0.3 ? -0.08 * danger : inZ ? 0.15 : 0.03) * dt, 0, 1);
+  $("bar4f").style.width = S.san * 100 + "%";
+  $("bar4").style.display = S.lv >= 3 || S.san < 0.99 ? "block" : "none";
+  if (S.san < 0.5 && Math.random() < dt * 0.4)
+    snd(P.x + (Math.random() - 0.5) * 8, P.z + (Math.random() - 0.5) * 8, 300 + Math.random() * 500, 0.25);
+  if (S.san < 0.4 && mons.length < 14 && Math.random() < dt * 0.15 * (1 - S.san)) {
+    const a = P.yaw + (Math.random() - 0.5) * 2.2,
+      x = clamp(P.x + Math.sin(a) * 10, -H + 1.5, H - 1.5),
+      z = clamp(P.z + Math.cos(a) * 10, -H + 1.5, H - 1.5);
+    spawn(x, z, 0, 1.5);
+    const g = mons[mons.length - 1];
+    g.userData.fake = true;
+    g.userData.life = 6;
+  }
+  if (S.bl > 0) S.bl -= dt;
+  if (S.lv >= 3) {
+    S.fat = clamp(S.fat + (fm ? (BR === 5 ? 0.4 : 0.22) * (1 + 0.3 * IM) : foc ? (BR === 5 ? 0.3 : 0.1) * (1 + 0.3 * IM) : -0.2) * dt, 0, 1);
+    if (S.fat >= 1 && S.bl <= 0) {
+      S.bl = 0.7;
+      S.fat = 0.25;
+      beep(120, 0.3, "sine", 0.2);
+      ach("ojos");
+    }
+  }
+  $("bar3").style.display = S.lv >= 3 ? "block" : "none";
+  $("bar3f").style.width = S.fat * 100 + "%";
+  $("lid").style.opacity = S.bl > 0 ? 1 : 0;
+  const fs = !RFX && S.fat > 0.6 ? `blur(${((S.fat - 0.6) * 8).toFixed(1)}px)` : "";
+  if (fs !== S.fs) {
+    S.fs = fs;
+    rd.domElement.style.filter = fs;
+  }
+  // cámara y ambiente
+  cam.position.set(
+    P.x + (Math.random() - 0.5) * (RFX ? 0 : danger) * 0.03,
+    (crouch ? 1.05 : 1.65) +
+      (mv ? Math.sin(P.t * 9) * 0.035 : 0) +
+      (Math.random() - 0.5) * (RFX ? 0 : danger) * 0.03,
+    P.z,
+  );
+  cam.rotation.set(P.pitch, P.yaw, 0);
+  cam.fov += ((sprint ? FOV + 8 : FOV) - cam.fov) * Math.min(1, dt * 6);
+  cam.updateProjectionMatrix();
+  $("vig").style.opacity = Math.max(danger, (1 - S.san) * 0.6);
+  $("ret").className = foc ? "on" : "";
+  scene.fog.color.setRGB(FCb[0] + danger * 0.14, FCb[1], FCb[2]);
+  scene.fog.density = FB + danger * 0.03;
+  rd.setClearColor(scene.fog.color);
+  if (lp) lp.frequency.value = 200 + danger * 600;
+  if (dg) dg.gain.value = danger * 0.07;
+  S.hb -= dt;
+  if (S.hb <= 0) {
+    if (danger > 0.08) thump();
+    S.hb = 1.3 - danger * 0.9;
+  }
+}
+
+/* ======================================================================
+   3 · ARRANQUE
+   ====================================================================== */
+
+let SENS = 0.0022,
+  FOV = 72,
+  DIF = 1,
+  CAP = false,
+  CB = false,
+  RFX = false,
+  ct,
+  QL = -1;
+$("opt").onclick = (e) => e.stopPropagation();
+$("lvsel").onchange = () => {
+  SEED = 0;
+  DAILY = 0;
+  S.lv = +$("lvsel").value;
+  S.deaths = 0;
+  build(S.lv);
+  if (S.st === "dead" || S.st === "win") S.st = "menu";
+};
+try {
+  const o = JSON.parse(localStorage.getItem("miradaOpt2") || "null");
+  if (o) {
+    $("qs").value = o.q;
+    $("dif").value = o.d;
+    $("fov").value = o.f;
+    $("sens").value = o.s;
+    $("vol").value = o.v;
+    if (o.ab !== undefined) $("ambv").value = o.ab;
+    $("capc").checked = o.c;
+    $("cbc").checked = !!o.b;
+    $("rfx").checked = !!o.r;
+    if (o.a2 !== undefined) $("amb").value = o.a2;
+  }
+} catch (e) {}
+["sens", "vol", "fov", "dif", "qs", "capc", "cbc", "amb", "rfx", "ambv"].forEach(
+  (id) =>
+    ($(id).onchange = $(id).oninput =
+      () => {
+        applyOpt();
+        saveOpt();
+        if (id === "dif" || id === "cbc" || id === "qs") {
+          build(S.lv);
+          if (S.st === "dead" || S.st === "win") S.st = "menu";
+        }
+      }),
+);
+$("dly").onclick = () => {
+  const d = Math.floor(Date.now() / 864e5);
+  SEED = d;
+  DAILY = d;
+  S.lv = 11 + (d % 40);
+  S.deaths = 0;
+  build(S.lv);
+  if (S.st === "dead" || S.st === "win") S.st = "menu";
+  msg("Reto diario: la misma sala para todos hoy.");
+};
+$("rs").onclick = () => {
+  build(S.lv);
+  if (S.st === "dead" || S.st === "win") S.st = "menu";
+};
+applyOpt();
+{
+  const c = document.createElement("canvas");
+  c.width = c.height = 128;
+  const g = c.getContext("2d"),
+    d = g.createImageData(128, 128);
+  for (let i = 0; i < d.data.length; i += 4) {
+    const v = Math.random() * 255;
+    d.data[i] = d.data[i + 1] = d.data[i + 2] = v;
+    d.data[i + 3] = 255;
+  }
+  g.putImageData(d, 0, 0);
+  $("grain").style.backgroundImage = `url(${c.toDataURL()})`;
+}
+const TOUCH = typeof matchMedia === "function" && matchMedia("(pointer:coarse)").matches;
+$("qt").onclick = () => location.reload();
+addEventListener("blur", () => pause());
+document.addEventListener("visibilitychange", () => {
+  if (document.hidden) pause();
+});
+$("hl").onclick = () => show("Ayuda", HELP, "Volver");
+$("al").onclick = () => {
+  ldA();
+  show(
+    "Logros",
+    Object.keys(AL)
+      .map((k) => (ACH[k] ? "★ " : "☆ ") + AL[k])
+      .join("<br>") +
+      "<br><br>Estrellas guardadas: " +
+      stT() +
+      " de " +
+      LV * 3,
+    "Volver",
+  );
+};
+if (TOUCH) {
+  document.body.classList.add("touch");
+  $("tc").style.display = "block";
+  try {
+    if (!localStorage.getItem("miradaOpt2")) {
+      $("qs").value = 1;
+      applyOpt();
+    }
+  } catch (e) {}
+  const tp = {};
+  addEventListener(
+    "touchstart",
+    (e) => {
+      if (S.st !== "play") return;
+      for (const t of e.changedTouches) {
+        if (t.target.closest && t.target.closest("#tb,#bz,#bh")) continue;
+        if (t.clientX < innerWidth * 0.45) {
+          tp[t.identifier] = { j: 1, x: t.clientX, y: t.clientY };
+          const z = $("jz");
+          z.style.display = "block";
+          z.style.left = t.clientX + "px";
+          z.style.top = t.clientY + "px";
+          $("jk").style.transform = "none";
+        } else tp[t.identifier] = { x: t.clientX, y: t.clientY };
+      }
+    },
+    { passive: false },
+  );
+  addEventListener(
+    "touchmove",
+    (e) => {
+      e.preventDefault();
+      for (const t of e.changedTouches) {
+        const o = tp[t.identifier];
+        if (!o) continue;
+        if (o.j) {
+          const R = Math.min(innerWidth, innerHeight) * 0.15,
+            dx = t.clientX - o.x,
+            dy = t.clientY - o.y,
+            l = Math.min(Math.hypot(dx, dy), R),
+            a = Math.atan2(dy, dx),
+            jx = (Math.cos(a) * l) / R,
+            jy = (Math.sin(a) * l) / R;
+          JS.x = Math.abs(jx) < 0.12 ? 0 : jx;
+          JS.y = Math.abs(jy) < 0.12 ? 0 : jy;
+          $("jk").style.transform = `translate(${jx * R}px,${jy * R}px)`;
+        } else {
+          const ts = SENS * 2.2;
+          P.yaw -= (t.clientX - o.x) * ts;
+          P.pitch = clamp(P.pitch - (t.clientY - o.y) * ts, -1.3, 1.3);
+          o.x = t.clientX;
+          o.y = t.clientY;
+        }
+      }
+    },
+    { passive: false },
+  );
+  const te = (e) => {
+    for (const t of e.changedTouches) {
+      const o = tp[t.identifier];
+      if (o && o.j) {
+        JS.x = JS.y = 0;
+        $("jz").style.display = "none";
+      }
+      delete tp[t.identifier];
+    }
+  };
+  addEventListener("touchend", te);
+  addEventListener("touchcancel", te);
+  const hold = (id, fn) => {
+    const b = $(id);
+    b.addEventListener(
+      "touchstart",
+      (e) => {
+        e.preventDefault();
+        fn(1, b);
+      },
+      { passive: false },
+    );
+    b.addEventListener(
+      "touchend",
+      (e) => {
+        e.preventDefault();
+        fn(0, b);
+      },
+      { passive: false },
+    );
+    b.addEventListener("touchcancel", () => fn(0, b));
+  };
+  hold("br", (d, b) => {
+    keys.ShiftLeft = d;
+    b.classList.toggle("on", !!d);
+  });
+  hold("bq", (d) => {
+    if (d) toss();
+  });
+  hold("bf", (d) => {
+    if (d) fix();
+  });
+  hold("bp", (d) => {
+    if (d) blink();
+  });
+  hold("bc", (d, b) => {
+    if (d) {
+      keys.KeyC = !keys.KeyC;
+      b.classList.toggle("on", !!keys.KeyC);
+    }
+  });
+  hold("bz", (d) => {
+    if (d) pause();
+  });
+  hold("bh", (d) => {
+    if (d) help();
+  });
+}
+fill();
+build(S.lv);
+if (S.lv > 1) $("go").textContent = "Continuar en la sala " + S.lv;
+let last = performance.now();
+(function loop(now) {
+  requestAnimationFrame(loop);
+  const dt = Math.min((now - last) / 1000, 0.05);
+  last = now;
+  if (S.st === "play") {
+    try {
+      upd(dt);
+      if (++FRM === 40) diag();
+    } catch (e) {
+      const bx = $("err");
+      bx.style.display = "block";
+      bx.textContent = "Error: " + e.message;
+    }
+  } else if (S.st === "dead" && S.dd > 0 && S.km) {
+    S.dd -= dt;
+    const m = S.km,
+      dx = m.position.x - P.x,
+      dz = m.position.z - P.z;
+    m.scale.setScalar(m.userData.s * (1 + (0.7 - S.dd) * 1.5));
+    m.userData.arms.forEach((a) => (a.rotation.x = -2.4));
+    cam.rotation.set(-0.2, Math.atan2(-dx, -dz), 0);
+  } else {
+    P.t += dt;
+    cam.position.set(P.x + Math.sin(P.t * 0.2) * 2, 1.65, P.z);
+    cam.rotation.set(P.pitch * 0.5, P.yaw + Math.sin(P.t * 0.25) * 0.7, 0);
+  }
+  rd.render(scene, cam);
+})(last);
+
+</script></body></html>
 
