@@ -224,6 +224,16 @@
 
 // ---------- Constantes de mundo ----------
 const WORLD_W = 30000, WORLD_H = 100, BASE_SURFACE = 9;
+const MAX_UP = 250;
+const SET_DEFAULT = { keys:{ inventory:'KeyI', place:'KeyE', shoot:'KeyF', jump:'Space', left:'KeyA', right:'KeyD' }, move:1, jump:1, mine:1, wallStart:4 };
+let SET = (function(){
+  try{
+    const d = JSON.parse(localStorage.getItem('prado_eterno_settings')||'null');
+    if(d) return { keys:Object.assign({}, SET_DEFAULT.keys, d.keys||{}), move:d.move||1, jump:d.jump||1, mine:d.mine||1, wallStart:(d.wallStart===undefined ? 4 : d.wallStart) };
+  }catch(e){}
+  return JSON.parse(JSON.stringify(SET_DEFAULT));
+})();
+function saveSettings(){ try{ localStorage.setItem('prado_eterno_settings', JSON.stringify(SET)); }catch(e){} }
 const GRAVITY = 34, JUMP_V = 11.2, MOVE_SPEED = 5.4, TERMINAL_VY = 26, CLIMB_SPEED = 3.4;
 const PLAYER_W = 0.62, PLAYER_H = 1.72;
 const REACH = 4.3;
@@ -665,10 +675,15 @@ function placeRuins(world, surfaces, chests, villages, key, R){
     if(inVillage(villages,x,14)) continue;
     const s = Math.max(5, Math.min(16, surfaces[x+3]));
     flattenSpan(world, surfaces, x, x+6, s, key, 4);
-    for(let k=0;k<7;k++) setT(world,x+k,s,'piedra_tallada');
-    [0,6].forEach(k=>{ const h=2+Math.floor(R()*3); for(let y=1;y<=h;y++) setT(world,x+k,s-y,'piedra_tallada'); });
-    setT(world,x+3,s-1,'cofre'); chests[chestKey(x+3,s-1)] = mineLoot(key,R);
-    setT(world,x+2,s-1,'antorcha');
+    for(let k=0;k<7;k++){                       // muros derruidos: alturas irregulares, huecos y musgo
+      const edge = k===0 || k===6;
+      const h = edge ? 1+Math.floor(R()*4) : (R()<0.35 ? 1+Math.floor(R()*2) : 0);
+      for(let y=1;y<=h;y++){ if(R()<0.2) continue; setT(world,x+k,s-y, R()<0.3 ? 'musgo' : 'piedra_tallada'); }
+      if(R()<0.4) setT(world,x+k,s, R()<0.5 ? 'musgo' : 'grava');
+    }
+    for(let j=0;j<3;j++){ const rx = x-2+Math.floor(R()*11); const rs = surfaces[rx]; if(rs!==undefined && world[rx][rs-1]==='aire') setT(world,rx,rs-1,'piedra'); }
+    const cx = x+2+Math.floor(R()*3);
+    setT(world,cx,s-1,'cofre'); chests[chestKey(cx,s-1)] = mineLoot(key,R);
     i++;
   }
 }
@@ -792,7 +807,7 @@ function makeMob(species, x, y){
 
 // ---------- Estado global ----------
 const WORLD_SEED = (function(){
-  try{ const d = JSON.parse(localStorage.getItem('prado_eterno_save_v1')||'null'); if(d && (d.v||1)>=12 && d.seed!=null) return d.seed; }catch(e){}
+  try{ const d = JSON.parse(localStorage.getItem('prado_eterno_save_v1')||'null'); if(d && (d.v||1)>=13 && d.seed!=null) return d.seed; }catch(e){}
   return Math.floor(Math.random()*100000);
 })();
 const WORLD_OFF = WORLD_SEED*1.37;
@@ -856,7 +871,7 @@ function inBoundsX(x){ return x>=0 && x<WORLD_W; }
 
 function tileAt(dim, x, y){
   if(!inBoundsX(x)) return 'rocamadre';
-  if(y<0) return 'aire';
+  if(y<0){ if(y<-MAX_UP) return 'rocamadre'; const v = dim.world[x][y]; return v===undefined ? 'aire' : v; }
   if(y>=WORLD_H) return 'rocamadre';
   return dim.world[x][y];
 }
@@ -895,7 +910,19 @@ function updatePlayer(dt){
 
   if(p.invuln>0) p.invuln = Math.max(0, p.invuln-dt);
 
-  p.vx = state.moveInput * MOVE_SPEED;
+  if(state.sleeping){
+    const sl = state.sleeping; sl.t += dt;
+    p.vx = 0; p.vy = 0; p.onGround = true;
+    if((state.moveInput!==0 || state.jumpPressed) && sl.t>0.5){ endSleep(false); return; }
+    if(sl.night){
+      const f = document.getElementById('sleepFade');
+      if(sl.t>1.0 && f) f.style.opacity = '1';
+      if(sl.t>2.4){ endSleep(true); }
+    }
+    return;
+  }
+
+  p.vx = state.moveInput * MOVE_SPEED * SET.move;
   if(state.moveInput>0) p.facing=1; else if(state.moveInput<0) p.facing=-1;
 
   const onLadder = touchingLadder(dim, p.x, p.y, PLAYER_W, PLAYER_H);
@@ -905,7 +932,7 @@ function updatePlayer(dt){
     p.onGround = false;
   } else {
     if(state.jumpPressed && p.onGround){
-      p.vy = -JUMP_V;
+      p.vy = -JUMP_V * SET.jump;
       p.onGround = false;
       SFX.jump();
     }
@@ -936,7 +963,7 @@ function updatePlayer(dt){
     p.onGround = true;
     if(state.fallStartY!==null){
       const dist = p.y - state.fallStartY;
-      if(dist>4.2) takeDamage(Math.max(1, Math.floor((dist-4.2)*3)), 'una caída de '+Math.floor(dist)+' bloques');
+      if(dist>4.2) takeDamage(Math.max(1, Math.floor((dist-4.2)*3)), 'una caída de '+Math.floor(dist)+' bloques', true);
       state.fallStartY = null;
     }
     p.vy = 0;
@@ -969,15 +996,16 @@ function respawnPlayer(){
   updateHUD();
 }
 
-function takeDamage(n, src){
+function takeDamage(n, src, noCap){
   const p = state.player;
   if(p.invuln>0) return;
   let def = 0;
   if(p.armor>=0) def += ARMOR_DEFENSE[ARMOR_TIERS[p.armor]];
   if((p.inv.escudo||0)>=1) def += 0.12;
   if(def>0) n = Math.max(1, Math.round(n*(1-Math.min(0.75,def))));
-  if(p.hp > p.maxHp*0.5) n = Math.min(n, Math.ceil(p.maxHp*0.5));
+  if(!noCap && p.hp > p.maxHp*0.5) n = Math.min(n, Math.ceil(p.maxHp*0.5));
   state.lastHit = src || 'daño';
+  if(state.sleeping) endSleep(false);
   p.hp = Math.max(0, p.hp-n);
   p.invuln = 1.0;
   SFX.hurt();
@@ -1028,7 +1056,7 @@ function updateCamera(){
   let cx = p.x + PLAYER_W/2 - vx/2;
   let cy = p.y + PLAYER_H/2 - vy/2;
   cx = Math.max(0, Math.min(WORLD_W-vx, cx));
-  cy = Math.max(-4, Math.min(WORLD_H-vy+2, cy));
+  cy = Math.max(-MAX_UP-4, Math.min(WORLD_H-vy+2, cy));
   state.camera.x = cx; state.camera.y = cy;
 }
 
@@ -1110,6 +1138,16 @@ function updateMob(dim, mob, dt, p){
     if(!boxCollides(dim, mob.x, ny, spec.w, spec.h)) mob.y = ny;
     mob.onGround = false;
   } else {
+    // subir escalones: si hay un bloque delante y espacio libre encima, salta (antes solo funcionaba hacia un lado)
+    if(mob.onGround && Math.abs(mob.vx)>0.01){
+      const ahx = Math.floor(mob.vx>0 ? mob.x+spec.w+0.1 : mob.x-0.1);
+      const fr = Math.floor(mob.y+spec.h-0.05);
+      if(isSolid(dim,ahx,fr)){
+        let clear = true;
+        for(let r=1;r<=Math.ceil(spec.h);r++){ if(isSolid(dim,ahx,fr-r)) clear = false; }
+        if(clear){ mob.vy = -JUMP_V*0.9; mob.onGround = false; }
+      }
+    }
     mob.vy = Math.min(mob.vy + GRAVITY*dt, TERMINAL_VY);
     const nx = mob.x + mob.vx*dt;
     if(!boxCollides(dim, nx, mob.y, spec.w, spec.h)) mob.x = nx;
@@ -1276,7 +1314,7 @@ function updateInteraction(dt){
   else if(HACHA_SET[t]) toolTierIdx = p.hacha;
   else if(PALA_SET[t]) toolTierIdx = p.pala;
   const mult = PICK_MULT[TIERS[toolTierIdx]];
-  state.mining.progress += dt*1000*mult;
+  state.mining.progress += dt*1000*mult*SET.mine;
   state.mining.tickT = (state.mining.tickT||0) + dt;
   if(state.mining.tickT > 0.15){ state.mining.tickT = 0; SFX.mineTick(); }
   if(state.mining.progress >= info.hardness){
@@ -1389,6 +1427,7 @@ function tryActivatePortal(){
 }
 
 function tryPlace(){
+  if(state.sleeping) return;
   const p = state.player;
   const dim = activeDim();
   if(tryActivatePortal()) return;
@@ -1396,6 +1435,7 @@ function tryPlace(){
   if(tryOpenChest()) return;
   if(tryOpenTrade()) return;
   if(tryOpenTable()) return;
+  if(tryUseBed()) return;
   const tx=state.aim.tx, ty=state.aim.ty;
   if(tileAt(dim,tx,ty)!=='aire') return;
   const pcx=p.x+PLAYER_W/2, pcy=p.y+PLAYER_H/2;
@@ -1500,7 +1540,86 @@ function exitBossArena(){
   updateHUD();
 }
 
+function sleepAt(x,y){
+  state.respawn = { dimKey: state.activeKey, x:x, y:y };
+  const cyclePos = state.time % DAY_LENGTH;
+  if(cyclePos >= DAY_LENGTH*0.5){
+    let delta = DAY_LENGTH*0.25 - cyclePos; if(delta<=0.5) delta += DAY_LENGTH;
+    state.time += delta;
+    addToast('Punto de reaparición guardado. Amanece.');
+  } else addToast('Punto de reaparición guardado. Solo se puede dormir de noche.');
+}
+function tryUseBed(){
+  if(!state.aim.valid) return false;
+  const t = tileAt(activeDim(),state.aim.tx,state.aim.ty);
+  if(t!=='cama' && t!=='cama_pie') return false;
+  const p = state.player;
+  if(Math.hypot(state.aim.tx+0.5-(p.x+PLAYER_W/2), state.aim.ty+0.5-(p.y+PLAYER_H/2))>REACH+0.5){ addToast('Acércate a la cama'); return true; }
+  startSleep(state.aim.tx,state.aim.ty);
+  return true;
+}
+function startSleep(tx,ty){
+  const dim = activeDim(), t = tileAt(dim,tx,ty);
+  if(t!=='cama' && t!=='cama_pie') return;
+  const other = t==='cama' ? 'cama_pie' : 'cama';
+  const ox = [tx-1,tx+1].find(x=>tileAt(dim,x,ty)===other);
+  if(ox===undefined) return;
+  const hx = t==='cama' ? tx : ox, fx = t==='cama' ? ox : tx;
+  const p = state.player;
+  p.x = (hx+fx)/2+0.5-PLAYER_W/2; p.y = ty-PLAYER_H-0.01; p.vx = 0; p.vy = 0;
+  const night = (state.time % DAY_LENGTH) >= DAY_LENGTH*0.5;
+  const hostileNear = dim.mobs.some(m=>SPECIES[m.species].behavior==='hostile' && Math.abs(m.x-p.x)<8 && Math.abs(m.y-p.y)<5);
+  state.sleeping = { hx, fx, ty, t:0, night: night && !hostileNear };
+  state.respawn = { dimKey: state.activeKey, x:p.x, y:p.y };
+  addToast(night && hostileNear ? 'Hay enemigos cerca: no puedes dormir, pero tu punto de reaparición queda guardado' : 'Punto de reaparición guardado');
+  const sb = document.getElementById('sleepBtn'); if(sb) sb.style.display = 'block';
+}
+function endSleep(skip){
+  if(!state.sleeping) return;
+  if(skip){
+    let delta = DAY_LENGTH*0.25 - (state.time % DAY_LENGTH); if(delta<=0.5) delta += DAY_LENGTH;
+    state.time += delta; addToast('Buenos días');
+  }
+  state.sleeping = null;
+  const sb = document.getElementById('sleepBtn'); if(sb) sb.style.display = 'none';
+  const f = document.getElementById('sleepFade'); if(f) f.style.opacity = '0';
+}
+function initSleepUI(){
+  const sb = document.createElement('button');
+  sb.id = 'sleepBtn'; sb.textContent = 'Levantarse';
+  sb.style.cssText = 'position:fixed;left:50%;bottom:calc(150px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);z-index:46;display:none;padding:10px 22px;border-radius:12px;border:1px solid #c99a62;background:rgba(40,30,20,.88);color:#fff;font-size:15px;font-weight:700;cursor:pointer;';
+  sb.onclick = ()=>endSleep(false);
+  document.body.appendChild(sb);
+  const f = document.createElement('div');
+  f.id = 'sleepFade';
+  f.style.cssText = 'position:fixed;inset:0;background:#000;opacity:0;pointer-events:none;transition:opacity 1s;z-index:45;';
+  document.body.appendChild(f);
+}
+function drawSleeper(ctx,cam,ts){
+  const sl = state.sleeping, w = PLAYER_W*ts, h = PLAYER_H*ts;
+  const headLeft = sl.hx < sl.fx, cxm = (sl.hx+sl.fx)/2+0.5;
+  const px = (cxm-cam.x)*ts + (headLeft ? h/2 : -h/2);
+  const py = (sl.ty-cam.y)*ts - w*0.5 - ts*0.08;
+  ctx.save(); ctx.translate(px,py); ctx.rotate(headLeft ? -Math.PI/2 : Math.PI/2);
+  const sx = -w/2, sy = -h;
+  ctx.fillStyle = '#8a5a34';
+  ctx.fillRect(sx+w*0.08, sy+h*0.55, w*0.28, h*0.42); ctx.fillRect(sx+w*0.64, sy+h*0.55, w*0.28, h*0.42);
+  ctx.fillStyle = '#4c7a3a'; ctx.fillRect(sx, sy+h*0.28, w, h*0.32);
+  ctx.fillStyle = '#e8c39e'; ctx.fillRect(sx+w*0.18, sy, w*0.64, h*0.3);
+  ctx.fillStyle = '#3a2a1c'; ctx.fillRect(sx+w*0.2, sy+h*0.12, w*0.14, h*0.04); ctx.fillRect(sx+w*0.62, sy+h*0.12, w*0.14, h*0.04);
+  ctx.fillStyle = 'rgba(194,68,122,0.95)'; ctx.fillRect(sx-1, sy+h*0.36, w+2, h*0.66);      // manta
+  ctx.restore();
+  ctx.fillStyle = '#fff'; ctx.font = 'bold '+Math.round(ts*0.35)+'px sans-serif';
+  const hxp = (cxm-cam.x)*ts + (headLeft ? -h/2 : h/2);
+  for(let i=0;i<3;i++){
+    const ph = (state.time*0.7+i*0.4)%1.2;
+    ctx.globalAlpha = Math.max(0, 1-ph/1.2);
+    ctx.fillText('z', hxp + i*ts*0.22*(headLeft?-1:1), py - ts*0.35 - ph*ts*0.7);
+  }
+  ctx.globalAlpha = 1;
+}
 function updateBed(dt){
+  return;
   const p = state.player;
   const dim = activeDim();
   const fx = Math.floor(p.x+PLAYER_W/2), fy = Math.floor(p.y+PLAYER_H+0.02);
@@ -1511,13 +1630,7 @@ function updateBed(dt){
     el.style.display='block';
     el.querySelector('.bar-fill').style.width = Math.min(100,(state.bedCharge/1.1)*100)+'%';
     if(state.bedCharge>=1.1){
-      state.respawn = { dimKey: state.activeKey, x:p.x, y:p.y };
-      const cyclePos = state.time % DAY_LENGTH;
-      const morningPos = DAY_LENGTH*0.25;
-      let delta = morningPos - cyclePos;
-      if(delta<=0.5) delta += DAY_LENGTH;
-      state.time += delta;
-      addToast('Punto de reaparición guardado. Amanece.');
+      sleepAt(p.x,p.y);
       state.bedCharge=0;
     }
   } else {
@@ -1952,21 +2065,62 @@ function renderInventoryPanel(){
 }
 
 // ---------- Entrada ----------
+function initSettingsUI(){
+  const btn = document.createElement('button');
+  btn.textContent = '⚙️'; btn.setAttribute('aria-label','Ajustes');
+  btn.style.cssText = 'position:fixed;top:calc(104px + env(safe-area-inset-top,0px));right:12px;z-index:50;width:36px;height:36px;border-radius:8px;border:none;background:rgba(0,0,0,0.45);color:#fff;font-size:17px;cursor:pointer;';
+  document.body.appendChild(btn);
+  const ov = document.createElement('div');
+  ov.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.6);display:none;z-index:70;align-items:center;justify-content:center;';
+  document.body.appendChild(ov);
+  const KEYS = [['inventory','Abrir inventario'],['place','Colocar / usar'],['shoot','Disparar'],['jump','Saltar'],['left','Izquierda'],['right','Derecha']];
+  const SLIDERS = [['move','Movimiento',0.5,1.6,0.05,v=>v.toFixed(2)+'×'],['jump','Salto',0.8,1.3,0.05,v=>v.toFixed(2)+'×'],['mine','Minado',0.5,2.5,0.1,v=>v.toFixed(1)+'×'],['wallStart','Fondo de tierra desde',0,12,1,v=>v+' bloques bajo el suelo']];
+  const nameOf = c=>c.replace('Key','').replace('Digit','').replace('Arrow','Flecha ').replace('Space','Espacio');
+  const B = 'background:#2b303a;border:1px solid #444b5a;color:#eee;border-radius:8px;padding:6px 10px;font-size:13px;cursor:pointer;';
+  let capturing = null;
+  function render(){
+    ov.innerHTML = '<div style="background:#20242c;border-radius:14px;padding:16px;max-width:420px;width:92%;max-height:84vh;overflow:auto;color:#eee;font-family:inherit;">'
+      +'<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;"><h2 style="margin:0;font-size:18px;">Ajustes</h2><button id="setClose" style="background:none;border:none;color:#fff;font-size:18px;cursor:pointer;">✕</button></div>'
+      +'<h3 style="font-size:12px;opacity:.7;margin:12px 0 4px;">TECLAS</h3>'
+      +KEYS.map(([k,l])=>'<div style="display:flex;justify-content:space-between;align-items:center;padding:5px 0;"><span>'+l+'</span><button data-key="'+k+'" style="'+B+'">'+(capturing===k ? 'Pulsa una tecla…' : nameOf(SET.keys[k]))+'</button></div>').join('')
+      +'<h3 style="font-size:12px;opacity:.7;margin:14px 0 4px;">SENSIBILIDAD Y FONDO</h3>'
+      +SLIDERS.map(([k,l,a,b,st,f])=>'<div style="padding:6px 0;"><div style="display:flex;justify-content:space-between;font-size:13px;"><span>'+l+'</span><span data-val="'+k+'">'+f(SET[k])+'</span></div><input type="range" data-k="'+k+'" min="'+a+'" max="'+b+'" step="'+st+'" value="'+SET[k]+'" style="width:100%;"></div>').join('')
+      +'<button id="setReset" style="'+B+'margin-top:12px;width:100%;">Restablecer</button></div>';
+    ov.querySelector('#setClose').onclick = ()=>{ capturing=null; ov.style.display='none'; };
+    ov.querySelector('#setReset').onclick = ()=>{ SET = JSON.parse(JSON.stringify(SET_DEFAULT)); saveSettings(); render(); };
+    ov.querySelectorAll('[data-key]').forEach(b=>b.onclick = ()=>{ capturing = b.dataset.key; render(); });
+    ov.querySelectorAll('input[type=range]').forEach(i=>i.oninput = ()=>{
+      const sl = SLIDERS.find(x=>x[0]===i.dataset.k); SET[sl[0]] = parseFloat(i.value); saveSettings();
+      ov.querySelector('[data-val="'+sl[0]+'"]').textContent = sl[5](SET[sl[0]]);
+    });
+  }
+  btn.onclick = ()=>{ ov.style.display='flex'; render(); };
+  ov.addEventListener('click', e=>{ if(e.target===ov){ capturing=null; ov.style.display='none'; } });
+  window.addEventListener('keydown', e=>{
+    if(!capturing) return;
+    e.preventDefault(); e.stopImmediatePropagation();
+    if(e.code!=='Escape'){ SET.keys[capturing] = e.code; saveSettings(); }
+    capturing = null; render();
+  }, true);
+  const ipEl = document.getElementById('invPanel');
+  if(ipEl) new MutationObserver(()=>{ btn.style.display = ipEl.classList.contains('open') ? 'none' : ''; }).observe(ipEl,{attributes:true,attributeFilter:['class']});
+}
 function setupInput(){
   const canvas = document.getElementById('game');
 
   function refreshMoveFromKeys(){
     let m=0;
-    if(state.keys['KeyA']||state.keys['ArrowLeft']) m-=1;
-    if(state.keys['KeyD']||state.keys['ArrowRight']) m+=1;
+    if(state.keys[SET.keys.left]||state.keys['ArrowLeft']) m-=1;
+    if(state.keys[SET.keys.right]||state.keys['ArrowRight']) m+=1;
     state.keyboardMove = m;
   }
 
   window.addEventListener('keydown', e=>{
     state.keys[e.code]=true;
-    if(e.code==='KeyE'){ tryPlace(); }
-    if(e.code==='KeyF'){ shootArrow(); }
-    if(e.code==='Space'||e.code==='KeyW'||e.code==='ArrowUp'){ state.keyboardJump=true; }
+    if(e.code===SET.keys.place){ tryPlace(); }
+    if(e.code===SET.keys.shoot){ shootArrow(); }
+    if(e.code===SET.keys.inventory){ const ip = document.getElementById('invPanel'); ip.classList.toggle('open'); if(ip.classList.contains('open')) renderInventoryPanel(); }
+    if(e.code===SET.keys.jump||e.code==='KeyW'||e.code==='ArrowUp'){ state.keyboardJump=true; }
     if(/^Digit[0-9]$/.test(e.code)){
       const idx = (parseInt(e.code.slice(-1),10)+9)%10;
       const hk = (state.player.hotbar||[])[idx];
@@ -1976,7 +2130,7 @@ function setupInput(){
   });
   window.addEventListener('keyup', e=>{
     state.keys[e.code]=false;
-    if(e.code==='Space'||e.code==='KeyW'||e.code==='ArrowUp'){ state.keyboardJump=false; }
+    if(e.code===SET.keys.jump||e.code==='KeyW'||e.code==='ArrowUp'){ state.keyboardJump=false; }
     refreshMoveFromKeys();
   });
 
@@ -1987,7 +2141,7 @@ function setupInput(){
     const wy = state.camera.y + sy/state.tileSizePx;
     state.aim.tx = Math.floor(wx); state.aim.ty = Math.floor(wy);
     state.aim.wx = wx; state.aim.wy = wy;
-    state.aim.valid = wx>=0 && wx<WORLD_W && wy>=-2 && wy<WORLD_H;
+    state.aim.valid = wx>=0 && wx<WORLD_W && wy>=-MAX_UP && wy<WORLD_H;
   }
 
   canvas.addEventListener('mousemove', e=>updateAimFromClient(e.clientX,e.clientY));
@@ -2217,13 +2371,16 @@ function drawCaveWall(ctx,cssW,cssH,dim,cam,ts){
     const wx = x0+i; if(wx<0 || wx>=WORLD_W) continue;
     const g = dim.surfaces[wx]!==undefined ? dim.surfaces[wx] : BASE_SURFACE;
     for(let j=0;j<ny;j++){
-      const wy = y0+j; if(wy<g || wy>=WORLD_H) continue;
+      const wy = y0+j; if(wy<g+SET.wallStart || wy>=WORLD_H) continue;
       const tn = tileAt(dim,wx,wy); if(tn && TILE_INFO[tn] && TILE_INFO[tn].solid) continue;
       const d = Math.min(1,(wy-g)/60);
       const n1 = tileHash(wx,wy), n2 = tileHash(wx>>1,(wy>>1)+500), n3 = tileHash(wx>>2,(wy>>2)+900);
-      const f = (1-0.7*d)*(0.84+0.1*n1+0.14*n2+0.1*n3);
+      ctx.globalAlpha = Math.min(1,(wy-g-SET.wallStart+1)/3);
+      const dd = wy-g; let b = base;
+      if(k==='A'){ const m = Math.max(0,Math.min(1,(dd-5)/8)); b = [104-18*m, 76+10*m, 52+40*m]; } else if(k==='B'){ b = [98,46,40]; }
+      const f = (1-0.4*d)*(0.88+0.08*n1+0.1*n2+0.08*n3);
       const px = (wx-cam.x)*ts, py = (wy-cam.y)*ts;
-      ctx.fillStyle = 'rgb('+Math.round(base[0]*f)+','+Math.round(base[1]*f)+','+Math.round(base[2]*f)+')';
+      ctx.fillStyle = 'rgb('+Math.round(b[0]*f)+','+Math.round(b[1]*f)+','+Math.round(b[2]*f)+')';
       ctx.fillRect(px,py,ts+1,ts+1);
       if(n1>0.45){
         ctx.fillStyle = 'rgba(0,0,0,.12)'; ctx.beginPath();
@@ -2235,6 +2392,7 @@ function drawCaveWall(ctx,cssW,cssH,dim,cam,ts){
       if(sol(-1,0)) edge(gL,px,py,ts*0.45,ts);
       if(sol(1,0)) edge(gR,px,py,ts,ts);
       if(sol(0,1)) edge(gB,px,py+ts*0.4,ts,ts*0.6);
+      ctx.globalAlpha = 1;
     }
   }
 }
@@ -2358,7 +2516,7 @@ function render(){
   const darkAlpha = state.activeKey==='C' ? 0.3 : Math.max(0,(1-df)*0.55-0.05);
 
   const x0 = Math.max(0, Math.floor(cam.x)-1), x1 = Math.min(WORLD_W-1, Math.ceil(cam.x+state.visibleTilesX)+1);
-  const y0 = Math.max(0, Math.floor(cam.y)-1), y1 = Math.min(WORLD_H-1, Math.ceil(cam.y+state.visibleTilesY)+1);
+  const y0 = Math.max(-MAX_UP, Math.floor(cam.y)-1), y1 = Math.min(WORLD_H-1, Math.ceil(cam.y+state.visibleTilesY)+1);
 
   const torches = [];
   for(let x=x0;x<=x1;x++){
@@ -2374,7 +2532,7 @@ function render(){
   for(let x=x0;x<=x1;x++){
     const surf = dim.surfaces[x]!==undefined ? dim.surfaces[x] : BASE_SURFACE;
     for(let y=y0;y<=y1;y++){
-      const t = dim.world[x][y];
+      const t = dim.world[x][y] || 'aire';
       if(t==='aire') continue;
       const info = TILE_INFO[t];
       const sx = (x-cam.x)*ts, sy=(y-cam.y)*ts;
@@ -2562,6 +2720,7 @@ function drawVillager(ctx, m, cam, ts){
 }
 
 function drawPlayer(ctx, cam, ts){
+  if(state.sleeping){ drawSleeper(ctx,cam,ts); return; }
   const p = state.player;
   const sx = (p.x-cam.x)*ts, sy=(p.y-cam.y)*ts;
   const w = PLAYER_W*ts, h = PLAYER_H*ts;
@@ -2672,7 +2831,7 @@ function serializeCrops(dim){
 function serializeState(){
   const p = state.player;
   return {
-    v: 12,
+    v: 13,
     seed: WORLD_SEED,
     spawnX: SPAWN_X,
     activeKey: state.activeKey,
@@ -2703,7 +2862,7 @@ function loadGame(){
   const p = state.player;
   Object.assign(p.inv, data.player.inv||{});
   if(data.achievements) Object.assign(state.achievements, data.achievements);
-  const sameWorld = (data.v||1) >= 12;
+  const sameWorld = (data.v||1) >= 13;
   if(sameWorld && data.chests){
     ['A','B'].forEach(dk=>{
       const saved = data.chests[dk];
@@ -3044,6 +3203,8 @@ function init(){
   if(ipEl) new MutationObserver(()=>{ muteBtn.style.display = ipEl.classList.contains('open') ? 'none' : ''; }).observe(ipEl,{attributes:true,attributeFilter:['class']});
   initChestUI();
   initTradeUI();
+  initSettingsUI();
+  initSleepUI();
   updateHUD();
   renderHotbar();
   renderInventoryPanel();
@@ -3055,4 +3216,3 @@ init();
 </script>
 </body>
 </html>
-
