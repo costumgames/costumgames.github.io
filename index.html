@@ -3,1128 +3,1126 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
+    <meta name="theme-color" content="#06100d">
     <link rel="icon" type="image/png" href="./costum-favicon.png">
-
-<title>CostumGames — Juegos y entretenimiento</title>
-
-<meta name="description" content="CostumGames: juegos, entretenimiento y contenido para descubrir y disfrutar.">
-
-<link rel="canonical" href="https://costumgames.github.io/">
-
-<!-- Identidad del sitio para buscadores -->
-<script type="application/ld+json">
-{
-  "@context": "https://schema.org",
-  "@type": "WebSite",
-  "name": "CostumGames",
-  "alternateName": "Costum",
-  "url": "https://costumgames.github.io/"
-}
-</script>
-
-    <!-- Identidad del sitio para buscadores -->
+    <title>CostumGames — Juegos y entretenimiento</title>
+    <meta name="description" content="Descubre y juega a los juegos de CostumGames: aventuras, retos, puzles, terror y mucho más.">
+    <link rel="canonical" href="https://costumgames.github.io/">
+    <meta property="og:title" content="CostumGames — Juegos y entretenimiento">
+    <meta property="og:description" content="Descubre juegos, supera retos y encuentra tu próxima aventura en CostumGames.">
+    <meta property="og:image" content="https://costumgames.github.io/costum-logo.png">
+    <meta property="og:url" content="https://costumgames.github.io/">
+    <meta property="og:type" content="website">
+    <meta property="og:see_also" content="https://www.instagram.com/costumgames_/">
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="CostumGames — Juegos y entretenimiento">
+    <meta name="twitter:description" content="Descubre juegos, supera retos y encuentra tu próxima aventura en CostumGames.">
+    <meta name="twitter:image" content="https://costumgames.github.io/costum-logo.png">
     <script type="application/ld+json">
     {
       "@context": "https://schema.org",
       "@type": "WebSite",
       "name": "CostumGames",
-      "alternateName": "Costum Games",
+      "alternateName": ["Costum", "Costum Games"],
       "url": "https://costumgames.github.io/"
     }
     </script>
-
-
-    <!-- Redes sociales -->
-    <meta property="og:title" content="CostumGames — Juegos online gratis">
-    <meta property="og:description" content="Juega gratis a todos los juegos de CostumGames.">
-    <meta property="og:image" content="https://costumgames.github.io/costum-logo.png">
-    <meta property="og:url" content="https://costumgames.github.io/">
-    <meta property="og:type" content="website">
-    <meta property="og:see_also" content="https://www.instagram.com/costumgames_/">
-
-    <meta name="twitter:card" content="summary_large_image">
-    <meta name="twitter:title" content="CostumGames — Juegos online gratis">
-    <meta name="twitter:description" content="Juega gratis a todos los juegos de CostumGames.">
-    <meta name="twitter:image" content="https://costumgames.github.io/costum-logo.png">
-
-    <!-- Google Analytics -->
+    <!-- Google Analytics: código conservado -->
     <script async src="https://www.googletagmanager.com/gtag/js?id=G-CF5MVG5PV5"></script>
     <script>
         window.dataLayer = window.dataLayer || [];
-
-        function gtag() {
-            dataLayer.push(arguments);
-        }
-
+        function gtag(){dataLayer.push(arguments);}
         gtag('js', new Date());
         gtag('config', 'G-CF5MVG5PV5');
     </script>
-
-    <!-- Google AdSense -->
-    <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-7947098371839453"
-     crossorigin="anonymous"></script>
-
-
+    <!-- Google AdSense: código conservado -->
+    <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-7947098371839453" crossorigin="anonymous"></script>
     <style>
-        * {
-            box-sizing: border-box;
+        :root {
+            color-scheme: dark;
+            --bg: #050b09;
+            --panel: #0a1712;
+            --panel-2: #0d2018;
+            --panel-3: #10281e;
+            --green: #39e69b;
+            --green-2: #17bd7b;
+            --green-soft: rgba(57, 230, 155, .13);
+            --text: #f4fbf7;
+            --muted: #a2b6aa;
+            --line: rgba(174, 224, 197, .15);
+            --max-width: 1540px;
+            --shadow: 0 22px 65px rgba(0,0,0,.30);
         }
-
-        html {
-            scroll-behavior: smooth;
-        }
-
+        * { box-sizing: border-box; }
+        html { scroll-behavior: smooth; scroll-padding-top: 100px; }
         body {
-            margin: 0;
-            min-height: 100vh;
-            font-family: Arial, Helvetica, sans-serif;
-            color: #ffffff;
-
+            margin: 0; min-height: 100vh; color: var(--text);
+            font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
             background:
-                radial-gradient(
-                    circle at 15% 0%,
-                    rgba(101, 230, 165, 0.12),
-                    transparent 35%
-                ),
-                radial-gradient(
-                    circle at 85% 0%,
-                    rgba(110, 90, 255, 0.12),
-                    transparent 35%
-                ),
-                linear-gradient(
-                    180deg,
-                    #07110d 0%,
-                    #020605 100%
-                );
+                radial-gradient(ellipse at 4% 2%, rgba(19, 132, 83, .17), transparent 33rem),
+                radial-gradient(ellipse at 96% 16%, rgba(17, 91, 75, .14), transparent 36rem),
+                linear-gradient(180deg, #06110d 0%, var(--bg) 52%, #030706 100%);
         }
-
-        .container {
-            width: min(1200px, 92%);
-            margin: auto;
-            padding: 28px 0 70px;
+        body::before {
+            content: ""; position: fixed; inset: 0; z-index: -1; pointer-events: none; opacity: .17;
+            background-image: linear-gradient(rgba(190,255,220,.035) 1px, transparent 1px), linear-gradient(90deg, rgba(190,255,220,.035) 1px, transparent 1px);
+            background-size: 54px 54px; mask-image: linear-gradient(to bottom, black, transparent 75%);
         }
-
-        header {
-            text-align: center;
-            margin-bottom: 18px;
+        a { color: inherit; }
+        button, input { font: inherit; }
+        button { color: inherit; }
+        .container { width: min(var(--max-width), calc(100% - 64px)); margin: 0 auto; }
+        .site-header {
+            position: sticky; top: 0; z-index: 50; border-bottom: 1px solid rgba(132,211,169,.13);
+            background: rgba(4, 12, 9, .84); backdrop-filter: blur(18px); -webkit-backdrop-filter: blur(18px);
         }
+        .header-inner { width: min(var(--max-width), calc(100% - 64px)); min-height: 68px; margin: 0 auto; display: flex; align-items: center; justify-content: space-between; gap: 26px; }
+        .brand-link { display: inline-flex; align-items: center; flex: 0 0 auto; text-decoration: none; }
+        .brand-logo { width: 142px; max-width: 18vw; height: auto; display: block; object-fit: contain; }
+        .main-nav { display: flex; align-items: center; justify-content: center; gap: clamp(18px, 2.5vw, 38px); margin-left: auto; }
+        .nav-link { position: relative; padding: 11px 2px; color: #c2d0c8; text-decoration: none; font-size: 14px; font-weight: 700; transition: color .18s ease; }
+        .nav-link::after { content: ""; position: absolute; left: 0; right: 0; bottom: 3px; height: 2px; border-radius: 2px; background: var(--green); transform: scaleX(0); transform-origin: left; transition: transform .18s ease; }
+        .nav-link:hover, .nav-link.active { color: #fff; }
+        .nav-link:hover::after, .nav-link.active::after { transform: scaleX(1); }
+        .header-actions { display: flex; align-items: center; gap: 10px; }
+        .header-favorites { display: inline-flex; align-items: center; gap: 9px; min-height: 43px; padding: 0 15px; border: 1px solid rgba(57,230,155,.38); border-radius: 999px; background: rgba(10,35,24,.7); color: #e8fff3; font-size: 13px; font-weight: 800; cursor: pointer; transition: background .2s ease, border-color .2s ease, transform .2s ease; }
+        .header-favorites:hover { background: rgba(35,130,82,.22); border-color: var(--green); transform: translateY(-1px); }
+        .header-favorites svg { width: 17px; height: 17px; fill: none; stroke: currentColor; stroke-width: 1.8; }
+        .favorite-total { min-width: 19px; height: 19px; display: inline-grid; place-items: center; padding: 0 5px; border-radius: 20px; background: rgba(57,230,155,.18); color: var(--green); font-size: 11px; }
+        .menu-toggle { display: none; width: 42px; height: 42px; border: 1px solid var(--line); border-radius: 12px; background: rgba(255,255,255,.04); cursor: pointer; }
+        .menu-toggle svg { width: 20px; height: 20px; fill: none; stroke: currentColor; stroke-width: 2; }
 
-        .costum-logo {
-            width: 190px;
-            max-width: 45%;
-            height: auto;
-            display: block;
-            margin: 0 auto 10px;
+        .hero {
+            position: relative; isolation: isolate; overflow: hidden; display: grid;
+            grid-template-columns: minmax(0, 1fr) minmax(250px, 300px); align-items: center; gap: 20px;
+            min-height: 0; margin: 12px auto 13px; padding: 18px 25px;
+            border: 1px solid rgba(65,226,151,.25); border-radius: 20px;
+            background: radial-gradient(ellipse at 88% 15%, rgba(24,150,99,.14), transparent 38%), linear-gradient(112deg, rgba(9,37,25,.98) 0%, rgba(5,22,16,.96) 62%, rgba(7,29,27,.97) 100%);
+            box-shadow: 0 15px 42px rgba(0,0,0,.22), inset 0 1px rgba(255,255,255,.035);
         }
+        .hero-copy-wrap { position: relative; z-index: 2; max-width: 760px; }
+        .eyebrow { display: inline-flex; align-items: center; gap: 8px; margin: 0 0 7px; padding: 6px 10px; border: 1px solid rgba(57,230,155,.2); border-radius: 999px; background: rgba(9,56,35,.56); color: #8cf2bd; font-size: 10px; font-weight: 900; letter-spacing: 1.1px; text-transform: uppercase; }
+        .eyebrow-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--green); box-shadow: 0 0 12px var(--green); }
+        .hero h1 { max-width: 720px; margin: 0; font-size: clamp(30px, 3.3vw, 43px); line-height: 1.02; letter-spacing: -2px; font-weight: 950; }
+        .hero h1 span { color: var(--green); text-shadow: 0 0 30px rgba(57,230,155,.22); }
+        .hero-copy { max-width: 560px; margin: 8px 0 12px; color: #c2d2c9; font-size: clamp(13px, 1.1vw, 15px); line-height: 1.52; }
+        .hero-actions { display: flex; align-items: center; flex-wrap: wrap; gap: 10px; }
+        .button { min-height: 42px; display: inline-flex; align-items: center; justify-content: center; gap: 9px; padding: 0 17px; border-radius: 11px; text-decoration: none; font-size: 12px; font-weight: 900; transition: transform .2s ease, box-shadow .2s ease, border-color .2s ease, background .2s ease; }
+        .button:hover { transform: translateY(-2px); }
+        .button-primary { color: #04130b; background: linear-gradient(135deg, #5cf0aa, #22d68b); box-shadow: 0 8px 27px rgba(31,213,135,.22); }
+        .button-primary:hover { box-shadow: 0 10px 32px rgba(31,213,135,.35); }
+        .button-secondary { border: 1px solid rgba(195,235,212,.24); background: rgba(255,255,255,.045); color: #edf8f1; }
+        .button-secondary:hover { border-color: rgba(57,230,155,.65); background: rgba(57,230,155,.08); }
+        .button svg { width: 16px; height: 16px; fill: currentColor; }
+        .hero-featured { min-width: 0; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 6px; padding: 9px; border: 1px solid rgba(160,224,187,.14); border-radius: 15px; background: rgba(3,17,11,.45); }
+        .hero-featured-title { grid-column: 1 / -1; margin: 0 0 1px 3px; color: #7debb0; font-size: 9px; font-weight: 900; letter-spacing: 1.5px; }
+        .featured-game { min-width: 0; display: flex; flex-direction: column; align-items: stretch; gap: 5px; padding: 5px; border: 1px solid transparent; border-radius: 9px; color: inherit; text-align: center; text-decoration: none; transition: background .18s ease, border-color .18s ease, transform .18s ease; }
+        .featured-game:hover { transform: translateY(-2px); border-color: rgba(57,230,155,.2); background: rgba(57,230,155,.07); }
+        .featured-game-thumb { width: 100%; height: 53px; flex: 0 0 auto; display: grid; place-items: center; overflow: hidden; border-radius: 7px; background: linear-gradient(140deg, rgba(31,83,55,.55), rgba(7,22,16,.9)); }
+        .featured-game-thumb img { width: 90%; height: 90%; object-fit: contain; }
+        .featured-game-meta { min-width: 0; flex: 1; }
+        .featured-game-meta strong { display: block; overflow: hidden; color: #edf8f1; font-size: 9px; font-weight: 850; text-overflow: ellipsis; white-space: nowrap; }
+        .featured-game-meta span { display: block; margin-top: 2px; color: #8ca99a; font-size: 8px; }
+        .featured-arrow { display: none; }
 
-        .brand {
-            margin: 0;
-            font-size: clamp(48px, 8vw, 76px);
-            font-weight: 900;
-            letter-spacing: 5px;
+        .category-area { display: flex; align-items: center; gap: 20px; margin: 0 auto 18px; padding: 9px 13px; border: 1px solid rgba(170,222,193,.15); border-radius: 18px; background: linear-gradient(100deg, rgba(8,25,17,.94), rgba(9,24,21,.86)); box-shadow: 0 8px 26px rgba(0,0,0,.14); }
+        .category-heading { display: flex; flex: 0 0 auto; align-items: center; gap: 10px; color: #e5f3ea; font-size: 13px; font-weight: 900; }
+        .category-heading svg { width: 19px; height: 19px; fill: none; stroke: var(--green); stroke-width: 2; }
+        .category-filters { display: flex; align-items: center; gap: 7px; min-width: 0; flex: 1; overflow-x: auto; padding: 2px 1px 5px; scrollbar-width: thin; scrollbar-color: rgba(57,230,155,.25) transparent; }
+        .category-chip { flex: 0 0 auto; min-height: 34px; display: inline-flex; align-items: center; gap: 7px; padding: 0 13px; border: 1px solid transparent; border-radius: 999px; background: transparent; color: #b7c9bf; font-size: 12px; font-weight: 800; white-space: nowrap; cursor: pointer; transition: background .18s ease, color .18s ease, border-color .18s ease; }
+        .category-chip:hover { border-color: rgba(57,230,155,.22); background: rgba(57,230,155,.06); color: #fff; }
+        .category-chip.active { background: linear-gradient(135deg, #5cf0aa, #25d88d); color: #06150c; box-shadow: 0 5px 18px rgba(57,230,155,.17); }
+        .chip-count { min-width: 18px; height: 18px; display: inline-grid; place-items: center; padding: 0 4px; border-radius: 99px; background: rgba(0,0,0,.13); font-size: 10px; opacity: .8; }
+
+        .catalogue { padding: 0 0 20px; }
+        .section-heading { display: flex; align-items: end; justify-content: space-between; gap: 20px; margin: 0 0 12px; }
+        .section-kicker { margin: 0 0 6px; color: #73e9aa; font-size: 10px; font-weight: 900; letter-spacing: 1.9px; text-transform: uppercase; }
+        .section-title { margin: 0; font-size: clamp(27px, 3vw, 36px); letter-spacing: -.9px; font-weight: 950; }
+        .game-count { display: inline-flex; align-items: center; gap: 8px; padding: 8px 12px; border: 1px solid rgba(57,230,155,.18); border-radius: 999px; background: rgba(10,49,31,.48); color: #8df0ba; font-size: 12px; font-weight: 800; white-space: nowrap; }
+        .game-count::before { content: ""; width: 7px; height: 7px; border-radius: 50%; background: var(--green); box-shadow: 0 0 10px var(--green); }
+        .catalogue-tools { display: flex; align-items: center; justify-content: space-between; gap: 20px; margin: 0 0 14px; }
+        .catalogue-note { margin: 0; color: #9db1a5; font-size: 13px; }
+        .search-box { position: relative; width: min(360px, 100%); flex: 0 1 360px; }
+        .search-box svg { position: absolute; top: 50%; left: 15px; width: 17px; height: 17px; transform: translateY(-50%); fill: none; stroke: #9bb1a5; stroke-width: 2; pointer-events: none; }
+        .search-box input { width: 100%; min-height: 45px; padding: 11px 42px 11px 43px; border: 1px solid rgba(178,224,196,.17); border-radius: 13px; outline: 0; background: rgba(8,22,16,.94); color: var(--text); font-size: 13px; transition: border-color .2s ease, box-shadow .2s ease; }
+        .search-box input::placeholder { color: #80958a; }
+        .search-box input:focus { border-color: rgba(57,230,155,.72); box-shadow: 0 0 0 3px rgba(57,230,155,.10); }
+        .search-clear { position: absolute; top: 50%; right: 8px; width: 29px; height: 29px; display: none; place-items: center; transform: translateY(-50%); border: 0; border-radius: 8px; background: rgba(255,255,255,.07); color: #d4e6db; cursor: pointer; }
+        .search-clear.visible { display: grid; }
+        .catalogue-layout { display: grid; grid-template-columns: minmax(0, 1fr) 276px; align-items: start; gap: 24px; }
+        .games { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); align-items: stretch; gap: 17px; }
+        .game-card { position: relative; min-width: 0; display: flex; flex-direction: column; overflow: hidden; border: 1px solid rgba(177,224,196,.15); border-radius: 19px; background: linear-gradient(155deg, rgba(13,31,22,.98), rgba(7,19,14,.98)); box-shadow: 0 10px 26px rgba(0,0,0,.16); transition: transform .22s ease, border-color .22s ease, box-shadow .22s ease; }
+        .game-card::before { content: ""; position: absolute; z-index: 0; inset: 0 0 auto; height: 150px; opacity: .72; pointer-events: none; background: radial-gradient(ellipse at 50% 0%, rgba(49,211,139,.13), transparent 70%); }
+        .game-card:hover { transform: translateY(-5px); border-color: rgba(57,230,155,.54); box-shadow: 0 18px 38px rgba(0,0,0,.28), 0 0 24px rgba(57,230,155,.055); }
+        .game-card[hidden] { display: none !important; }
+        .game-card-top { position: absolute; z-index: 3; top: 10px; left: 10px; right: 10px; display: flex; align-items: center; justify-content: space-between; gap: 8px; pointer-events: none; }
+        .game-category { max-width: calc(100% - 43px); overflow: hidden; padding: 6px 9px; border: 1px solid rgba(196,236,211,.12); border-radius: 999px; background: rgba(3,13,9,.68); color: #d5e9dc; font-size: 9px; font-weight: 900; letter-spacing: .35px; text-overflow: ellipsis; white-space: nowrap; backdrop-filter: blur(8px); }
+        .favorite-button { width: 35px; height: 35px; flex: 0 0 auto; display: grid; place-items: center; border: 1px solid rgba(213,240,224,.18); border-radius: 50%; background: rgba(3,13,9,.70); color: #e4f3e9; cursor: pointer; pointer-events: auto; transition: color .18s ease, background .18s ease, border-color .18s ease, transform .18s ease; backdrop-filter: blur(8px); }
+        .favorite-button:hover { transform: scale(1.08); border-color: rgba(255,107,138,.7); color: #ff91aa; }
+        .favorite-button svg { width: 18px; height: 18px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+        .favorite-button[aria-pressed="true"] { color: #ff668f; border-color: rgba(255,102,143,.38); background: rgba(67,14,34,.82); }
+        .favorite-button[aria-pressed="true"] svg { fill: currentColor; }
+        .game-card-link { position: relative; z-index: 1; min-height: 100%; display: flex; flex-direction: column; color: inherit; text-decoration: none; }
+        .game-image { position: relative; height: 150px; display: grid; place-items: center; overflow: hidden; margin: 0; padding: 18px 13px 8px; background: radial-gradient(ellipse at 50% 50%, rgba(25,135,88,.19), transparent 67%), linear-gradient(140deg, rgba(10,48,33,.48), rgba(5,18,13,.20)); }
+        .game-image::after { content: ""; position: absolute; inset: auto 12% 0; height: 1px; background: linear-gradient(90deg, transparent, rgba(104,235,165,.25), transparent); }
+        .game-image img { display: block; width: 92%; height: 88%; object-fit: contain; filter: drop-shadow(0 10px 15px rgba(0,0,0,.25)); transition: transform .35s cubic-bezier(.2,.8,.2,1), filter .35s ease; }
+        .game-card:hover .game-image img { transform: scale(1.055); filter: drop-shadow(0 12px 18px rgba(0,0,0,.4)); }
+        .game-card-copy { flex: 1; display: flex; flex-direction: column; padding: 13px 15px 15px; }
+        .game-name { min-height: 42px; margin: 0 0 7px; font-size: clamp(16px, 1.18vw, 19px); line-height: 1.2; letter-spacing: -.35px; font-weight: 900; }
+        .game-description { flex: 1; margin: 0; color: #a8b9af; font-size: 12px; line-height: 1.55; }
+        .play-button { align-self: flex-start; display: inline-flex; align-items: center; justify-content: center; gap: 8px; min-height: 37px; margin-top: 15px; padding: 0 13px; border-radius: 10px; background: linear-gradient(135deg, #55e9a2, #24d48a); color: #04140b; font-size: 12px; font-weight: 950; box-shadow: 0 5px 15px rgba(42,211,135,.13); transition: transform .18s ease, box-shadow .18s ease; }
+        .play-button svg { width: 14px; height: 14px; fill: currentColor; }
+        .game-card:hover .play-button { transform: translateX(2px); box-shadow: 0 7px 20px rgba(42,211,135,.22); }
+
+        .side-column { display: grid; gap: 16px; }
+        .side-panel { overflow: hidden; border: 1px solid rgba(177,224,196,.16); border-radius: 19px; background: linear-gradient(155deg, rgba(12,31,22,.97), rgba(6,18,13,.97)); box-shadow: 0 12px 28px rgba(0,0,0,.17); }
+        .side-panel-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 17px 17px 13px; }
+        .side-panel-title { display: flex; align-items: center; gap: 9px; margin: 0; font-size: 15px; font-weight: 900; }
+        .side-panel-title svg { width: 18px; height: 18px; fill: #f5c84c; stroke: #f5c84c; }
+        .side-count { color: #91a99b; font-size: 11px; font-weight: 800; }
+        .favorites-empty { padding: 12px 20px 22px; text-align: center; }
+        .empty-heart { width: 58px; height: 58px; display: grid; place-items: center; margin: 0 auto 12px; border: 1px solid rgba(181,220,196,.14); border-radius: 18px; background: rgba(255,255,255,.025); color: #52685b; }
+        .empty-heart svg { width: 27px; height: 27px; fill: none; stroke: currentColor; stroke-width: 1.6; }
+        .favorites-empty strong { display: block; font-size: 13px; }
+        .favorites-empty p { margin: 7px 0 15px; color: #91a69a; font-size: 11px; line-height: 1.55; }
+        .small-action { min-height: 34px; display: inline-flex; align-items: center; justify-content: center; padding: 0 13px; border: 1px solid rgba(57,230,155,.26); border-radius: 9px; background: rgba(57,230,155,.10); color: #9bf2c2; font-size: 11px; font-weight: 900; cursor: pointer; transition: background .18s ease; }
+        .small-action:hover { background: rgba(57,230,155,.18); }
+        .favorite-list { display: grid; gap: 0; padding: 0 13px 12px; }
+        .favorite-item { display: flex; align-items: center; gap: 10px; padding: 9px 4px; border-top: 1px solid rgba(178,224,196,.09); text-decoration: none; }
+        .favorite-thumb { width: 42px; height: 42px; flex: 0 0 auto; display: grid; place-items: center; overflow: hidden; border: 1px solid rgba(178,224,196,.12); border-radius: 10px; background: rgba(255,255,255,.035); }
+        .favorite-thumb img { width: 85%; height: 85%; object-fit: contain; }
+        .favorite-item strong { display: block; overflow: hidden; color: #e6f2e9; font-size: 11px; text-overflow: ellipsis; white-space: nowrap; }
+        .favorite-item small { display: block; margin-top: 4px; color: #82978a; font-size: 10px; }
+        .recent-title svg { fill: none; stroke: #77d9ff; stroke-width: 1.8; }
+        .empty-recent { width: 52px; height: 52px; display: grid; place-items: center; margin: 0 auto 11px; border: 1px solid rgba(119,217,255,.16); border-radius: 16px; background: rgba(119,217,255,.035); color: #66899a; }
+        .empty-recent svg { width: 25px; height: 25px; fill: none; stroke: currentColor; stroke-width: 1.7; stroke-linecap: round; stroke-linejoin: round; }
+        .recent-list { display: grid; gap: 0; padding: 0 13px 12px; }
+        .recent-item { display: flex; align-items: center; gap: 10px; padding: 9px 4px; border-top: 1px solid rgba(178,224,196,.09); text-decoration: none; }
+        .recent-thumb { width: 42px; height: 42px; flex: 0 0 auto; display: grid; place-items: center; overflow: hidden; border: 1px solid rgba(119,217,255,.14); border-radius: 10px; background: rgba(255,255,255,.035); }
+        .recent-thumb img { width: 85%; height: 85%; object-fit: contain; }
+        .recent-item strong { display: block; overflow: hidden; color: #e6f2e9; font-size: 11px; text-overflow: ellipsis; white-space: nowrap; }
+        .recent-item small { display: block; margin-top: 4px; color: #82978a; font-size: 10px; }
+        .random-panel { padding-bottom: 15px; }
+        .random-title svg { fill: none; stroke: #91efba; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+        .random-content { padding: 0 17px 1px; }
+        .random-content p { margin: 0 0 13px; color: #9eb3a6; font-size: 12px; line-height: 1.55; }
+        .random-action { width: 100%; min-height: 42px; display: inline-flex; align-items: center; justify-content: center; gap: 9px; border: 1px solid rgba(57,230,155,.3); border-radius: 10px; background: linear-gradient(110deg, rgba(57,230,155,.16), rgba(57,230,155,.07)); color: #a4f4c7; font-size: 12px; font-weight: 900; cursor: pointer; transition: background .18s ease, border-color .18s ease, transform .18s ease; }
+        .random-action:hover { transform: translateY(-1px); border-color: rgba(57,230,155,.65); background: rgba(57,230,155,.17); }
+        .random-action svg { width: 16px; height: 16px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+        .favorites-footer { padding: 0 17px 16px; }
+        .favorites-footer .small-action { width: 100%; }
+        .about-panel { position: relative; padding: 19px; }
+        .about-panel::after { content: ""; position: absolute; right: -38px; bottom: -50px; width: 145px; height: 145px; border: 1px solid rgba(57,230,155,.10); border-radius: 50%; box-shadow: 0 0 0 18px rgba(57,230,155,.025), 0 0 0 38px rgba(57,230,155,.018); pointer-events: none; }
+        .about-panel h3 { position: relative; z-index: 1; margin: 0 0 8px; font-size: 15px; }
+        .about-panel p { position: relative; z-index: 1; margin: 0; color: #9eb3a6; font-size: 12px; line-height: 1.65; }
+        .about-panel a { position: relative; z-index: 1; display: inline-flex; align-items: center; gap: 6px; margin-top: 14px; color: #80eeb4; font-size: 11px; font-weight: 900; text-decoration: none; }
+        .about-panel a:hover { color: #c0ffda; }
+        .no-results { display: none; margin: 20px 0 10px; padding: 35px 20px; text-align: center; border: 1px dashed rgba(177,224,196,.22); border-radius: 16px; background: rgba(8,22,15,.58); color: #a6b9ad; }
+        .no-results strong { display: block; margin-bottom: 7px; color: #effaf2; font-size: 16px; }
+        .no-results button { margin-top: 13px; }
+
+        footer { margin-top: 42px; border-top: 1px solid rgba(177,224,196,.13); background: rgba(3,10,7,.53); }
+        .footer-inner { width: min(var(--max-width), calc(100% - 64px)); min-height: 74px; margin: 0 auto; display: flex; align-items: center; justify-content: space-between; gap: 25px; }
+        .footer-links { display: flex; align-items: center; flex-wrap: wrap; gap: 19px; }
+        .footer-links a { color: #a9baaf; font-size: 12px; text-decoration: none; }
+        .footer-links a:hover { color: var(--green); }
+        .footer-copy { color: #788b80; font-size: 11px; text-align: right; }
+        .footer-copy p { margin: 4px 0 0; }
+
+        :focus-visible { outline: 2px solid #75f0b3; outline-offset: 3px; }
+        @media (max-width: 1240px) {
+            .container, .header-inner, .footer-inner { width: min(var(--max-width), calc(100% - 44px)); }
+            .catalogue-layout { grid-template-columns: minmax(0, 1fr) 245px; gap: 18px; }
+            .games { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px; }
+            .game-image { height: 155px; }
+            .brand-logo { width: 150px; }
+            .main-nav { gap: 18px; }
         }
-
-        .brand span {
-            color: #65e6a5;
+        @media (max-width: 980px) {
+            .header-inner { min-height: 66px; }
+            .brand-logo { width: 136px; max-width: 30vw; }
+            .main-nav { gap: 14px; }
+            .nav-link { font-size: 12px; }
+            .header-favorites { padding: 0 12px; }
+            .hero { grid-template-columns: minmax(0, 1fr) 265px; min-height: 0; padding: 17px 21px; gap: 14px; }
+            .hero h1 { font-size: clamp(29px, 4vw, 39px); }
+            .catalogue-layout { grid-template-columns: 1fr; }
+            .games { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+            .side-column { grid-template-columns: 1fr 1fr; }
         }
-
-        .subtitle {
-            margin: 6px 0 0;
-            color: #aeb8b4;
-            font-size: 16px;
+        @media (max-width: 760px) {
+            html { scroll-padding-top: 82px; }
+            .container, .header-inner, .footer-inner { width: calc(100% - 30px); }
+            .header-inner { min-height: 60px; gap: 12px; flex-wrap: wrap; }
+            .brand-logo { width: 126px; max-width: 42vw; }
+            .menu-toggle { display: grid; place-items: center; }
+            .header-actions { margin-left: auto; }
+            .header-favorites { min-height: 40px; padding: 0 11px; font-size: 0; gap: 6px; }
+            .header-favorites svg { width: 18px; height: 18px; }
+            .favorite-total { font-size: 10px; }
+            .main-nav { order: 3; width: 100%; display: none; align-items: stretch; flex-direction: column; gap: 2px; margin: 0; padding: 0 0 13px; }
+            .main-nav.open { display: flex; }
+            .nav-link { padding: 11px 13px; border-radius: 9px; background: rgba(255,255,255,.025); font-size: 13px; }
+            .nav-link::after { display: none; }
+            .hero { grid-template-columns: 1fr; min-height: 0; gap: 10px; margin: 10px auto 11px; padding: 15px 14px; border-radius: 16px; }
+            .hero h1 { max-width: 520px; font-size: clamp(25px, 7.4vw, 34px); letter-spacing: -1.2px; }
+            .hero-copy { margin: 7px 0 10px; font-size: 12px; line-height: 1.4; }
+            .hero-actions { gap: 7px; }
+            .hero-actions .button { min-height: 35px; padding: 0 10px; gap: 6px; border-radius: 9px; font-size: 10px; }
+            .hero-actions .button svg { width: 13px; height: 13px; }
+            .hero-featured { gap: 5px; padding: 7px; }
+            .hero-featured-title { margin-bottom: 0; }
+            .featured-game { gap: 4px; padding: 4px; }
+            .featured-game-thumb { height: 42px; }
+            .featured-game-meta strong { font-size: 9px; }
+            .featured-game-meta span { display: none; }
+            .category-area { align-items: center; flex-direction: row; gap: 8px; margin-bottom: 14px; padding: 8px 9px; border-radius: 13px; }
+            .category-heading { font-size: 11px; gap: 5px; }
+            .category-heading svg { width: 15px; height: 15px; }
+            .category-filters { width: 0; flex: 1 1 auto; gap: 4px; }
+            .category-chip { min-height: 31px; padding: 0 9px; font-size: 10px; }
+            .section-heading { align-items: center; flex-direction: row; gap: 10px; margin-bottom: 9px; }
+            .section-title { font-size: 29px; }
+            .catalogue-tools { align-items: stretch; flex-direction: column; gap: 0; margin-bottom: 11px; }
+            .catalogue-note { display: none; }
+            .search-box { width: 100%; flex-basis: auto; }
+            .games { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 11px; }
+            .game-card { border-radius: 15px; }
+            .game-card-top { top: 7px; left: 7px; right: 7px; }
+            .game-category { padding: 5px 7px; font-size: 8px; }
+            .favorite-button { width: 31px; height: 31px; }
+            .favorite-button svg { width: 16px; height: 16px; }
+            .game-image { height: 124px; padding: 15px 8px 5px; }
+            .game-card-copy { padding: 10px 10px 12px; }
+            .game-name { min-height: 38px; margin-bottom: 6px; font-size: 15px; }
+            .game-description { font-size: 11px; line-height: 1.48; }
+            .play-button { min-height: 34px; margin-top: 12px; padding: 0 10px; font-size: 11px; }
+            .side-column { grid-template-columns: 1fr; }
+            footer { margin-top: 32px; }
+            .footer-inner { min-height: 0; align-items: flex-start; flex-direction: column; gap: 17px; padding: 23px 0; }
+            .footer-links { gap: 13px; }
+            .footer-copy { text-align: left; }
         }
-
-        /* BUSCADOR */
-
-        .search-area {
-            display: flex;
-            justify-content: flex-end;
-            margin: 0 0 18px;
+        @media (max-width: 390px) {
+            .container, .header-inner, .footer-inner { width: calc(100% - 24px); }
+            .brand-logo { width: 120px; }
+            .hero { padding: 13px 10px; }
+            .hero h1 { font-size: 25px; }
+            .hero-copy { font-size: 11px; }
+            .featured-game-thumb { height: 36px; }
+            .hero-actions .button { min-height: 34px; padding: 0 8px; font-size: 9px; }
+            .games { grid-template-columns: 1fr; }
+            .game-image { height: 170px; }
+            .game-name { min-height: 0; font-size: 18px; }
+            .game-description { font-size: 12px; }
         }
-
-        .search-box {
-            width: min(300px, 100%);
-            position: relative;
-        }
-
-        .search-box input {
-            width: 100%;
-            padding: 13px 16px 13px 42px;
-
-            border-radius: 12px;
-            border: 1px solid rgba(255, 255, 255, 0.14);
-
-            background: rgba(15, 27, 23, 0.96);
-
-            color: #ffffff;
-
-            font-size: 15px;
-            outline: none;
-        }
-
-        .search-box input::placeholder {
-            color: #8f9a95;
-        }
-
-        .search-box input:focus {
-            border-color: #65e6a5;
-
-            box-shadow:
-                0 0 0 3px rgba(101, 230, 165, 0.10);
-        }
-
-        .search-icon {
-            position: absolute;
-            left: 15px;
-            top: 50%;
-
-            transform: translateY(-50%);
-
-            color: #aeb8b4;
-            font-size: 17px;
-
-            pointer-events: none;
-        }
-
-        .game-card.hidden {
-            display: none;
-        }
-
-        .no-results {
-            display: none;
-
-            text-align: center;
-
-            color: #aeb8b4;
-
-            margin: 35px 0;
-
-            font-size: 17px;
-        }
-
-        .section-title {
-            text-align: center;
-            font-size: 28px;
-            margin: 0 0 18px;
-        }
-
-        .games {
-            display: grid;
-            grid-template-columns: repeat(
-                auto-fit,
-                minmax(290px, 1fr)
-            );
-
-            gap: 25px;
-        }
-
-        .game-card {
-            display: block;
-
-            text-decoration: none;
-            color: white;
-
-            background: rgba(15, 27, 23, 0.96);
-
-            border: 1px solid rgba(255, 255, 255, 0.10);
-
-            border-radius: 22px;
-
-            padding: 22px;
-
-            transition:
-                transform 0.2s ease,
-                border-color 0.2s ease,
-                box-shadow 0.2s ease;
-        }
-
-        .game-card:hover {
-            transform: translateY(-7px);
-
-            border-color: #65e6a5;
-
-            box-shadow:
-                0 15px 40px rgba(0, 0, 0, 0.35);
-        }
-
-        .game-image {
-            width: 100%;
-            height: 220px;
-
-            border-radius: 17px;
-
-            background:
-                linear-gradient(
-                    135deg,
-                    #0b3d2e,
-                    #145b45
-                );
-
-            display: flex;
-
-            align-items: center;
-            justify-content: center;
-
-            overflow: hidden;
-
-            margin-bottom: 20px;
-        }
-
-        .game-image img {
-            width: 85%;
-            height: 85%;
-
-            object-fit: contain;
-        }
-
-        .placeholder {
-            font-size: 80px;
-        }
-
-        .game-name {
-            font-size: 28px;
-
-            font-weight: 900;
-
-            margin-bottom: 8px;
-        }
-
-        .game-description {
-            color: #aeb8b4;
-
-            line-height: 1.55;
-
-            min-height: 50px;
-        }
-
-        .play-button {
-            display: inline-block;
-
-            margin-top: 18px;
-
-            background: #65e6a5;
-
-            color: #06100c;
-
-            font-weight: 900;
-
-            padding: 11px 19px;
-
-            border-radius: 10px;
-        }
-
-        footer {
-            text-align: center;
-
-            margin-top: 65px;
-
-            color: #68736e;
-
-            font-size: 14px;
-        }
-
-        footer a {
-            color: #68736e;
-            text-decoration: none;
-        }
-
-        footer a:hover {
-            color: #65e6a5;
-        }
-
-        /* MÓVIL */
-
-        @media (max-width: 600px) {
-
-            .container {
-                padding-top: 30px;
-            }
-
-            .subtitle {
-                font-size: 15px;
-            }
-
-            .search-area {
-                justify-content: stretch;
-            }
-
-            .search-box {
-                width: 100%;
-            }
-
-            .section-title {
-                font-size: 29px;
-            }
-
-            .game-image {
-                height: 190px;
-            }
+        @media (prefers-reduced-motion: reduce) {
+            *, *::before, *::after { scroll-behavior: auto !important; transition-duration: .01ms !important; animation-duration: .01ms !important; }
         }
     </style>
 </head>
-
 <body>
-
-<div class="container">
-
-<header>
-
-    <img
-        src="costum-logo.png"
-        alt="CostumGames"
-        class="costum-logo"
-    >
-
-    <p class="subtitle">
-        CostumGames — juegos, entretenimiento y mucho más
-    </p>
-
+    <header class="site-header">
+        <div class="header-inner">
+            <a class="brand-link" href="./" aria-label="CostumGames, inicio">
+                <img src="costum-logo.png" alt="CostumGames" class="brand-logo">
+            </a>
+            <nav class="main-nav" id="mainNav" aria-label="Navegación principal">
+                <a class="nav-link active" href="./">Inicio</a>
+                <a class="nav-link" href="#catalogo">Juegos</a>
+                <a class="nav-link" href="#categorias">Categorías</a>
+                <a class="nav-link" href="#acerca">Acerca de</a>
+            </nav>
+            <div class="header-actions">
+                <button class="header-favorites" id="headerFavorites" type="button" aria-pressed="false">
+                    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20.8 8.8c0 5.1-8.8 10.2-8.8 10.2S3.2 13.9 3.2 8.8A4.8 4.8 0 0 1 12 6.1a4.8 4.8 0 0 1 8.8 2.7Z"/></svg>
+                    Mis favoritos <span class="favorite-total" id="favoriteTotal">0</span>
+                </button>
+                <button class="menu-toggle" id="menuToggle" type="button" aria-label="Abrir menú" aria-expanded="false" aria-controls="mainNav">
+                    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16"/></svg>
+                </button>
+            </div>
+        </div>
     </header>
 
-    <main>
-
-        <!-- BUSCADOR -->
-
-        <div class="search-area">
-
-            <div class="search-box">
-
-                <span class="search-icon">🔎</span>
-
-                <input
-                    type="search"
-                    id="gameSearch"
-                    placeholder="Buscar juego..."
-                    aria-label="Buscar juego"
-                    autocomplete="off"
-                >
-
+    <main class="container">
+        <section class="hero" aria-labelledby="hero-title">
+            <div class="hero-copy-wrap">
+                <p class="eyebrow"><span class="eyebrow-dot"></span> Tu espacio para jugar</p>
+                <h1 id="hero-title">Encuentra tu <span>próxima partida.</span></h1>
+                <p class="hero-copy">Explora juegos, descubre nuevas experiencias y encuentra algo que te apetezca jugar.</p>
+                <div class="hero-actions">
+                    <a class="button button-primary" href="#catalogo"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m8 5 12 7-12 7V5Z"/></svg> Explorar juegos</a>
+                    <a class="button button-secondary" href="#categorias">Ver categorías</a>
+                </div>
             </div>
+            <div class="hero-featured" id="featuredGames" aria-label="Juegos para descubrir">
+                <p class="hero-featured-title">PARA DESCUBRIR</p>
+                <span class="featured-loading" aria-live="polite">Eligiendo juegos…</span>
+            </div>
+        </section>
 
-        </div>
+        <section class="category-area" id="categorias" aria-label="Filtrar juegos por categoría">
+            <div class="category-heading"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 6h16M7 12h10M10 18h4"/></svg><span>Categorías</span></div>
+            <div class="category-filters" id="categoryFilters">
+                <button class="category-chip active" type="button" data-category="Todas" aria-pressed="true">Todas <span class="chip-count" data-count="Todas"></span></button>
+                <button class="category-chip" type="button" data-category="Aventura" aria-pressed="false">Aventura <span class="chip-count" data-count="Aventura"></span></button>
+                <button class="category-chip" type="button" data-category="Acción" aria-pressed="false">Acción <span class="chip-count" data-count="Acción"></span></button>
+                <button class="category-chip" type="button" data-category="Terror" aria-pressed="false">Terror <span class="chip-count" data-count="Terror"></span></button>
+                <button class="category-chip" type="button" data-category="Arcade" aria-pressed="false">Arcade <span class="chip-count" data-count="Arcade"></span></button>
+                <button class="category-chip" type="button" data-category="Puzles" aria-pressed="false">Puzles <span class="chip-count" data-count="Puzles"></span></button>
+                <button class="category-chip" type="button" data-category="Deportes" aria-pressed="false">Deportes <span class="chip-count" data-count="Deportes"></span></button>
+                <button class="category-chip" type="button" data-category="Estrategia" aria-pressed="false">Estrategia <span class="chip-count" data-count="Estrategia"></span></button>
+                <button class="category-chip" type="button" data-category="Supervivencia" aria-pressed="false">Supervivencia <span class="chip-count" data-count="Supervivencia"></span></button>
+                <button class="category-chip" type="button" data-category="Mesa" aria-pressed="false">Mesa <span class="chip-count" data-count="Mesa"></span></button>
+                <button class="category-chip" type="button" data-category="Conocimiento" aria-pressed="false">Conocimiento <span class="chip-count" data-count="Conocimiento"></span></button>
+                <button class="category-chip" type="button" data-category="Habilidad" aria-pressed="false">Habilidad <span class="chip-count" data-count="Habilidad"></span></button>
+            </div>
+        </section>
 
-        <h2 class="section-title">
-            Juegos
-        </h2>
-
-        <div class="games">
-
-            <!-- 1. VALORCRACKS -->
-
-            <a
-                class="game-card"
-                href="valorcracks/"
-            >
-
-                <div class="game-image">
-
-                    <img
-                        src="valorcracks/valorcracks-logo.png"
-                        alt="ValorCracks"
-                    >
-
+        <section class="catalogue" id="catalogo" aria-labelledby="catalogue-title">
+            <div class="section-heading">
+                <div><p class="section-kicker">Elige tu siguiente aventura</p><h2 class="section-title" id="catalogue-title">Todos los juegos</h2></div>
+                <span class="game-count" id="gameCount" aria-live="polite">22 juegos disponibles</span>
+            </div>
+            <div class="catalogue-tools">
+                <p class="catalogue-note">Encuentra algo nuevo que jugar o vuelve a tus favoritos.</p>
+                <div class="search-box" role="search">
+                    <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="10.8" cy="10.8" r="6.8"/><path d="m16 16 5 5"/></svg>
+                    <input type="search" id="gameSearch" placeholder="Buscar juegos..." aria-label="Buscar juegos por nombre o descripción" autocomplete="off">
+                    <button class="search-clear" id="searchClear" type="button" aria-label="Borrar búsqueda">×</button>
                 </div>
+            </div>
+            <div class="catalogue-layout">
+                <div>
+                    <div class="games" id="gamesGrid">
+                    <article class="game-card" data-id="valorcracks/" data-category="Deportes">
+                        <div class="game-card-top">
+                            <span class="game-category">Deportes</span>
+                            <button class="favorite-button" type="button" aria-label="Añadir ValorCracks a favoritos" aria-pressed="false" title="Añadir a favoritos">
+                                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20.8 8.8c0 5.1-8.8 10.2-8.8 10.2S3.2 13.9 3.2 8.8A4.8 4.8 0 0 1 12 6.1a4.8 4.8 0 0 1 8.8 2.7Z"/></svg>
+                            </button>
+                        </div>
+                        <a class="game-card-link" href="valorcracks/" aria-label="Jugar a ValorCracks">
+                            <div class="game-image"><img src="valorcracks/valorcracks-logo.png" alt="ValorCracks" loading="lazy" decoding="async"></div>
+                            <div class="game-card-copy">
+                                <h3 class="game-name">ValorCracks</h3>
+                                <p class="game-description">Compara los valores de mercado de jugadores de fútbol y demuestra cuánto sabes.</p>
+                                <span class="play-button"><span>Jugar</span><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m9 5 10 7-10 7V5Z"/></svg></span>
+                            </div>
+                        </a>
+                    </article>
 
-                <div class="game-name">
-                    ValorCracks
+                    <article class="game-card" data-id="cripta/" data-category="Aventura">
+                        <div class="game-card-top">
+                            <span class="game-category">Aventura</span>
+                            <button class="favorite-button" type="button" aria-label="Añadir Cripta: Descenso a favoritos" aria-pressed="false" title="Añadir a favoritos">
+                                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20.8 8.8c0 5.1-8.8 10.2-8.8 10.2S3.2 13.9 3.2 8.8A4.8 4.8 0 0 1 12 6.1a4.8 4.8 0 0 1 8.8 2.7Z"/></svg>
+                            </button>
+                        </div>
+                        <a class="game-card-link" href="cripta/" aria-label="Jugar a Cripta: Descenso">
+                            <div class="game-image"><img src="cripta/logo.png" alt="Cripta: Descenso" loading="lazy" decoding="async"></div>
+                            <div class="game-card-copy">
+                                <h3 class="game-name">Cripta: Descenso</h3>
+                                <p class="game-description">Explora una cripta olvidada, supera sus peligros y descubre qué se esconde en lo más profundo.</p>
+                                <span class="play-button"><span>Jugar</span><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m9 5 10 7-10 7V5Z"/></svg></span>
+                            </div>
+                        </a>
+                    </article>
+
+                    <article class="game-card" data-id="club%20de%20juegos/" data-category="Mesa">
+                        <div class="game-card-top">
+                            <span class="game-category">Mesa</span>
+                            <button class="favorite-button" type="button" aria-label="Añadir Club de Juegos a favoritos" aria-pressed="false" title="Añadir a favoritos">
+                                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20.8 8.8c0 5.1-8.8 10.2-8.8 10.2S3.2 13.9 3.2 8.8A4.8 4.8 0 0 1 12 6.1a4.8 4.8 0 0 1 8.8 2.7Z"/></svg>
+                            </button>
+                        </div>
+                        <a class="game-card-link" href="club%20de%20juegos/" aria-label="Jugar a Club de Juegos">
+                            <div class="game-image"><img src="club%20de%20juegos/logo.png" alt="Club de Juegos" loading="lazy" decoding="async"></div>
+                            <div class="game-card-copy">
+                                <h3 class="game-name">Club de Juegos</h3>
+                                <p class="game-description">Juega, compite y diviértete.</p>
+                                <span class="play-button"><span>Jugar</span><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m9 5 10 7-10 7V5Z"/></svg></span>
+                            </div>
+                        </a>
+                    </article>
+
+                    <article class="game-card" data-id="mirada/" data-category="Terror">
+                        <div class="game-card-top">
+                            <span class="game-category">Terror</span>
+                            <button class="favorite-button" type="button" aria-label="Añadir Mirada a favoritos" aria-pressed="false" title="Añadir a favoritos">
+                                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20.8 8.8c0 5.1-8.8 10.2-8.8 10.2S3.2 13.9 3.2 8.8A4.8 4.8 0 0 1 12 6.1a4.8 4.8 0 0 1 8.8 2.7Z"/></svg>
+                            </button>
+                        </div>
+                        <a class="game-card-link" href="mirada/" aria-label="Jugar a Mirada">
+                            <div class="game-image"><img src="mirada/logo.png" alt="Mirada" loading="lazy" decoding="async"></div>
+                            <div class="game-card-copy">
+                                <h3 class="game-name">Mirada</h3>
+                                <p class="game-description">Adéntrate en una experiencia de suspense donde cada detalle puede esconder algo inquietante. Observa con atención y descubre qué está pasando.</p>
+                                <span class="play-button"><span>Jugar</span><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m9 5 10 7-10 7V5Z"/></svg></span>
+                            </div>
+                        </a>
+                    </article>
+
+                    <article class="game-card" data-id="ecos%20del%20eden/" data-category="Aventura">
+                        <div class="game-card-top">
+                            <span class="game-category">Aventura</span>
+                            <button class="favorite-button" type="button" aria-label="Añadir Ecos del Edén a favoritos" aria-pressed="false" title="Añadir a favoritos">
+                                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20.8 8.8c0 5.1-8.8 10.2-8.8 10.2S3.2 13.9 3.2 8.8A4.8 4.8 0 0 1 12 6.1a4.8 4.8 0 0 1 8.8 2.7Z"/></svg>
+                            </button>
+                        </div>
+                        <a class="game-card-link" href="ecos%20del%20eden/" aria-label="Jugar a Ecos del Edén">
+                            <div class="game-image"><img src="ecos%20del%20eden/Logo_ecos%20del%20eden.png" alt="Ecos del Edén" loading="lazy" decoding="async"></div>
+                            <div class="game-card-copy">
+                                <h3 class="game-name">Ecos del Edén</h3>
+                                <p class="game-description">Explora dos realidades, descubre reinos misteriosos, derrota guardianes y encuentra secretos ocultos.</p>
+                                <span class="play-button"><span>Jugar</span><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m9 5 10 7-10 7V5Z"/></svg></span>
+                            </div>
+                        </a>
+                    </article>
+
+                    <article class="game-card" data-id="zona%20cero/index.html" data-category="Acción">
+                        <div class="game-card-top">
+                            <span class="game-category">Acción</span>
+                            <button class="favorite-button" type="button" aria-label="Añadir Zona Cero a favoritos" aria-pressed="false" title="Añadir a favoritos">
+                                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20.8 8.8c0 5.1-8.8 10.2-8.8 10.2S3.2 13.9 3.2 8.8A4.8 4.8 0 0 1 12 6.1a4.8 4.8 0 0 1 8.8 2.7Z"/></svg>
+                            </button>
+                        </div>
+                        <a class="game-card-link" href="zona%20cero/index.html" aria-label="Jugar a Zona Cero">
+                            <div class="game-image"><img src="zona%20cero/logo.png" alt="Zona Cero" loading="lazy" decoding="async"></div>
+                            <div class="game-card-copy">
+                                <h3 class="game-name">Zona Cero</h3>
+                                <p class="game-description">Entra en la batalla, sobrevive y conviértete en el último jugador en pie.</p>
+                                <span class="play-button"><span>Jugar</span><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m9 5 10 7-10 7V5Z"/></svg></span>
+                            </div>
+                        </a>
+                    </article>
+
+                    <article class="game-card" data-id="turno%20de%20noche%203d/" data-category="Terror">
+                        <div class="game-card-top">
+                            <span class="game-category">Terror</span>
+                            <button class="favorite-button" type="button" aria-label="Añadir Turno de noche 3D a favoritos" aria-pressed="false" title="Añadir a favoritos">
+                                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20.8 8.8c0 5.1-8.8 10.2-8.8 10.2S3.2 13.9 3.2 8.8A4.8 4.8 0 0 1 12 6.1a4.8 4.8 0 0 1 8.8 2.7Z"/></svg>
+                            </button>
+                        </div>
+                        <a class="game-card-link" href="turno%20de%20noche%203d/" aria-label="Jugar a Turno de noche 3D">
+                            <div class="game-image"><img src="turno%20de%20noche%203d/logo.png" alt="Turno de noche 3D" loading="lazy" decoding="async"></div>
+                            <div class="game-card-copy">
+                                <h3 class="game-name">Turno de noche 3D</h3>
+                                <p class="game-description">Sobrevive durante tu turno de noche, explora la tienda y enfréntate a los peligros que te esperan.</p>
+                                <span class="play-button"><span>Jugar</span><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m9 5 10 7-10 7V5Z"/></svg></span>
+                            </div>
+                        </a>
+                    </article>
+
+                    <article class="game-card" data-id="the%20architecture%20of%20error/" data-category="Puzles">
+                        <div class="game-card-top">
+                            <span class="game-category">Puzles</span>
+                            <button class="favorite-button" type="button" aria-label="Añadir The Architecture of Error a favoritos" aria-pressed="false" title="Añadir a favoritos">
+                                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20.8 8.8c0 5.1-8.8 10.2-8.8 10.2S3.2 13.9 3.2 8.8A4.8 4.8 0 0 1 12 6.1a4.8 4.8 0 0 1 8.8 2.7Z"/></svg>
+                            </button>
+                        </div>
+                        <a class="game-card-link" href="the%20architecture%20of%20error/" aria-label="Jugar a The Architecture of Error">
+                            <div class="game-image"><img src="the%20architecture%20of%20error/logo.png" alt="The Architecture of Error" loading="lazy" decoding="async"></div>
+                            <div class="game-card-copy">
+                                <h3 class="game-name">The Architecture of Error</h3>
+                                <p class="game-description">Entra en un ascensor donde cada planta puede esconder una anomalía. Observa, decide y descubre hasta dónde puedes llegar.</p>
+                                <span class="play-button"><span>Jugar</span><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m9 5 10 7-10 7V5Z"/></svg></span>
+                            </div>
+                        </a>
+                    </article>
+
+                    <article class="game-card" data-id="naufrago%203d/" data-category="Supervivencia">
+                        <div class="game-card-top">
+                            <span class="game-category">Supervivencia</span>
+                            <button class="favorite-button" type="button" aria-label="Añadir Náufrago 3D a favoritos" aria-pressed="false" title="Añadir a favoritos">
+                                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20.8 8.8c0 5.1-8.8 10.2-8.8 10.2S3.2 13.9 3.2 8.8A4.8 4.8 0 0 1 12 6.1a4.8 4.8 0 0 1 8.8 2.7Z"/></svg>
+                            </button>
+                        </div>
+                        <a class="game-card-link" href="naufrago%203d/" aria-label="Jugar a Náufrago 3D">
+                            <div class="game-image"><img src="naufrago%203d/logo.png" alt="Náufrago 3D" loading="lazy" decoding="async"></div>
+                            <div class="game-card-copy">
+                                <h3 class="game-name">Náufrago 3D</h3>
+                                <p class="game-description">Sobrevive en una isla desierta: recolecta recursos, fabrica herramientas, explora cuevas y descubre nuevas islas.</p>
+                                <span class="play-button"><span>Jugar</span><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m9 5 10 7-10 7V5Z"/></svg></span>
+                            </div>
+                        </a>
+                    </article>
+
+                    <article class="game-card" data-id="asteroid%20runner/" data-category="Arcade">
+                        <div class="game-card-top">
+                            <span class="game-category">Arcade</span>
+                            <button class="favorite-button" type="button" aria-label="Añadir Asteroid Runner a favoritos" aria-pressed="false" title="Añadir a favoritos">
+                                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20.8 8.8c0 5.1-8.8 10.2-8.8 10.2S3.2 13.9 3.2 8.8A4.8 4.8 0 0 1 12 6.1a4.8 4.8 0 0 1 8.8 2.7Z"/></svg>
+                            </button>
+                        </div>
+                        <a class="game-card-link" href="asteroid%20runner/" aria-label="Jugar a Asteroid Runner">
+                            <div class="game-image"><img src="asteroid%20runner/logo.png" alt="Asteroid Runner" loading="lazy" decoding="async"></div>
+                            <div class="game-card-copy">
+                                <h3 class="game-name">Asteroid Runner</h3>
+                                <p class="game-description">Pilota, esquiva asteroides y sobrevive a una carrera espacial llena de peligros.</p>
+                                <span class="play-button"><span>Jugar</span><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m9 5 10 7-10 7V5Z"/></svg></span>
+                            </div>
+                        </a>
+                    </article>
+
+                    <article class="game-card" data-id="marea/" data-category="Puzles">
+                        <div class="game-card-top">
+                            <span class="game-category">Puzles</span>
+                            <button class="favorite-button" type="button" aria-label="Añadir Marea a favoritos" aria-pressed="false" title="Añadir a favoritos">
+                                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20.8 8.8c0 5.1-8.8 10.2-8.8 10.2S3.2 13.9 3.2 8.8A4.8 4.8 0 0 1 12 6.1a4.8 4.8 0 0 1 8.8 2.7Z"/></svg>
+                            </button>
+                        </div>
+                        <a class="game-card-link" href="marea/" aria-label="Jugar a Marea">
+                            <div class="game-image"><img src="marea/logo.png" alt="Marea" loading="lazy" decoding="async"></div>
+                            <div class="game-card-copy">
+                                <h3 class="game-name">Marea</h3>
+                                <p class="game-description">Controla la marea, supera los niveles y recoge las perlas para conseguir todas las estrellas.</p>
+                                <span class="play-button"><span>Jugar</span><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m9 5 10 7-10 7V5Z"/></svg></span>
+                            </div>
+                        </a>
+                    </article>
+
+                    <article class="game-card" data-id="4%20en%20raya/" data-category="Estrategia">
+                        <div class="game-card-top">
+                            <span class="game-category">Estrategia</span>
+                            <button class="favorite-button" type="button" aria-label="Añadir 4 en raya a favoritos" aria-pressed="false" title="Añadir a favoritos">
+                                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20.8 8.8c0 5.1-8.8 10.2-8.8 10.2S3.2 13.9 3.2 8.8A4.8 4.8 0 0 1 12 6.1a4.8 4.8 0 0 1 8.8 2.7Z"/></svg>
+                            </button>
+                        </div>
+                        <a class="game-card-link" href="4%20en%20raya/" aria-label="Jugar a 4 en raya">
+                            <div class="game-image"><img src="4%20en%20raya/logo.png" alt="4 en raya" loading="lazy" decoding="async"></div>
+                            <div class="game-card-copy">
+                                <h3 class="game-name">4 en raya</h3>
+                                <p class="game-description">Juega al clásico 4 en raya y consigue conectar tus fichas antes que tu rival.</p>
+                                <span class="play-button"><span>Jugar</span><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m9 5 10 7-10 7V5Z"/></svg></span>
+                            </div>
+                        </a>
+                    </article>
+
+                    <article class="game-card" data-id="adivina%20la%20bandera/" data-category="Conocimiento">
+                        <div class="game-card-top">
+                            <span class="game-category">Conocimiento</span>
+                            <button class="favorite-button" type="button" aria-label="Añadir Adivina la bandera a favoritos" aria-pressed="false" title="Añadir a favoritos">
+                                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20.8 8.8c0 5.1-8.8 10.2-8.8 10.2S3.2 13.9 3.2 8.8A4.8 4.8 0 0 1 12 6.1a4.8 4.8 0 0 1 8.8 2.7Z"/></svg>
+                            </button>
+                        </div>
+                        <a class="game-card-link" href="adivina%20la%20bandera/" aria-label="Jugar a Adivina la bandera">
+                            <div class="game-image"><img src="adivina%20la%20bandera/logo.png" alt="Adivina la bandera" loading="lazy" decoding="async"></div>
+                            <div class="game-card-copy">
+                                <h3 class="game-name">Adivina la bandera</h3>
+                                <p class="game-description">Pon a prueba cuánto sabes de las banderas del mundo.</p>
+                                <span class="play-button"><span>Jugar</span><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m9 5 10 7-10 7V5Z"/></svg></span>
+                            </div>
+                        </a>
+                    </article>
+
+                    <article class="game-card" data-id="prado%20eterno/" data-category="Supervivencia">
+                        <div class="game-card-top">
+                            <span class="game-category">Supervivencia</span>
+                            <button class="favorite-button" type="button" aria-label="Añadir Prado Eterno a favoritos" aria-pressed="false" title="Añadir a favoritos">
+                                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20.8 8.8c0 5.1-8.8 10.2-8.8 10.2S3.2 13.9 3.2 8.8A4.8 4.8 0 0 1 12 6.1a4.8 4.8 0 0 1 8.8 2.7Z"/></svg>
+                            </button>
+                        </div>
+                        <a class="game-card-link" href="prado%20eterno/" aria-label="Jugar a Prado Eterno">
+                            <div class="game-image"><img src="prado%20eterno/logo.png" alt="Prado Eterno" loading="lazy" decoding="async"></div>
+                            <div class="game-card-copy">
+                                <h3 class="game-name">Prado Eterno</h3>
+                                <p class="game-description">Explora un mundo infinito, consigue recursos, construye y sobrevive en dos dimensiones llenas de peligros.</p>
+                                <span class="play-button"><span>Jugar</span><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m9 5 10 7-10 7V5Z"/></svg></span>
+                            </div>
+                        </a>
+                    </article>
+
+                    <article class="game-card" data-id="azulejo/" data-category="Puzles">
+                        <div class="game-card-top">
+                            <span class="game-category">Puzles</span>
+                            <button class="favorite-button" type="button" aria-label="Añadir Azulejo a favoritos" aria-pressed="false" title="Añadir a favoritos">
+                                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20.8 8.8c0 5.1-8.8 10.2-8.8 10.2S3.2 13.9 3.2 8.8A4.8 4.8 0 0 1 12 6.1a4.8 4.8 0 0 1 8.8 2.7Z"/></svg>
+                            </button>
+                        </div>
+                        <a class="game-card-link" href="azulejo/" aria-label="Jugar a Azulejo">
+                            <div class="game-image"><img src="azulejo/logo.png" alt="Azulejo" loading="lazy" decoding="async"></div>
+                            <div class="game-card-copy">
+                                <h3 class="game-name">Azulejo</h3>
+                                <p class="game-description">Supera los desafíos de Azulejo y consigue la mejor puntuación.</p>
+                                <span class="play-button"><span>Jugar</span><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m9 5 10 7-10 7V5Z"/></svg></span>
+                            </div>
+                        </a>
+                    </article>
+
+                    <article class="game-card" data-id="el%20farolero%20de%20las%20ruinas/" data-category="Aventura">
+                        <div class="game-card-top">
+                            <span class="game-category">Aventura</span>
+                            <button class="favorite-button" type="button" aria-label="Añadir El farolero de las ruinas a favoritos" aria-pressed="false" title="Añadir a favoritos">
+                                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20.8 8.8c0 5.1-8.8 10.2-8.8 10.2S3.2 13.9 3.2 8.8A4.8 4.8 0 0 1 12 6.1a4.8 4.8 0 0 1 8.8 2.7Z"/></svg>
+                            </button>
+                        </div>
+                        <a class="game-card-link" href="el%20farolero%20de%20las%20ruinas/" aria-label="Jugar a El farolero de las ruinas">
+                            <div class="game-image"><img src="el%20farolero%20de%20las%20ruinas/logo.png" alt="El farolero de las ruinas" loading="lazy" decoding="async"></div>
+                            <div class="game-card-copy">
+                                <h3 class="game-name">El farolero de las ruinas</h3>
+                                <p class="game-description">Adéntrate en las ruinas y supera los peligros que encontrarás en el camino.</p>
+                                <span class="play-button"><span>Jugar</span><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m9 5 10 7-10 7V5Z"/></svg></span>
+                            </div>
+                        </a>
+                    </article>
+
+                    <article class="game-card" data-id="trayectorias/" data-category="Habilidad">
+                        <div class="game-card-top">
+                            <span class="game-category">Habilidad</span>
+                            <button class="favorite-button" type="button" aria-label="Añadir Trayectorias a favoritos" aria-pressed="false" title="Añadir a favoritos">
+                                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20.8 8.8c0 5.1-8.8 10.2-8.8 10.2S3.2 13.9 3.2 8.8A4.8 4.8 0 0 1 12 6.1a4.8 4.8 0 0 1 8.8 2.7Z"/></svg>
+                            </button>
+                        </div>
+                        <a class="game-card-link" href="trayectorias/" aria-label="Jugar a Trayectorias">
+                            <div class="game-image"><img src="trayectorias/logo.png" alt="Trayectorias" loading="lazy" decoding="async"></div>
+                            <div class="game-card-copy">
+                                <h3 class="game-name">Trayectorias</h3>
+                                <p class="game-description">Pon a prueba tu habilidad y supera los retos de Trayectorias.</p>
+                                <span class="play-button"><span>Jugar</span><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m9 5 10 7-10 7V5Z"/></svg></span>
+                            </div>
+                        </a>
+                    </article>
+
+                    <article class="game-card" data-id="cima%20infinita/" data-category="Habilidad">
+                        <div class="game-card-top">
+                            <span class="game-category">Habilidad</span>
+                            <button class="favorite-button" type="button" aria-label="Añadir Cima Infinita a favoritos" aria-pressed="false" title="Añadir a favoritos">
+                                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20.8 8.8c0 5.1-8.8 10.2-8.8 10.2S3.2 13.9 3.2 8.8A4.8 4.8 0 0 1 12 6.1a4.8 4.8 0 0 1 8.8 2.7Z"/></svg>
+                            </button>
+                        </div>
+                        <a class="game-card-link" href="cima%20infinita/" aria-label="Jugar a Cima Infinita">
+                            <div class="game-image"><img src="cima%20infinita/logo.png" alt="Cima Infinita" loading="lazy" decoding="async"></div>
+                            <div class="game-card-copy">
+                                <h3 class="game-name">Cima Infinita</h3>
+                                <p class="game-description">Llega a lo más alto y supera todos los obstáculos en Cima Infinita.</p>
+                                <span class="play-button"><span>Jugar</span><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m9 5 10 7-10 7V5Z"/></svg></span>
+                            </div>
+                        </a>
+                    </article>
+
+                    <article class="game-card" data-id="pixel%20breaker/" data-category="Arcade">
+                        <div class="game-card-top">
+                            <span class="game-category">Arcade</span>
+                            <button class="favorite-button" type="button" aria-label="Añadir Pixel Breaker a favoritos" aria-pressed="false" title="Añadir a favoritos">
+                                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20.8 8.8c0 5.1-8.8 10.2-8.8 10.2S3.2 13.9 3.2 8.8A4.8 4.8 0 0 1 12 6.1a4.8 4.8 0 0 1 8.8 2.7Z"/></svg>
+                            </button>
+                        </div>
+                        <a class="game-card-link" href="pixel%20breaker/" aria-label="Jugar a Pixel Breaker">
+                            <div class="game-image"><img src="pixel%20breaker/logo.png" alt="Pixel Breaker" loading="lazy" decoding="async"></div>
+                            <div class="game-card-copy">
+                                <h3 class="game-name">Pixel Breaker</h3>
+                                <p class="game-description">Cuela la bola por los huecos para llegar a los píxeles y romperlos. Infinito y cada vez más difícil.</p>
+                                <span class="play-button"><span>Jugar</span><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m9 5 10 7-10 7V5Z"/></svg></span>
+                            </div>
+                        </a>
+                    </article>
+
+                    <article class="game-card" data-id="ahorcado%20futbolero/" data-category="Deportes">
+                        <div class="game-card-top">
+                            <span class="game-category">Deportes</span>
+                            <button class="favorite-button" type="button" aria-label="Añadir Ahorcado Futbolero a favoritos" aria-pressed="false" title="Añadir a favoritos">
+                                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20.8 8.8c0 5.1-8.8 10.2-8.8 10.2S3.2 13.9 3.2 8.8A4.8 4.8 0 0 1 12 6.1a4.8 4.8 0 0 1 8.8 2.7Z"/></svg>
+                            </button>
+                        </div>
+                        <a class="game-card-link" href="ahorcado%20futbolero/" aria-label="Jugar a Ahorcado Futbolero">
+                            <div class="game-image"><img src="ahorcado%20futbolero/logo.png" alt="Ahorcado Futbolero" loading="lazy" decoding="async"></div>
+                            <div class="game-card-copy">
+                                <h3 class="game-name">Ahorcado Futbolero</h3>
+                                <p class="game-description">Adivina al futbolista oculto usando las pistas y las letras antes de quedarte sin vidas.</p>
+                                <span class="play-button"><span>Jugar</span><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m9 5 10 7-10 7V5Z"/></svg></span>
+                            </div>
+                        </a>
+                    </article>
+
+                    <article class="game-card" data-id="nebulosa/" data-category="Arcade">
+                        <div class="game-card-top">
+                            <span class="game-category">Arcade</span>
+                            <button class="favorite-button" type="button" aria-label="Añadir Nebulosa a favoritos" aria-pressed="false" title="Añadir a favoritos">
+                                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20.8 8.8c0 5.1-8.8 10.2-8.8 10.2S3.2 13.9 3.2 8.8A4.8 4.8 0 0 1 12 6.1a4.8 4.8 0 0 1 8.8 2.7Z"/></svg>
+                            </button>
+                        </div>
+                        <a class="game-card-link" href="nebulosa/" aria-label="Jugar a Nebulosa">
+                            <div class="game-image"><img src="nebulosa/logo.png" alt="Nebulosa" loading="lazy" decoding="async"></div>
+                            <div class="game-card-copy">
+                                <h3 class="game-name">Nebulosa</h3>
+                                <p class="game-description">Esquiva a los fantasmas de la nebulosa, recoge todos los puntos y sobrevive en este laberinto espacial.</p>
+                                <span class="play-button"><span>Jugar</span><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m9 5 10 7-10 7V5Z"/></svg></span>
+                            </div>
+                        </a>
+                    </article>
+
+                    <article class="game-card" data-id="pollito/" data-category="Arcade">
+                        <div class="game-card-top">
+                            <span class="game-category">Arcade</span>
+                            <button class="favorite-button" type="button" aria-label="Añadir Pollito a favoritos" aria-pressed="false" title="Añadir a favoritos">
+                                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20.8 8.8c0 5.1-8.8 10.2-8.8 10.2S3.2 13.9 3.2 8.8A4.8 4.8 0 0 1 12 6.1a4.8 4.8 0 0 1 8.8 2.7Z"/></svg>
+                            </button>
+                        </div>
+                        <a class="game-card-link" href="pollito/" aria-label="Jugar a Pollito">
+                            <div class="game-image"><img src="pollito/logo.png" alt="Pollito" loading="lazy" decoding="async"></div>
+                            <div class="game-card-copy">
+                                <h3 class="game-name">Pollito</h3>
+                                <p class="game-description">Ayuda al pollito a correr, saltar y superar los obstáculos. ¡Consigue la mayor puntuación!</p>
+                                <span class="play-button"><span>Jugar</span><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m9 5 10 7-10 7V5Z"/></svg></span>
+                            </div>
+                        </a>
+                    </article>
+                    </div>
+                    <div class="no-results" id="noResults" role="status"><strong>No encontramos ese juego.</strong><span>Prueba con otro nombre o cambia la categoría.</span><br><button class="small-action" id="resetFilters" type="button">Quitar filtros</button></div>
                 </div>
-
-                <div class="game-description">
-                    Compara los valores de mercado de jugadores de fútbol y demuestra cuánto sabes.
-                </div>
-
-                <span class="play-button">
-                    Jugar
-                </span>
-
-            </a>
-
-            <!-- 2. CRIPTA: DESCENSO -->
-
-            <a
-                class="game-card"
-                href="cripta/"
-            >
-
-                <div class="game-image">
-
-                    <img
-                        src="cripta/logo.png"
-                        alt="Cripta: Descenso"
-                    >
-
-                </div>
-
-                <div class="game-name">
-                    Cripta: Descenso
-                </div>
-
-                <div class="game-description">
-
-                    <p>
-Explora una cripta olvidada, supera sus peligros y descubre qué se esconde en lo más profundo
-                    </p>
-
-                </div>
-
-                <span class="play-button">
-                    Jugar
-                </span>
-
-            </a>
-
-            <!-- 3. CLUB DE JUEGOS -->
-
-            <a
-                class="game-card"
-                href="club%20de%20juegos/"
-            >
-
-                <div class="game-image">
-
-                    <img
-                        src="club%20de%20juegos/logo.png"
-                        alt="Club de Juegos"
-                    >
-
-                </div>
-
-                <div class="game-name">
-                    Club de Juegos
-                </div>
-
-                <div class="game-description">
-                    Juega, compite y diviértete.
-                </div>
-
-                <span class="play-button">
-                    Jugar
-                </span>
-
-            </a>
-
-<!-- MIRADA -->
-<a class="game-card" href="mirada/">
-
-    <div class="game-image">
-        <img
-            src="mirada/logo.png"
-            alt="Mirada"
-        >
-    </div>
-
-    <div class="game-name">
-        Mirada
-    </div>
-
-    <div class="game-description">
-        Adéntrate en una experiencia de suspense donde cada detalle puede esconder algo inquietante. Observa con atención y descubre qué está pasando.
-    </div>
-
-    <span class="play-button">Jugar</span>
-
-</a>
-
-<!-- ECOS DEL EDÉN -->
-<a class="game-card" href="ecos%20del%20eden/">
-
-    <div class="game-image">
-        <img
-            src="ecos%20del%20eden/Logo_ecos%20del%20eden.png"
-            alt="Logo de Ecos del Edén"
-        >
-    </div>
-
-    <div class="game-name">
-        Ecos del Edén
-    </div>
-
-    <div class="game-description">
-        Explora dos realidades, descubre reinos misteriosos,
-        derrota guardianes y encuentra secretos ocultos.
-    </div>
-
-    <span class="play-button">
-        Jugar
-    </span>
-
-</a>
-            <!-- 4. ZONA CERO -->
-
-<a class="game-card" href="zona%20cero/index.html">
-    <div class="game-image">
-        <img src="zona%20cero/logo.png" alt="Zona Cero">
-    </div>
-    <div class="game-name">Zona Cero</div>
-    <div class="game-description">
-        Entra en la batalla, sobrevive y conviértete en el último jugador en pie.
-    </div>
-    <span class="play-button">Jugar</span>
-</a>
-
-            <!-- 5. TURNO DE NOCHE 3D -->
-
-               <a
-    class="game-card"
-    href="turno%20de%20noche%203d/"
->
-
-    <div class="game-image">
-
-        <img
-            src="turno%20de%20noche%203d/logo.png"
-            alt="Turno de noche 3D"
-        >
-
-    </div>
-
-    <div class="game-name">
-        Turno de noche 3D
-    </div>
-
-    <div class="game-description">
-        Sobrevive durante tu turno de noche, explora la tienda y enfréntate a los peligros que te esperan.
-    </div>
-
-    <span class="play-button">
-        Jugar
-    </span>
-
-</a>
-          
-
-<!-- THE ARCHITECTURE OF ERROR -->
-
-<a
-    class="game-card"
-    href="the%20architecture%20of%20error/"
->
-    <div class="game-image">
-        <img
-            src="the%20architecture%20of%20error/logo.png"
-            alt="The Architecture of Error"
-        >
-    </div>
-
-    <div class="game-name">
-        The Architecture of Error
-    </div>
-
-    <div class="game-description">
-        Entra en un ascensor donde cada planta puede esconder una anomalía. Observa, decide y descubre hasta dónde puedes llegar.
-    </div>
-
-    <span class="play-button">
-        Jugar
-    </span>
-</a>
-            
-        <!-- 6. NÁUFRAGO 3D -->
-
-<a
-    class="game-card"
-    href="naufrago%203d/"
->
-
-    <div class="game-image">
-
-        <img
-            src="naufrago%203d/logo.png"
-            alt="Náufrago 3D"
-        >
-
-    </div>
-
-    <div class="game-name">
-        Náufrago 3D
-    </div>
-
-    <div class="game-description">
-        Sobrevive en una isla desierta: recolecta recursos, fabrica herramientas, explora cuevas y explora nuevas islas.
-    </div>
-
-    <span class="play-button">
-        Jugar
-    </span>
-
-</a>
-
-
-            <!-- 8. ASTEROID RUNNER -->
-
-          <a
-    class="game-card"
-    href="asteroid%20runner/"
->
-    <div class="game-image">
-        <img
-            src="asteroid%20runner/logo.png"
-            alt="Asteroid Runner"
-        >
-    </div>
-
-    <div class="game-name">
-        Asteroid Runner
-    </div>
-
-    <div class="game-description">
-        Pilota, esquiva asteroides y sobrevive a una carrera espacial llena de peligros.
-    </div>
-
-    <span class="play-button">
-        Jugar
-    </span>
-</a>
-            
-        
-          <!-- MAREA -->
-
-<a
-    class="game-card"
-    href="marea/"
->
-    <div class="game-image">
-        <img
-            src="marea/logo.png"
-            alt="Marea"
-        >
-    </div>
-
-    <div class="game-name">
-        Marea
-    </div>
-
-    <div class="game-description">
-        Controla la marea, supera los niveles y recoge las perlas para conseguir todas las estrellas.
-    </div>
-
-    <span class="play-button">
-        Jugar
-    </span>
-</a>
-            
-            <!-- 4 EN RAYA -->
-
-            <a
-                class="game-card"
-                href="4%20en%20raya/"
-            >
-
-                <div class="game-image">
-
-                    <img
-                        src="4%20en%20raya/logo.png"
-                        alt="4 en raya"
-                    >
-
-                </div>
-
-                <div class="game-name">
-                    4 en raya
-                </div>
-
-                <div class="game-description">
-                    Juega al clásico 4 en raya y consigue conectar tus fichas antes que tu rival.
-                </div>
-
-                <span class="play-button">
-                    Jugar
-                </span>
-
-            </a>
-
-
-            <!-- ADIVINA LA BANDERA -->
-
-            <a
-                class="game-card"
-                href="adivina%20la%20bandera/"
-            >
-
-                <div class="game-image">
-
-                    <img
-                        src="adivina%20la%20bandera/logo.png"
-                        alt="Adivina la bandera"
-                    >
-
-                </div>
-
-                <div class="game-name">
-                    Adivina la bandera
-                </div>
-
-                <div class="game-description">
-                    Pon a prueba cuánto sabes de las banderas del mundo.
-                </div>
-
-                <span class="play-button">
-                    Jugar
-                </span>
-
-            </a>
-
-
-<!-- PRADO ETERNO -->
-
-<a
-    class="game-card"
-    href="prado eterno/"
->
-    <div class="game-image">
-        <img
-            src="prado eterno/logo.png"
-            alt="Prado Eterno"
-        >
-    </div>
-
-    <div class="game-name">
-        Prado Eterno
-    </div>
-
-    <div class="game-description">
-        Explora un mundo infinito, consigue recursos, construye y sobrevive en dos dimensiones llenas de peligros.
-    </div>
-
-    <span class="play-button">
-        Jugar
-    </span>
-</a>
-
-            
-            <!-- AZULEJO -->
-
-            <a
-                class="game-card"
-                href="azulejo/"
-            >
-
-                <div class="game-image">
-
-                    <img
-                        src="azulejo/logo.png"
-                        alt="Azulejo"
-                    >
-
-                </div>
-
-                <div class="game-name">
-                    Azulejo
-                </div>
-
-                <div class="game-description">
-                    Supera los desafíos de Azulejo y consigue la mejor puntuación.
-                </div>
-
-                <span class="play-button">
-                    Jugar
-                </span>
-
-            </a>
-
-
-            <!-- EL FAROLERO DE LAS RUINAS -->
-
-            <a
-                class="game-card"
-                href="el%20farolero%20de%20las%20ruinas/"
-            >
-
-                <div class="game-image">
-
-                    <img
-                        src="el%20farolero%20de%20las%20ruinas/logo.png"
-                        alt="El farolero de las ruinas"
-                    >
-
-                </div>
-
-                <div class="game-name">
-                    El farolero de las ruinas
-                </div>
-
-                <div class="game-description">
-                    Adéntrate en las ruinas y supera los peligros que encontrarás en el camino.
-                </div>
-
-                <span class="play-button">
-                    Jugar
-                </span>
-
-            </a>
-
-
-            <!-- TRAYECTORIAS -->
-
-            <a
-                class="game-card"
-                href="trayectorias/"
-            >
-
-                <div class="game-image">
-
-                    <img
-                        src="trayectorias/logo.png"
-                        alt="Trayectorias"
-                    >
-
-                </div>
-
-                <div class="game-name">
-                    Trayectorias
-                </div>
-
-                <div class="game-description">
-                    Pon a prueba tu habilidad y supera los retos de Trayectorias.
-                </div>
-
-                <span class="play-button">
-                    Jugar
-                </span>
-
-            </a>
-
-
-            <!-- CIMA INFINITA -->
-
-            <a
-                class="game-card"
-                href="cima%20infinita/"
-            >
-
-                <div class="game-image">
-
-                    <img
-                        src="cima%20infinita/logo.png"
-                        alt="Cima Infinita"
-                    >
-
-                </div>
-
-                <div class="game-name">
-                    Cima Infinita
-                </div>
-
-                <div class="game-description">
-                    Llega a lo más alto y supera todos los obstáculos en Cima Infinita.
-                </div>
-
-                <span class="play-button">
-                    Jugar
-                </span>
-
-            </a>
-
-
-            <!-- PIXEL BREAKER -->
-
-            <a
-                class="game-card"
-                href="pixel%20breaker/"
-            >
-
-                <div class="game-image">
-
-                    <img
-                        src="pixel%20breaker/logo.png"
-                        alt="Pixel Breaker"
-                    >
-
-                </div>
-
-                <div class="game-name">
-                    Pixel Breaker
-                </div>
-
-                <div class="game-description">
-                    Cuela la bola por los huecos para llegar a los píxeles y romperlos. Infinito y cada vez más difícil.
-                </div>
-
-                <span class="play-button">
-                    Jugar
-                </span>
-
-            </a>
-
-
-            <!-- AHORCADO FUTBOLERO -->
-
-            <a
-                class="game-card"
-                href="ahorcado%20futbolero/"
-            >
-
-                <div class="game-image">
-
-                    <img
-                        src="ahorcado%20futbolero/logo.png"
-                        alt="Ahorcado Futbolero"
-                    >
-
-                </div>
-
-                <div class="game-name">
-                    Ahorcado Futbolero
-                </div>
-
-                <div class="game-description">
-                    Adivina al futbolista oculto usando las pistas y las letras antes de quedarte sin vidas.
-                </div>
-
-                <span class="play-button">
-                    Jugar
-                </span>
-
-            </a>
-
-
-            <!-- NEBULOSA -->
-
-            <a
-                class="game-card"
-                href="nebulosa/"
-            >
-
-                <div class="game-image">
-
-                    <img
-                        src="nebulosa/logo.png"
-                        alt="Nebulosa"
-                    >
-
-                </div>
-
-                <div class="game-name">
-                    Nebulosa
-                </div>
-
-                <div class="game-description">
-                    Esquiva a los fantasmas de la nebulosa, recoge todos los puntos y sobrevive en este laberinto espacial.
-                </div>
-
-                <span class="play-button">
-                    Jugar
-                </span>
-
-            </a>
-
-
-            <!-- POLLITO -->
-
-            <a class="game-card" href="pollito/">
-                <div class="game-image">
-                    <img src="pollito/logo.png" alt="Pollito">
-                </div>
-                <div class="game-name">Pollito</div>
-                <div class="game-description">
-                    Ayuda al pollito a correr, saltar y superar los obstáculos. ¡Consigue la mayor puntuación!
-                </div>
-                <span class="play-button">Jugar</span>
-            </a>
-            
-        </div>
-
-
-        <!-- MENSAJE SI NO HAY RESULTADOS -->
-
-        <div
-            class="no-results"
-            id="noResults"
-        >
-            No se ha encontrado ningún juego
-        </div>
-
+                <aside class="side-column" aria-label="Panel lateral">
+                    <section class="side-panel" aria-labelledby="recentTitle">
+                        <div class="side-panel-head"><h3 class="side-panel-title recent-title" id="recentTitle"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3.5 2"/></svg> Seguir jugando</h3><span class="side-count" id="recentCount">Sin actividad</span></div>
+                        <div id="recentContent">
+                            <div class="favorites-empty recent-empty"><span class="empty-recent"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3.5 2"/></svg></span><strong>Aún no has jugado</strong><p>Los juegos que abras aparecerán aquí para que puedas retomarlos rápidamente.</p></div>
+                        </div>
+                    </section>
+                    <section class="side-panel random-panel" aria-labelledby="randomTitle">
+                        <div class="side-panel-head"><h3 class="side-panel-title random-title" id="randomTitle"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M16 3h5v5M4 20 21 3M21 16v5h-5M4 4l5 5m3 3 4 4"/></svg> ¿A qué jugamos hoy?</h3></div>
+                        <div class="random-content"><p>Deja que CostumGames elija una partida por ti.</p><button class="random-action" id="randomGame" type="button"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M16 3h5v5M4 20 21 3M21 16v5h-5M4 4l5 5m3 3 4 4"/></svg> Sorpréndeme</button></div>
+                    </section>
+                    <section class="side-panel" aria-labelledby="favoritesTitle">
+                        <div class="side-panel-head"><h3 class="side-panel-title" id="favoritesTitle"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m12 2.8 2.8 5.7 6.3.9-4.5 4.4 1.1 6.2-5.7-3-5.7 3 1.1-6.2L2.9 9.4l6.3-.9L12 2.8Z"/></svg> Tus favoritos</h3><span class="side-count" id="sideFavoriteCount">0 guardados</span></div>
+                        <div id="favoritesContent">
+                            <div class="favorites-empty"><span class="empty-heart"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20.8 8.8c0 5.1-8.8 10.2-8.8 10.2S3.2 13.9 3.2 8.8A4.8 4.8 0 0 1 12 6.1a4.8 4.8 0 0 1 8.8 2.7Z"/></svg></span><strong>Aún no tienes favoritos</strong><p>Guarda los juegos que más te gusten con el corazón de cada tarjeta.</p></div>
+                        </div>
+                        <div class="favorites-footer"><button class="small-action" id="viewFavorites" type="button">Ver mis favoritos</button></div>
+                    </section>
+                    <section class="side-panel about-panel" id="acerca">
+                        <h3>Más que juegos</h3>
+                        <p>CostumGames reúne juegos y experiencias para descubrir, probar cosas nuevas y pasar un buen rato.</p>
+                        <a href="https://www.instagram.com/costumgames_/" target="_blank" rel="noopener noreferrer">Conoce CostumGames <span aria-hidden="true">↗</span></a>
+                    </section>
+                </aside>
+            </div>
+        </section>
     </main>
 
-
     <footer>
-
-        © CostumGames
-
-        <br>
-
-        <a
-            href="https://www.instagram.com/costumgames_/"
-            target="_blank"
-            rel="noopener noreferrer"
-        >
-            Instagram: @costumgames_
-        </a>
-
+        <div class="footer-inner">
+            <nav class="footer-links" aria-label="Enlaces del pie de página">
+                <a href="./">Inicio</a><a href="#catalogo">Juegos</a><a href="#categorias">Categorías</a><a href="#acerca">Acerca de</a><a href="https://www.instagram.com/costumgames_/" target="_blank" rel="noopener noreferrer">Instagram</a>
+            </nav>
+            <div class="footer-copy">© <span id="year"></span> CostumGames<p>Juegos, entretenimiento y mucho más.</p></div>
+        </div>
     </footer>
 
-</div>
+    <script>
+        (() => {
+            const cards = Array.from(document.querySelectorAll('.game-card'));
+            const searchInput = document.getElementById('gameSearch');
+            const searchClear = document.getElementById('searchClear');
+            const count = document.getElementById('gameCount');
+            const categoryButtons = Array.from(document.querySelectorAll('.category-chip'));
+            const categoryCounters = Array.from(document.querySelectorAll('.chip-count'));
+            const noResults = document.getElementById('noResults');
+            const headerFavorites = document.getElementById('headerFavorites');
+            const favoriteTotal = document.getElementById('favoriteTotal');
+            const sideFavoriteCount = document.getElementById('sideFavoriteCount');
+            const favoritesContent = document.getElementById('favoritesContent');
+            const recentContent = document.getElementById('recentContent');
+            const recentCount = document.getElementById('recentCount');
+            const randomGameButton = document.getElementById('randomGame');
+            const viewFavorites = document.getElementById('viewFavorites');
+            const resetFilters = document.getElementById('resetFilters');
+            const menuToggle = document.getElementById('menuToggle');
+            const mainNav = document.getElementById('mainNav');
+            const storageKey = 'costumgames:favorites:v1';
+            const recentStorageKey = 'costumgames:recent:v1';
+            const randomLastKey = 'costumgames:random:last:v1';
+            const validIds = new Set(cards.map(card => card.dataset.id));
+            const featuredContainer = document.getElementById('featuredGames');
+            const featuredStorageKey = 'costumgames:featured:last-selection:v1';
+            let activeCategory = 'Todas';
+            let favoritesOnly = false;
+            let favorites = new Set();
+            let recentGames = [];
 
+            try {
+                const savedRecent = JSON.parse(localStorage.getItem(recentStorageKey) || '[]');
+                if (Array.isArray(savedRecent)) recentGames = [...new Set(savedRecent.filter(id => typeof id === 'string' && validIds.has(id)))].slice(0, 4);
+            } catch (error) {
+                recentGames = [];
+            }
 
-<!-- BUSCADOR -->
+            try {
+                const saved = JSON.parse(localStorage.getItem(storageKey) || '[]');
+                if (Array.isArray(saved)) favorites = new Set(saved.filter(id => typeof id === 'string' && validIds.has(id)));
+            } catch (error) {
+                // Si el navegador bloquea localStorage, los favoritos seguirán funcionando durante esta visita.
+                favorites = new Set();
+            }
 
-<script>
+            const normalize = value => String(value || '').toLocaleLowerCase('es').normalize('NFD').replace(/[\u0300-\u036f]/g, '').trim();
+            const cardById = new Map(cards.map(card => [card.dataset.id, card]));
 
-    const searchInput =
-        document.getElementById("gameSearch");
+            // Selección aleatoria de tres juegos distinta a la visita anterior.
+            function renderFeaturedGames() {
+                if (!featuredContainer || cards.length === 0) return;
 
-    const gameCards =
-        document.querySelectorAll(".game-card");
+                const pool = cards.filter(card => {
+                    const link = card.querySelector('.game-card-link');
+                    const image = card.querySelector('.game-image img');
+                    const name = card.querySelector('.game-name');
+                    return link && link.getAttribute('href') && image && image.getAttribute('src') && name;
+                });
+                if (!pool.length) return;
 
-    const noResults =
-        document.getElementById("noResults");
-
-
-    searchInput.addEventListener(
-        "input",
-        function () {
-
-            const search =
-                this.value
-                    .trim()
-                    .toLowerCase()
-                    .normalize("NFD")
-                    .replace(/[\u0300-\u036f]/g, "");
-
-
-            let visibleGames = 0;
-
-
-            gameCards.forEach(
-                card => {
-
-                    const gameName =
-                        card
-                            .querySelector(".game-name")
-                            .textContent
-                            .toLowerCase()
-                            .normalize("NFD")
-                            .replace(/[\u0300-\u036f]/g, "");
-
-
-                    const matches =
-                        gameName.includes(search);
-
-
-                    card.classList.toggle(
-                        "hidden",
-                        !matches
-                    );
-
-
-                    if (matches) {
-                        visibleGames++;
+                const previous = (() => {
+                    try {
+                        const saved = JSON.parse(localStorage.getItem(featuredStorageKey) || '[]');
+                        return Array.isArray(saved) ? saved.filter(id => typeof id === 'string') : [];
+                    } catch (error) {
+                        return [];
                     }
+                })();
 
+                // Fisher-Yates: mezcla el catálogo sin repetir juegos en una misma selección.
+                const shuffled = pool.slice();
+                for (let i = shuffled.length - 1; i > 0; i--) {
+                    const j = Math.floor(Math.random() * (i + 1));
+                    [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
                 }
-            );
 
+                let selected = shuffled.slice(0, Math.min(3, shuffled.length));
+                const sameSelection = selected.length === previous.length &&
+                    selected.map(card => card.dataset.id).sort().join('|') === previous.slice().sort().join('|');
+                if (sameSelection && shuffled.length > selected.length) {
+                    // Cambia uno por otro título disponible para evitar repetir exactamente la selección.
+                    selected[0] = shuffled[selected.length];
+                }
 
-            noResults.style.display =
-                visibleGames === 0
-                    ? "block"
-                    : "none";
+                const title = featuredContainer.querySelector('.hero-featured-title');
+                const fragment = document.createDocumentFragment();
+                if (title) fragment.appendChild(title);
 
-        }
-    );
+                selected.forEach(card => {
+                    const sourceLink = card.querySelector('.game-card-link');
+                    const sourceImage = card.querySelector('.game-image img');
+                    const name = card.querySelector('.game-name').textContent.trim();
+                    const category = card.dataset.category || 'Juego';
 
-</script>
+                    const link = document.createElement('a');
+                    link.className = 'featured-game';
+                    link.href = sourceLink.getAttribute('href');
+                    link.setAttribute('aria-label', `Descubrir ${name}`);
 
+                    const thumb = document.createElement('span');
+                    thumb.className = 'featured-game-thumb';
+                    const image = document.createElement('img');
+                    image.src = sourceImage.getAttribute('src');
+                    image.alt = '';
+                    image.loading = 'lazy';
+                    image.decoding = 'async';
+                    thumb.appendChild(image);
+
+                    const meta = document.createElement('span');
+                    meta.className = 'featured-game-meta';
+                    const gameName = document.createElement('strong');
+                    gameName.textContent = name;
+                    const gameCategory = document.createElement('span');
+                    gameCategory.textContent = category;
+                    meta.append(gameName, gameCategory);
+
+                    const arrow = document.createElement('span');
+                    arrow.className = 'featured-arrow';
+                    arrow.setAttribute('aria-hidden', 'true');
+                    arrow.textContent = '↗';
+
+                    link.append(thumb, meta, arrow);
+                    fragment.appendChild(link);
+                });
+
+                featuredContainer.replaceChildren(fragment);
+                try {
+                    localStorage.setItem(featuredStorageKey, JSON.stringify(selected.map(card => card.dataset.id)));
+                } catch (error) {
+                    // Si el almacenamiento está bloqueado, la selección aleatoria sigue funcionando en esta visita.
+                }
+            }
+
+            function saveRecentGames() {
+                try { localStorage.setItem(recentStorageKey, JSON.stringify(recentGames)); } catch (error) { /* el historial sigue disponible durante esta visita */ }
+            }
+
+            function renderRecentPanel() {
+                const recentCards = recentGames.map(id => cardById.get(id)).filter(Boolean).slice(0, 4);
+                recentCount.textContent = recentCards.length ? `${recentCards.length} ${recentCards.length === 1 ? 'reciente' : 'recientes'}` : 'Sin actividad';
+                if (!recentCards.length) {
+                    recentContent.innerHTML = `<div class="favorites-empty recent-empty"><span class="empty-recent"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3.5 2"/></svg></span><strong>Aún no has jugado</strong><p>Los juegos que abras aparecerán aquí para que puedas retomarlos rápidamente.</p></div>`;
+                    return;
+                }
+                const list = document.createElement('div');
+                list.className = 'recent-list';
+                recentCards.forEach(card => {
+                    const link = document.createElement('a');
+                    link.className = 'recent-item';
+                    link.href = card.querySelector('.game-card-link').getAttribute('href');
+                    const thumb = document.createElement('span'); thumb.className = 'recent-thumb';
+                    const img = document.createElement('img'); img.src = card.querySelector('.game-image img').getAttribute('src'); img.alt = '';
+                    thumb.appendChild(img);
+                    const info = document.createElement('span');
+                    const title = document.createElement('strong'); title.textContent = card.querySelector('.game-name').textContent;
+                    const category = document.createElement('small'); category.textContent = card.dataset.category || 'Juego';
+                    info.append(title, category); link.append(thumb, info); list.appendChild(link);
+                });
+                recentContent.replaceChildren(list);
+            }
+
+            function rememberGame(id) {
+                if (!validIds.has(id)) return;
+                recentGames = [id, ...recentGames.filter(item => item !== id)].slice(0, 4);
+                saveRecentGames();
+                renderRecentPanel();
+            }
+
+            function saveFavorites() {
+                try { localStorage.setItem(storageKey, JSON.stringify([...favorites])); } catch (error) { /* almacenamiento temporal */ }
+            }
+
+            function updateFavoriteButtons() {
+                cards.forEach(card => {
+                    const button = card.querySelector('.favorite-button');
+                    const selected = favorites.has(card.dataset.id);
+                    button.setAttribute('aria-pressed', String(selected));
+                    button.setAttribute('aria-label', `${selected ? 'Quitar' : 'Añadir'} ${card.querySelector('.game-name').textContent} ${selected ? 'de' : 'a'} favoritos`);
+                    button.title = selected ? 'Quitar de favoritos' : 'Añadir a favoritos';
+                });
+                favoriteTotal.textContent = favorites.size;
+                sideFavoriteCount.textContent = `${favorites.size} ${favorites.size === 1 ? 'guardado' : 'guardados'}`;
+                headerFavorites.setAttribute('aria-pressed', String(favoritesOnly));
+                viewFavorites.textContent = favoritesOnly ? 'Ver todos los juegos' : 'Ver mis favoritos';
+            }
+
+            function renderFavoritePanel() {
+                const favoriteCards = cards.filter(card => favorites.has(card.dataset.id));
+                if (!favoriteCards.length) {
+                    favoritesContent.innerHTML = `<div class="favorites-empty"><span class="empty-heart"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20.8 8.8c0 5.1-8.8 10.2-8.8 10.2S3.2 13.9 3.2 8.8A4.8 4.8 0 0 1 12 6.1a4.8 4.8 0 0 1 8.8 2.7Z"/></svg></span><strong>Aún no tienes favoritos</strong><p>Guarda los juegos que más te gusten con el corazón de cada tarjeta.</p></div>`;
+                    return;
+                }
+                const list = document.createElement('div');
+                list.className = 'favorite-list';
+                favoriteCards.slice(0, 4).forEach(card => {
+                    const link = document.createElement('a');
+                    link.className = 'favorite-item';
+                    link.href = card.querySelector('.game-card-link').getAttribute('href');
+                    const thumb = document.createElement('span'); thumb.className = 'favorite-thumb';
+                    const img = document.createElement('img'); img.src = card.querySelector('img').getAttribute('src'); img.alt = '';
+                    thumb.appendChild(img);
+                    const info = document.createElement('span');
+                    const title = document.createElement('strong'); title.textContent = card.querySelector('.game-name').textContent;
+                    const category = document.createElement('small'); category.textContent = card.dataset.category;
+                    info.append(title, category); link.append(thumb, info); list.appendChild(link);
+                });
+                favoritesContent.replaceChildren(list);
+            }
+
+            function updateCategoryCounts() {
+                categoryCounters.forEach(counter => {
+                    const category = counter.dataset.count;
+                    const total = category === 'Todas' ? cards.length : cards.filter(card => card.dataset.category === category).length;
+                    counter.textContent = total;
+                });
+            }
+
+            function updateGames() {
+                const query = normalize(searchInput.value);
+                let visible = 0;
+                cards.forEach(card => {
+                    const name = normalize(card.querySelector('.game-name').textContent);
+                    const description = normalize(card.querySelector('.game-description').textContent);
+                    const category = normalize(card.dataset.category);
+                    const categoryMatch = activeCategory === 'Todas' || card.dataset.category === activeCategory;
+                    const searchMatch = !query || name.includes(query) || description.includes(query) || category.includes(query);
+                    const favoriteMatch = !favoritesOnly || favorites.has(card.dataset.id);
+                    const match = categoryMatch && searchMatch && favoriteMatch;
+                    card.hidden = !match;
+                    if (match) visible++;
+                });
+                noResults.style.display = visible === 0 ? 'block' : 'none';
+                if (favoritesOnly && !query && activeCategory === 'Todas') count.textContent = `${visible} ${visible === 1 ? 'favorito' : 'favoritos'}`;
+                else if (query || activeCategory !== 'Todas' || favoritesOnly) count.textContent = `${visible} de ${cards.length} juegos`;
+                else count.textContent = `${cards.length} juegos disponibles`;
+                searchClear.classList.toggle('visible', Boolean(searchInput.value));
+                updateFavoriteButtons();
+                renderFavoritePanel();
+            }
+
+            function setFavoritesFilter(force) {
+                favoritesOnly = typeof force === 'boolean' ? force : !favoritesOnly;
+                updateGames();
+                if (favoritesOnly) document.getElementById('catalogo').scrollIntoView({ behavior: 'smooth', block: 'start' });
+            }
+
+            categoryButtons.forEach(button => button.addEventListener('click', () => {
+                activeCategory = button.dataset.category;
+                categoryButtons.forEach(item => {
+                    const active = item === button;
+                    item.classList.toggle('active', active);
+                    item.setAttribute('aria-pressed', String(active));
+                });
+                updateGames();
+            }));
+
+            cards.forEach(card => card.querySelector('.favorite-button').addEventListener('click', event => {
+                event.preventDefault(); event.stopPropagation();
+                const id = card.dataset.id;
+                if (favorites.has(id)) favorites.delete(id); else favorites.add(id);
+                saveFavorites();
+                if (favoritesOnly && favorites.size === 0) favoritesOnly = false;
+                updateGames();
+            }));
+
+            // Registra las visitas iniciadas desde las tarjetas, los destacados o el historial.
+            document.addEventListener('click', event => {
+                const link = event.target.closest('a[href]');
+                if (!link) return;
+                const href = link.getAttribute('href');
+                const matchingCard = cards.find(card => card.querySelector('.game-card-link')?.getAttribute('href') === href);
+                if (matchingCard) rememberGame(matchingCard.dataset.id);
+            });
+
+            randomGameButton.addEventListener('click', () => {
+                if (!cards.length) return;
+                let pool = cards.slice();
+                let previousRandom = '';
+                try { previousRandom = localStorage.getItem(randomLastKey) || ''; } catch (error) { /* sin historial */ }
+                if (pool.length > 1) pool = pool.filter(card => card.dataset.id !== previousRandom);
+                const selected = pool[Math.floor(Math.random() * pool.length)];
+                if (!selected) return;
+                const id = selected.dataset.id;
+                const href = selected.querySelector('.game-card-link').getAttribute('href');
+                try { localStorage.setItem(randomLastKey, id); } catch (error) { /* el juego aleatorio sigue funcionando */ }
+                rememberGame(id);
+                window.location.href = href;
+            });
+
+            searchInput.addEventListener('input', updateGames);
+            searchInput.addEventListener('keydown', event => { if (event.key === 'Escape') { searchInput.value = ''; updateGames(); } });
+            searchClear.addEventListener('click', () => { searchInput.value = ''; searchInput.focus(); updateGames(); });
+            headerFavorites.addEventListener('click', () => setFavoritesFilter());
+            viewFavorites.addEventListener('click', () => setFavoritesFilter());
+            resetFilters.addEventListener('click', () => {
+                searchInput.value = ''; activeCategory = 'Todas'; favoritesOnly = false;
+                categoryButtons.forEach(button => { const active = button.dataset.category === 'Todas'; button.classList.toggle('active', active); button.setAttribute('aria-pressed', String(active)); });
+                updateGames();
+            });
+            menuToggle.addEventListener('click', () => {
+                const expanded = menuToggle.getAttribute('aria-expanded') === 'true';
+                menuToggle.setAttribute('aria-expanded', String(!expanded));
+                menuToggle.setAttribute('aria-label', expanded ? 'Abrir menú' : 'Cerrar menú');
+                mainNav.classList.toggle('open', !expanded);
+            });
+            mainNav.querySelectorAll('a').forEach(link => link.addEventListener('click', () => {
+                mainNav.classList.remove('open'); menuToggle.setAttribute('aria-expanded', 'false'); menuToggle.setAttribute('aria-label', 'Abrir menú');
+            }));
+            document.getElementById('year').textContent = new Date().getFullYear();
+            renderFeaturedGames();
+            renderRecentPanel();
+            updateCategoryCounts(); updateGames();
+        })();
+    </script>
 </body>
 </html>
