@@ -1,4 +1,4 @@
-!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="es"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
 <title>Cazador de Sombras</title>
@@ -62,8 +62,27 @@ body.lefty #bD{right:auto;left:max(34px,env(safe-area-inset-left))}body.lefty #b
 <div id="cls" style="margin-bottom:6px"></div><div id="clsd" style="color:#9aa6e0;font-size:14px;margin-bottom:6px"></div><div id="set"><label>Calidad <select id="sQ"><option value="0">Baja</option><option value="1">Media</option><option value="2">Alta</option></select></label><label>Dificultad <select id="sD"><option value="0">Fácil</option><option value="1">Normal</option><option value="2">Difícil</option></select></label><label>Volumen <input type="range" id="sV" min="0" max="1" step=".05"></label><label>Sensibilidad <input type="range" id="sS" min=".4" max="2" step=".1"></label><label class="tcl">Botones <input type="range" id="sB" min=".7" max="1.4" step=".05"></label><label class="tcl"><input type="checkbox" id="sY"> Vibración</label><label class="tcl"><input type="checkbox" id="sL"> Zurdo</label><label class="tcl"><input type="checkbox" id="sA"> Cámara automática</label><label class="tcl"><input type="checkbox" id="sP"> Modo vertical</label><label class="tcl"><span id="sE" class="eb">Colocar botones</span></label></div><div id="keys">WASD moverte · Ratón cámara · Clic izquierdo atacar (mantén: golpe cargado; con arco, disparo continuo) · R golpe cargado o ráfaga · F lanza de sombra<br>Espacio esquivar · Mantén Q o clic derecho: controlas a tu sombra, el tiempo se ralentiza y tú te quedas quieto<br>Con la sombra activa: clic = señuelo · Espacio = intercambiar sitio contigo<br>La sombra trepa los pilares y cae sobre los enemigos</div></div>
 <div id="ed" style="display:none;position:fixed;top:14px;left:50%;transform:translateX(-50%);z-index:6"><span class="eb" id="edOk">Listo</span><span class="eb" id="edRs">Restablecer</span></div>
 <div id="up"><h2 id="upt">Elige una mejora</h2><div id="cards"></div></div>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 <script>
+(function () {
+    const sources = [
+        'https://cdn.jsdelivr.net/npm/three@0.128.0/build/three.min.js',
+        'https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js',
+        'https://raw.githubusercontent.com/mrdoob/three.js/r128/build/three.min.js'
+    ];
+    function loadThree(index) {
+        return new Promise((resolve, reject) => {
+            if (window.THREE) return resolve();
+            if (index >= sources.length) return reject(new Error('No se pudo cargar Three.js'));
+            const script = document.createElement('script');
+            script.src = sources[index];
+            script.onload = () => window.THREE ? resolve() : loadThree(index + 1).then(resolve, reject);
+            script.onerror = () => loadThree(index + 1).then(resolve, reject);
+            document.head.appendChild(script);
+        });
+    }
+    loadThree(0).then(() => {
+        // El juego se inicia solo cuando el motor 3D se ha cargado correctamente.
+
 const T=THREE,$=id=>document.getElementById(id),K={};
 let state='menu',locked=false,wave=0,waveT=0,shake=0,hitstop=0,time=0,score=0,hurtT=0;
 const R=new T.WebGLRenderer({antialias:true});R.setSize(innerWidth,innerHeight);R.setPixelRatio(Math.min(devicePixelRatio,2));
@@ -431,5 +450,13 @@ function loop(now){requestAnimationFrame(loop);let dt=Math.min(.05,(now-last)/10
  else if(state!=='pause')cam.yaw+=dt*.15;
  updFx(dt);updEmb(rdt);flames.forEach((f,i)=>f.scale.y=1+Math.sin(time*9+i)*.18);TL.forEach((l,i)=>l.intensity=1.1+Math.sin(time*11+i*2)*.25+Math.random()*.1);mist.forEach((m,i)=>{const a=time*.05*(i%2?1:-1)+i;m.position.x=Math.cos(a)*(6+i*2.5);m.position.z=Math.sin(a)*(6+i*2.5)});updCam(rdt);R.render(S,C)}
 requestAnimationFrame(loop);
+    }).catch(() => {
+        const menu = document.getElementById('menu');
+        if (menu) {
+            menu.style.display = 'flex';
+            menu.innerHTML = '<div style="max-width:560px;padding:28px;border:1px solid #9c86ff;border-radius:8px;background:#10152c"><h1 style="font-size:clamp(30px,7vw,54px);margin:0 0 14px">Cazador de Sombras</h1><p style="line-height:1.6;color:#cbd2f4">No se ha podido cargar el motor 3D. Comprueba tu conexión a Internet y vuelve a intentarlo.</p><button onclick="location.reload()" style="border:1px solid #9c86ff;background:#9c86ff22;color:#fff;padding:12px 24px;border-radius:4px;cursor:pointer">Reintentar</button></div>';
+        }
+    });
+})();
 </script></body></html>
 
