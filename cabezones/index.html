@@ -15,7 +15,7 @@ canvas{display:block;touch-action:none}
 <script>
 const cv=document.getElementById('c'),ctx=cv.getContext('2d');
 const W=900,H=500,G=430,GW=72,CB=G-150;
-const fit=()=>{const s=Math.min(innerWidth/W,innerHeight/H);cv.style.width=W*s+'px';cv.style.height=H*s+'px'};
+const fit=()=>{const s=Math.min(1,innerWidth/W,innerHeight/H);cv.style.width=W*s+'px';cv.style.height=H*s+'px'};
 addEventListener('resize',fit);fit();
 const keys={},pr={},ms={x:-1,y:-1,c:0,m:0};
 addEventListener('keydown',e=>{if(e.code.startsWith('Arrow')||e.code==='Space')e.preventDefault();if(!keys[e.code])pr[e.code]=1;keys[e.code]=1;aud()});
@@ -456,4 +456,3 @@ requestAnimationFrame(loop);
 </script>
 </body>
 </html>
-
