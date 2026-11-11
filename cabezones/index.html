@@ -2,12 +2,12 @@
 <html lang="es">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
 <title>Cabezones — Fútbol</title>
 <style>
 html,body{margin:0;height:100%;background:#0a0d2b;overflow:hidden}
 body{display:flex;align-items:center;justify-content:center}
-canvas{display:block;touch-action:none}
+canvas{display:block;touch-action:none;-webkit-user-select:none;user-select:none;-webkit-touch-callout:none;-webkit-tap-highlight-color:transparent}
 </style>
 </head>
 <body>
@@ -15,14 +15,22 @@ canvas{display:block;touch-action:none}
 <script>
 const cv=document.getElementById('c'),ctx=cv.getContext('2d');
 const W=900,H=500,G=430,GW=72,CB=G-150;
-const fit=()=>{const s=Math.min(1,innerWidth/W,innerHeight/H);cv.style.width=W*s+'px';cv.style.height=H*s+'px'};
+const fit=()=>{const s=Math.min(innerWidth/W,innerHeight/H);cv.style.width=W*s+'px';cv.style.height=H*s+'px'};
 addEventListener('resize',fit);fit();
 const keys={},pr={},ms={x:-1,y:-1,c:0,m:0};
-addEventListener('keydown',e=>{if(e.code.startsWith('Arrow')||e.code==='Space')e.preventDefault();if(!keys[e.code])pr[e.code]=1;keys[e.code]=1;aud()});
+let TOUCH=false,fsT=0;const tdown={},tptr={};
+addEventListener('keydown',e=>{if(e.code.startsWith('Arrow')||e.code==='Space')e.preventDefault();if(!keys[e.code])pr[e.code]=1;keys[e.code]=1;TOUCH=false;aud()});
 addEventListener('keyup',e=>keys[e.code]=0);
 const mpos=e=>{const r=cv.getBoundingClientRect();ms.x=(e.clientX-r.left)*W/r.width;ms.y=(e.clientY-r.top)*H/r.height;ms.m=1};
 cv.addEventListener('pointermove',mpos);
-cv.addEventListener('pointerdown',e=>{mpos(e);ms.c=1;aud()});
+cv.addEventListener('contextmenu',e=>e.preventDefault());
+cv.addEventListener('pointerdown',e=>{mpos(e);ms.c=1;aud();
+ if(e.pointerType==='touch'){TOUCH=true;if(!fsT){fsT=1;try{document.documentElement.requestFullscreen().then(()=>{try{screen.orientation.lock('landscape').catch(()=>{})}catch(x){}}).catch(()=>{})}catch(x){}}}
+ try{cv.setPointerCapture(e.pointerId)}catch(x){}
+ if(S==='play'&&TOUCH&&!paused){if(NET!=='guest'&&ph!=='end'&&ms.x>W/2-28&&ms.x<W/2+28&&ms.y>80&&ms.y<120){paused=true;return}tpress(e.pointerId,ms.x,ms.y)}});
+cv.addEventListener('pointermove',e=>{if(TOUCH&&S==='play'&&!paused&&e.pressure>0)tpress(e.pointerId,ms.x,ms.y)});
+const pend=e=>{const a=tptr[e.pointerId];if(a){tact(a,0);delete tptr[e.pointerId]}};
+cv.addEventListener('pointerup',pend);cv.addEventListener('pointercancel',pend);
 
 /* ---------- sonido ---------- */
 let AC;
@@ -339,7 +347,7 @@ function hud(){
   ctx.strokeStyle=c.col;ctx.lineWidth=2;rr(x,26,w,14,7);ctx.stroke();
   const rd=p.en>=100;txt(rd?'¡HABILIDAD LISTA!  ['+kn(CT[p.side].s)+']':c.hb,p.side?x+w:x,56,13,rd&&Math.floor(now/250)%2?'#fff':rd?'#ffd23a':'#cfd6ff',al,'800');if(p.it>=0)txt(ITEMS[p.it].ic+' '+ITEMS[p.it].n+'  ['+kn(CT[p.side].u)+']',p.side?x+w:x,78,15,'#fff',al,'800')});
  const hl=i=>{const c=CT[i];return kn(c.l)+' '+kn(c.r)+' mover · '+kn(c.j)+' saltar · '+kn(c.k)+' chutar · '+kn(c.s)+' habilidad · '+kn(c.u)+' objeto'};
- if(mode===1||NET)txt('J1: '+hl(0)+'   (también vale el teclado de J2)',W/2,H-12,13,'#fff','center','700');
+ if(TOUCH){}else if(mode===1||NET)txt('J1: '+hl(0)+'   (también vale el teclado de J2)',W/2,H-12,13,'#fff','center','700');
  else{txt('J1: '+hl(0),12,H-12,12,'#fff','left','700');txt('J2: '+hl(1),W-12,H-12,12,'#fff','right','700')}}
 
 function game(){
@@ -350,9 +358,11 @@ function game(){
  drawBall();if(box)drawBox();
  pts.forEach(p=>{ctx.globalAlpha=Math.min(1,p.l/20);ctx.fillStyle=p.c;ctx.beginPath();ctx.arc(p.x,p.y,p.r,0,7);ctx.fill()});ctx.globalAlpha=1;
  hud();
+ if(TOUCH&&!paused&&ph!=='end')drawTB();
  if(ph==='count')txt(Math.ceil(cnt/60)+'',W/2,235,90,'#ffd23a');
  if(msgT>0)txt(msg,W/2,235,msg.length>8?56:76,'#ffd23a');
- if(paused){ctx.fillStyle='rgba(8,10,30,.7)';ctx.fillRect(0,0,W,H);txt('PAUSA',W/2,230,70);txt('P continuar  ·  M menú',W/2,275,20,'#cfd6ff','center','700')}
+ if(paused){ctx.fillStyle='rgba(8,10,30,.7)';ctx.fillRect(0,0,W,H);txt('PAUSA',W/2,230,70);if(btn(W/2-200,260,190,54,'CONTINUAR'))paused=false;
+  if(btn(W/2+10,260,190,54,'MENÚ','#4cc9ff')){paused=false;S='menu'}}
  if(ph==='end'){ctx.fillStyle='rgba(8,10,30,.74)';ctx.fillRect(0,0,W,H);const w=sc[0]>sc[1]?0:1;
   txt('¡GANA '+NM()[w]+'!',W/2,170,58,CH[P[w].ci].col);txt(sc[0]+' - '+sc[1],W/2,240,50);
   if(unl>0)txt('¡DESBLOQUEADO: '+CH[unl].ic+' '+CH[unl].n+'!',W/2,282,28,CH[unl].col);
@@ -360,6 +370,13 @@ function game(){
   else if(btn(W/2-200,310,190,54,unl>0?'SIGUIENTE RIVAL':'REVANCHA')){if(unl>0)go(1);else startMatch()}
   if(btn(W/2+10,310,190,54,'MENÚ','#4cc9ff'))S='menu'}}
 
+const TB=[['l','◀',14,376],['r','▶',126,376],['j','▲',W-230,376],['k','⚽',W-118,376],['s','⭐',W-118,264],['u','🎁',W-230,264]];
+function tact(a,on){const c=CT[0][a];if(on){tdown[a]=(tdown[a]||0)+1;keys[c]=1;if(a==='k'||a==='s'||a==='u')pr[c]=1}else{tdown[a]=Math.max(0,(tdown[a]||0)-1);if(!tdown[a])keys[c]=0}}
+function tpress(id,x,y){let nb=null;for(const b of TB)if(x>=b[2]&&x<=b[2]+104&&y>=b[3]&&y<=b[3]+104)nb=b[0];
+ const old=tptr[id];if(old===nb)return;if(old)tact(old,0);if(nb){tptr[id]=nb;tact(nb,1)}else delete tptr[id]}
+function drawTB(){ctx.save();TB.forEach(b=>{const on=tdown[b[0]]>0;ctx.globalAlpha=on?.85:.45;ctx.fillStyle=on?'#ffd23a':'#0a0d2b';ctx.beginPath();ctx.arc(b[2]+52,b[3]+52,50,0,7);ctx.fill();
+  ctx.globalAlpha=.9;ctx.strokeStyle='#fff';ctx.lineWidth=4;ctx.stroke();ctx.globalAlpha=1;ctx.fillStyle=on?'#0a0d2b':'#fff';ctx.font='900 40px sans-serif';ctx.textAlign='center';ctx.fillText(b[1],b[2]+52,b[3]+66)});
+ if(NET!=='guest'){rr(W/2-28,80,56,40,10);ctx.fillStyle='rgba(8,10,30,.6)';ctx.fill();txt('⏸',W/2,108,22,'#fff','center','900',false)}ctx.restore()}
 function netLeave(){const c=conn,q=peer;NET=null;conn=peer=null;try{c&&c.close()}catch(e){}try{q&&q.destroy()}catch(e){}}
 function loadPeer(cb){if(window.Peer)return cb();const u=['https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js','https://cdn.jsdelivr.net/npm/peerjs@1.5.4/dist/peerjs.min.js'];
  const t=i=>{if(i>=u.length){netMsg='No se pudo cargar la librería online (¿sin internet?)';return}const sc=document.createElement('script');sc.src=u[i];sc.onload=cb;sc.onerror=()=>t(i+1);document.head.appendChild(sc)};t(0)}
@@ -395,7 +412,8 @@ function netScr(){ctx.fillStyle='rgba(8,10,30,.84)';ctx.fillRect(0,0,W,H);txt('J
   txt('Uno crea la sala y pasa el código al otro, que pulsa UNIRSE y lo escribe.',W/2,300,15,'#e8ecff','center','600',false);
   txt('Hace falta internet. El anfitrión juega como J1 y el invitado como J2.',W/2,324,15,'#e8ecff','center','600',false)}
  else if(netSt==='host'){txt('Código de sala',W/2,150,22,'#cfd6ff');txt(netCode,W/2,250,96,'#ffd23a');txt(netMsg,W/2,300,18,'#e8ecff','center','700',false)}
- else if(netSt==='join'){txt('Escribe el código de la sala y pulsa Enter',W/2,150,22,'#cfd6ff');txt((netCode+'_____').slice(0,5).split('').join(' '),W/2,250,80,'#ffd23a');txt(netMsg,W/2,300,18,'#ff8a8a','center','700',false)}
+ else if(netSt==='join'){txt('Escribe el código de la sala y pulsa Enter',W/2,150,22,'#cfd6ff');txt((netCode+'_____').slice(0,5).split('').join(' '),W/2,250,80,'#ffd23a');txt(netMsg,W/2,300,18,'#ff8a8a','center','700',false);
+  if(btn(W/2-120,330,240,52,'✎ ESCRIBIR CÓDIGO','#ffd23a')){const c=prompt('Código de sala (5 caracteres)');if(c){netCode=c.toUpperCase().replace(/[^A-Z0-9]/g,'').slice(0,5);if(netCode.length===5)netJoin()}}}
  else txt(netMsg,W/2,220,22,'#e8ecff');
  if(btn(W/2-100,410,200,46,'VOLVER','#ff8a8a')){netLeave();if(netSt==='menu')S='menu';else{netSt='menu';netMsg=''}}}
 const ACT=[['l','Izquierda'],['r','Derecha'],['j','Saltar'],['k','Chutar'],['s','Habilidad'],['u','Objeto']];
@@ -431,6 +449,7 @@ function picker(){
  txt(mode===1||NET?'ELIGE TU CABEZÓN':'JUGADOR '+(pick+1)+': ELIGE TU CABEZÓN',W/2,38,28,'#ffd23a');
  if(netSt==='ready'&&NET)txt('Esperando al otro jugador...',W/2,62,16,'#ffd23a');
  if(mode===1&&SV.lv<LAD.length)txt('Próximo rival: '+CH[LAD[SV.lv]].ic+' '+CH[LAD[SV.lv]].n+'  ('+(SV.lv+1)+'/'+LAD.length+')',W/2,62,15,'#cfd6ff','center','700');
+ if(btn(12,12,110,34,'◀ MENÚ','#ff8a8a'))S='menu';
  const pg=Math.floor(sel/10),np=Math.ceil(CH.length/10);
  CH.forEach((c,i)=>{if(Math.floor(i/10)!==pg)return;const k=i%10,x=12+(k%5)*178,y=72+Math.floor(k/5)*184,w=170,h=176,lk=!un(i);
   if(ms.m&&ms.x>x&&ms.x<x+w&&ms.y>y&&ms.y<y+h)sel=i;
@@ -448,6 +467,7 @@ function render(){
  if(shake>0)ctx.translate((Math.random()-.5)*shake,(Math.random()-.5)*shake);
  ctx.drawImage(BG[SP],0,0);
  if(S==='menu')menu();else if(S==='pick')picker();else if(S==='keys')keysScr();else if(S==='net')netScr();else game();
+ if(TOUCH&&innerHeight>innerWidth*1.1){ctx.fillStyle='rgba(8,10,30,.94)';ctx.fillRect(0,0,W,H);txt('↻ Gira el móvil',W/2,230,48,'#ffd23a');txt('El juego se juega en horizontal',W/2,280,20,'#cfd6ff','center','700',false)}
  ctx.restore();ms.c=0;ms.m=0}
 
 let last=0,acc=0;
